@@ -189,3 +189,24 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
+
+# MiBici: datos, experimentos, modelos y secretos locales
+mlruns/
+mlartifacts/
+mlflow.db
+mlflow.db-*
+.env.*
+!.env.example
+*.csv
+*.parquet
+*.feather
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.h5
+*.keras
+*.pt
+*.pth
+/models/*
+!/models/.gitkeep

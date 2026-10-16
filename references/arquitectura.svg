@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
+<title>Arquitectura propuesta MiBici - Equipo 45</title>
+<desc>Fuente MiBici, ingesta, almacenamiento, variables, entrenamiento y MLflow. Git registra código y manifiesto. Diseño pendiente de implementación.</desc>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52798e"/></marker></defs>
+<rect width="1280" height="800" fill="#ffffff"/>
+<g font-family="DejaVu Sans, Arial, sans-serif" fill="#20323e">
+<text x="40" y="45" font-size="28" font-weight="bold" fill="#164c69">Arquitectura propuesta | MiBici - Equipo 45</text>
+<text x="40" y="77" font-size="17">Componentes por implementar; configuración y diseño disponibles en el repositorio.</text>
+<rect x="40" y="120" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="58" y="156" font-size="21" font-weight="bold" fill="#164c69">1. Fuentes</text>
+<text x="58" y="193" font-size="16">Portal MiBici: viajes mensuales</text>
+<text x="58" y="221" font-size="16">Nomenclatura de estaciones</text>
+<text x="58" y="249" font-size="16">URL de cada archivo</text>
+<rect x="460" y="120" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="478" y="156" font-size="21" font-weight="bold" fill="#164c69">2. Ingesta</text>
+<text x="478" y="193" font-size="16">Python + pandas por bloques</text>
+<text x="478" y="221" font-size="16">Normalizar columnas, fechas y tipos</text>
+<text x="478" y="249" font-size="16">Validar duplicados y calidad</text>
+<rect x="880" y="120" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="898" y="156" font-size="21" font-weight="bold" fill="#164c69">3. Almacenamiento</text>
+<text x="898" y="193" font-size="16">CSV crudo y Parquet por mes</text>
+<text x="898" y="221" font-size="16">Manifiesto: SHA-256 y conteos</text>
+<text x="898" y="249" font-size="16">Archivos grandes fuera de Git</text>
+<rect x="880" y="420" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="898" y="456" font-size="21" font-weight="bold" fill="#164c69">4. Variables y partición</text>
+<text x="898" y="493" font-size="16">Funciones en features.py</text>
+<text x="898" y="521" font-size="16">Calendario, rezagos, proxy, perfiles</text>
+<text x="898" y="549" font-size="16">Cortes temporales de config.py</text>
+<rect x="460" y="420" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="478" y="456" font-size="21" font-weight="bold" fill="#164c69">5. Entrenamiento</text>
+<text x="478" y="493" font-size="16">scikit-learn: P1, P2 y P3</text>
+<text x="478" y="521" font-size="16">Baselines y modelos candidatos</text>
+<text x="478" y="549" font-size="16">Validación antes de prueba</text>
+<rect x="40" y="420" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
+<text x="58" y="456" font-size="21" font-weight="bold" fill="#164c69">6. Registro y evidencia</text>
+<text x="58" y="493" font-size="16">MLflow + SQLite local</text>
+<text x="58" y="521" font-size="16">Parámetros, métricas y etiquetas</text>
+<text x="58" y="549" font-size="16">Artefactos, mapa y capturas</text>
+</g><g stroke="#52798e" stroke-width="3" fill="none" marker-end="url(#arrow)">
+<line x1="400" y1="203" x2="449" y2="203"/>
+<line x1="820" y1="203" x2="869" y2="203"/>
+<line x1="1060" y1="286" x2="1060" y2="409"/>
+<line x1="880" y1="503" x2="831" y2="503"/>
+<line x1="460" y1="503" x2="411" y2="503"/>
+</g><rect x="40" y="650" width="1200" height="100" rx="12" fill="#164c69"/>
+<g font-family="DejaVu Sans, Arial, sans-serif" fill="#ffffff">
+<text x="60" y="685" font-size="21" font-weight="bold">Git/GitHub: código, propuesta y manifiesto versionados mediante Pull Requests</text>
+<text x="60" y="720" font-size="17">Cada run vinculará equipo, pregunta, commit y versión de datos. Datos, modelos y MLflow quedan fuera de Git.</text>
+</g></svg>
