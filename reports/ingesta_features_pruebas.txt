@@ -1,0 +1,15 @@
+test_invalid_rows_and_personal_columns (test_data_features.TestIngestion.test_invalid_rows_and_personal_columns) ... ok
+test_iso_does_not_swap_month_and_day (test_data_features.TestIngestion.test_iso_does_not_swap_month_and_day) ... ok
+test_repeatable_manifest_and_corruption_detection (test_data_features.TestIngestion.test_repeatable_manifest_and_corruption_detection) ... ok
+test_source_version_ignores_windows_line_endings (test_data_features.TestIngestion.test_source_version_ignores_windows_line_endings) ... ok
+test_arrivals_are_not_available_before_trip_end (test_data_features.TestTemporalFeatures.test_arrivals_are_not_available_before_trip_end) ... ok
+test_future_departures_cannot_change_current_predictors (test_data_features.TestTemporalFeatures.test_future_departures_cannot_change_current_predictors) ... ok
+test_lags_do_not_cross_stations (test_data_features.TestTemporalFeatures.test_lags_do_not_cross_stations) ... ok
+test_station_profiles_ignore_future_and_normalize (test_data_features.TestTemporalFeatures.test_station_profiles_ignore_future_and_normalize) ... ok
+test_temporal_boundaries_and_crossing_horizons (test_data_features.TestTemporalFeatures.test_temporal_boundaries_and_crossing_horizons) ... ok
+test_virtual_inventory_clips_each_event_and_excludes_boundary (test_data_features.TestTemporalFeatures.test_virtual_inventory_clips_each_event_and_excludes_boundary) ... ok
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.099s
+
+OK

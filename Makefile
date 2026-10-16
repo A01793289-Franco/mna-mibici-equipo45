@@ -57,6 +57,16 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## Download, normalize and version MiBici data
+.PHONY: data
+data:
+	$(PYTHON_INTERPRETER) -m mibici.dataset
+
+## Build reproducible hourly variables and station profiles
+.PHONY: features
+features:
+	$(PYTHON_INTERPRETER) -m mibici.features
+
 
 
 #################################################################################

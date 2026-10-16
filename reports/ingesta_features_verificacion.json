@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-10-16T21:24:04.662782+00:00",
+  "python": "3.13.15",
+  "complete_rebuilds": 2,
+  "identical_data_manifest": true,
+  "identical_feature_manifest": true,
+  "data_version": "17e91a04faef0f3d3d9b823d026f72160b218e24fb333ff1fbb3edecfda74197",
+  "feature_version": "e1af5e180b47b7bba7206e7620894a7ac3a2508ea736c959716e063e89fc12ea",
+  "raw_and_parquet_hashes_verified": true,
+  "synthetic_tests_passed": 10,
+  "p3_profiles_normalized": true,
+  "predictors_without_missing_values": true,
+  "data_summary": {
+    "months": 9,
+    "raw_rows": 3362065,
+    "clean_trips": 3358273,
+    "observed_stations": 471,
+    "catalog_stations": 480,
+    "stations_outside_catalog": [
+      405,
+      407
+    ]
+  },
+  "feature_rows": {
+    "p1": 2556542,
+    "p2": 2551458,
+    "p3_train": 397,
+    "p3_val": 468,
+    "p3_test": 468
+  },
+  "split_counts": {
+    "p1": {
+      "train": 1552105,
+      "val": 665747,
+      "test": 338690
+    },
+    "p2": {
+      "train": 1551437,
+      "val": 662771,
+      "test": 337250
+    }
+  }
+}

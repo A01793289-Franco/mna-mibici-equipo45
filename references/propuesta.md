@@ -1,6 +1,6 @@
 # Propuesta de solución | Equipo 45
 
-Este documento precisa el Canvas inicial. Es un diseño pendiente de implementar y evaluar; no contiene resultados de ingesta ni de entrenamiento.
+Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; los baselines siguen pendientes de entrenamiento y evaluación. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
 
 ## 1. Problemas y decisiones
 
@@ -19,7 +19,7 @@ P1 y P2 se recalcularían cada hora. P3 se construye con entrenamiento, se contr
 - **Fuente:** [portal de MiBici](https://www.mibici.net/es/datos-abiertos/). Se proponen nueve meses completos, enero-septiembre de 2026, para incluir variaciones semanales y mensuales. No representan un ciclo anual completo.
 - **Archivos:** CSV `datos_abiertos_AAAA_MM.csv` y catálogo de septiembre. Enlaces publicados: [enero](https://www.mibici.net/site/assets/files/120163/datos_abiertos_2026_01.csv), [septiembre](https://www.mibici.net/site/assets/files/131825/datos_abiertos_2026_09.csv) y [catálogo](https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv). La ingesta resolverá los nueve enlaces desde el portal y conservará las URL.
 - **Variables originales:** ID del viaje para deduplicación, inicio, fin, origen y destino; del catálogo, ID, nombre, capacidad, latitud y longitud. Los nombres originales y tipos deben verificarse al descargar.
-- **Tamaño real:** pendiente de medir. Se registrarán meses, filas originales/limpias por archivo, viajes válidos, estaciones observadas y del catálogo, y descartes. No se usarán los contadores globales del portal como tamaño del proyecto.
+- **Tamaño real:** nueve meses, 3,362,065 registros originales y 3,358,273 viajes válidos; 471 IDs observados y 480 estaciones en el catálogo. Descartes: 3,034 registros inválidos y 758 duplicados. El [manifiesto](data_manifest.json) conserva cifras por archivo y hashes. No son contadores globales del portal.
 - **Privacidad:** excluir identificadores de usuarios, edad, género y otros atributos personales de las tablas de modelado. El ID del viaje es un control local de calidad, no un predictor. Artefactos y mapas mostrarán agregados por estación/hora.
 - **Condiciones de uso:** el portal permite descargar CSV; antes de entregar se debe registrar el texto o enlace de las condiciones aplicables y fecha de consulta. La descarga abierta no se interpreta como una licencia específica ni como permiso para redistribuir información personal. MIT cubre el código del repositorio.
 
