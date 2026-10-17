@@ -5,6 +5,7 @@ scikit-learn==1.9.1
 matplotlib==3.11.2
 mlflow==3.16.1
 python-dotenv==1.2.4
+requests==2.34.2
 black==26.10.1
 flake8==7.4.1
 isort==9.0.2

@@ -21,6 +21,20 @@ SEED = 42
 TIMEZONE = "America/Mexico_City"
 DATA_PORTAL_URL = "https://www.mibici.net/es/datos-abiertos/"
 STATIONS_URL = "https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv"
+REQUEST_HEADERS = {"User-Agent": "MiBiciEquipo45/1.0", "Accept": "text/html,text/csv,*/*"}
+DOWNLOAD_TIMEOUT = (15, 120)
+CHUNK_ROWS = 100_000
+DATA_SCHEMA_VERSION = "1"
+TRIPS_DIR = INTERIM_DIR / "trips"
+STATIONS_FILE = INTERIM_DIR / "stations.parquet"
+FEATURE_MANIFEST_PATH = REFERENCES_DIR / "feature_manifest.json"
+FEATURE_FILES = {
+    "p1": PROCESSED_DIR / "p1_hourly.parquet",
+    "p2": PROCESSED_DIR / "p2_hourly.parquet",
+    "p3_train": PROCESSED_DIR / "p3_train.parquet",
+    "p3_val": PROCESSED_DIR / "p3_val.parquet",
+    "p3_test": PROCESSED_DIR / "p3_test.parquet",
+}
 
 START_DATE = date(2026, 1, 1)
 TRAIN_END = date(2026, 7, 1)
@@ -42,6 +56,27 @@ P2_INITIAL_OCCUPANCY_CHECKS = (0.25, 0.5, 0.75)
 N_CLUSTERS = 3
 KMEANS_N_INIT = 10
 PROFILE_HOURS = 24
+MIN_PROFILE_DAYS = 14
+P3_FEATURE_COLUMNS = tuple(
+    f"{kind}_{hour:02d}" for kind in ("weekday", "weekend") for hour in range(PROFILE_HOURS)
+)
+CALENDAR_FEATURES = ("hour", "weekday", "is_weekend", "month")
+P1_FEATURE_COLUMNS = (
+    *CALENDAR_FEATURES,
+    *(f"departures_lag_{lag}" for lag in LAGS_HOURS),
+    *(f"departures_mean_{window}" for window in ROLLING_HOURS),
+)
+NET_FLOW_LAGS_HOURS = (1, 24)
+P2_FEATURE_COLUMNS = (
+    *P1_FEATURE_COLUMNS,
+    "virtual_occupancy",
+    *(f"net_flow_lag_{lag}" for lag in NET_FLOW_LAGS_HOURS),
+)
+
+
+def data_path(path, data_dir=DATA_DIR):
+    """Resuelve una ruta de datos centralizada para un directorio local alternativo."""
+    return Path(data_dir) / Path(path).relative_to(DATA_DIR)
 
 
 def create_directories():

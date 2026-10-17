@@ -2,7 +2,7 @@
 
 ![Componentes y flujo](arquitectura.svg)
 
-El diagrama describe el sistema que se implementará. Actualmente existen la configuración y la documentación del diseño.
+El diagrama describe el sistema del proyecto. Configuración, ingesta y variables están implementadas; entrenamiento y seguimiento de baselines siguen pendientes. La evidencia de ejecución está en [ingesta_features.md](ingesta_features.md).
 
 | Componente | Herramienta y función | Justificación |
 |---|---|---|
