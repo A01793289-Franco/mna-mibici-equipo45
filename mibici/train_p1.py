@@ -45,6 +45,26 @@ def wape(y_true, y_pred):
     return (y_true - y_pred).abs().sum() / denominator
 
 
+def wape(y_true, y_pred):
+    """Weighted Absolute Percentage Error."""
+    denominator = y_true.abs().sum()
+
+    if denominator == 0:
+        return float("nan")
+
+    return (y_true - y_pred).abs().sum() / denominator
+
+
+def evaluate_model(y_true, y_pred):
+    """Calcula métricas de evaluación."""
+    mae = mean_absolute_error(y_true, y_pred)
+    rmse = root_mean_squared_error(y_true, y_pred)
+    r2 = r2_score(y_true, y_pred)
+    wape_score = wape(y_true, y_pred)
+
+    return mae, rmse, r2, wape_score
+
+
 def main():
     """Ejecuta entrenamiento y evaluación inicial del modelo P1."""
 
@@ -62,6 +82,14 @@ def main():
     X_val = val[FEATURES]
     y_val = val[TARGET]
 
+    # Baseline: misma estación y misma hora de la semana anterior.
+    baseline_preds = val["departures_lag_168"]
+
+    baseline_mae, baseline_rmse, baseline_r2, baseline_wape = evaluate_model(
+        y_val,
+        baseline_preds,
+    )
+
     # Modelo candidato definido en la propuesta
     model = HistGradientBoostingRegressor(
         loss="poisson",
@@ -75,17 +103,26 @@ def main():
     preds = model.predict(X_val)
 
     # Métricas de evaluación
-    mae = mean_absolute_error(y_val, preds)
-    rmse = root_mean_squared_error(y_val, preds)
-    r2 = r2_score(y_val, preds)
-    wape_score = wape(y_val, preds)
+    preds = model.predict(X_val)
 
-    print("\nResultados de validación")
+    model_mae, model_rmse, model_r2, model_wape = evaluate_model(
+        y_val,
+        preds,
+    )
+
+    print("\nBaseline semanal")
     print("-" * 30)
-    print(f"MAE:  {mae:.4f}")
-    print(f"RMSE: {rmse:.4f}")
-    print(f"R²:   {r2:.4f}")
-    print(f"WAPE: {wape_score:.4f}")
+    print(f"MAE:  {baseline_mae:.4f}")
+    print(f"RMSE: {baseline_rmse:.4f}")
+    print(f"R²:   {baseline_r2:.4f}")
+    print(f"WAPE: {baseline_wape:.4f}")
+
+    print("\nHistGradientBoostingRegressor")
+    print("-" * 30)
+    print(f"MAE:  {model_mae:.4f}")
+    print(f"RMSE: {model_rmse:.4f}")
+    print(f"R²:   {model_r2:.4f}")
+    print(f"WAPE: {model_wape:.4f}")
 
 
 if __name__ == "__main__":
