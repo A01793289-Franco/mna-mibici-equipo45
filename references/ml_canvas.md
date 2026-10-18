@@ -1,6 +1,6 @@
 # Machine Learning Canvas | Equipo 45
 
-Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los baselines siguen pendientes de ejecución.
+Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los seis runs fueron ejecutados; el monitoreo operativo es una fase posterior.
 
 ## Decisión
 
@@ -32,15 +32,15 @@ CSV mensuales de viajes: enero-septiembre de 2026. Catálogo: nomenclatura_2026_
 
 Inicio y fin, estaciones e ID del viaje para deduplicar; capacidad y coordenadas del catálogo.
 
-Sin atributos personales. Tamaño real y condiciones aplicables: pendientes de registrar.
+3,358,273 viajes válidos; 471 IDs observados. Sin atributos personales. Licencia específica de los CSV no identificada.
 
 ## Recolección de datos
 
-Ingesta reproducible propuesta: descarga, normalización de columnas y fechas, revisión de duplicados y registros inválidos.
+Ingesta ejecutada: descarga, normalización de columnas y fechas; revisión de duplicados y registros inválidos.
 
 CSV crudo local y Parquet mensual. Manifiesto en Git con URL, SHA-256 y conteos.
 
-Implementación pendiente.
+Enero-septiembre 2026: nueve meses verificados.
 
 ## Predicciones
 
@@ -48,11 +48,11 @@ Implementación pendiente.
 
 **Proxy P2:** iniciar al 50% de capacidad; acumular llegadas finalizadas menos salidas y recortar entre cero y capacidad.
 
-Umbrales: 10% y 90%. Revisar sensibilidad del inicio: 25%, 50% y 75%.
+Umbrales: 10% y 90%. Sensibilidad 25%/75% propuesta; no ejecutada.
 
 **P3:** análisis por lotes con actualización mensual propuesta.
 
-Baselines pendientes de ejecución.
+Seis runs reales en MLflow. P1-P2 evaluados una vez en septiembre.
 
 ## Evaluación Offline
 
@@ -90,6 +90,6 @@ Detalle de modelos, métricas y supuestos en propuesta.md.
 
 Comparar predicciones y observaciones por estación. Vigilar deriva, nuevas estaciones, cambios de capacidad y calidad de datos.
 
-P2 necesita validación con inventarios y rebalanceos reales. MLflow ligará pregunta, versión de datos, commit y evidencia. Es una fase posterior.
+P2 necesita validación con inventarios y rebalanceos reales. MLflow liga pregunta, versiones y commit. Monitoreo operativo: fase posterior.
 
 Las fórmulas, los supuestos, las métricas y las referencias están en [propuesta.md](propuesta.md). Estructura conceptual: [Machine Learning Canvas, Louis Dorard](https://www.louisdorard.com/machine-learning-canvas/).

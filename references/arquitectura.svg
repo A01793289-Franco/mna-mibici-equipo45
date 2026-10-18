@@ -1,11 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
 <title>Arquitectura propuesta MiBici - Equipo 45</title>
-<desc>Fuente MiBici, ingesta, almacenamiento, variables, entrenamiento y MLflow. Git registra código y manifiesto. Ingesta y variables implementadas; baselines pendientes.</desc>
+<desc>Fuente MiBici, ingesta, almacenamiento, variables, entrenamiento y MLflow. Git registra código y manifiesto. Ingesta, variables y seis corridas implementadas; monitoreo operativo futuro.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52798e"/></marker></defs>
 <rect width="1280" height="800" fill="#ffffff"/>
 <g font-family="DejaVu Sans, Arial, sans-serif" fill="#20323e">
 <text x="40" y="45" font-size="28" font-weight="bold" fill="#164c69">Arquitectura propuesta | MiBici - Equipo 45</text>
-<text x="40" y="77" font-size="17">Ingesta y variables implementadas; entrenamiento y registro de baselines pendientes.</text>
+<text x="40" y="77" font-size="17">Ingesta, variables y seis corridas reales de P1, P2 y P3 con registro en MLflow.</text>
 <rect x="40" y="120" width="360" height="166" rx="12" fill="#f0f6f9" stroke="#c4d7e1"/>
 <text x="58" y="156" font-size="21" font-weight="bold" fill="#164c69">1. Fuentes</text>
 <text x="58" y="193" font-size="16">Portal MiBici: viajes mensuales</text>
@@ -45,5 +45,5 @@
 </g><rect x="40" y="650" width="1200" height="100" rx="12" fill="#164c69"/>
 <g font-family="DejaVu Sans, Arial, sans-serif" fill="#ffffff">
 <text x="60" y="685" font-size="21" font-weight="bold">Git/GitHub: código, propuesta y manifiesto versionados mediante Pull Requests</text>
-<text x="60" y="720" font-size="17">Cada run vinculará equipo, pregunta, commit y versión de datos. Datos, modelos y MLflow quedan fuera de Git.</text>
+<text x="60" y="720" font-size="17">Cada run vincula equipo, pregunta, commit y versiones de datos y variables. Datos, modelos y MLflow quedan fuera de Git.</text>
 </g></svg>

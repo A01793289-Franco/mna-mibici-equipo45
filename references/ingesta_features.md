@@ -66,7 +66,7 @@ Para sensibilidad, `python -m mibici.features --initial-occupancy 0.25` reconstr
 
 [feature_manifest.json](feature_manifest.json) liga la versión de origen, el código, columnas predictoras, filas por conjunto, clases, exclusiones y hashes de las tablas. [La verificación de reproducción](../reports/ingesta_features_verificacion.json) documenta dos ejecuciones y las comprobaciones automáticas.
 
-Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. Quedan pendientes entrenamiento, evaluación y registro de baselines reales en MLflow, notebook exploratorio y capturas de la interfaz. Las condiciones de uso del portal todavía deben documentarse en la entrega final.
+Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. El entrenamiento y la evaluación ya se ejecutaron con seis runs reales en MLflow. El notebook exploratorio está ejecutado, las capturas están en reports/figures/ y los resultados en reports/resultados_mlflow.md. Las condiciones publicadas del portal se documentan en references/condiciones_datos.md.
 
 ## Documentación de módulos y funciones
 

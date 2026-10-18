@@ -1,6 +1,6 @@
 # Propuesta de solución | Equipo 45
 
-Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo de evaluación se fija antes de ejecutar la prueba final. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
+Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo quedó confirmado en Git antes de ejecutar una sola vez la prueba final de P1-P2. Las seis corridas finalizaron correctamente; P3 se evaluó con entrenamiento y validación. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
 
 ## 1. Problemas y decisiones
 
@@ -16,7 +16,7 @@ P1 y P2 se recalcularían cada hora. P3 se construye con entrenamiento, se contr
 
 ## 2. Datos propuestos
 
-- **Fuente:** [portal de MiBici](https://www.mibici.net/es/datos-abiertos/). Se proponen nueve meses completos, enero-septiembre de 2026, para incluir variaciones semanales y mensuales. No representan un ciclo anual completo.
+- **Fuente:** [portal de MiBici](https://www.mibici.net/es/datos-abiertos/). Se utilizaron nueve meses completos, enero-septiembre de 2026, para incluir variaciones semanales y mensuales. No representan un ciclo anual completo.
 - **Archivos:** CSV `datos_abiertos_AAAA_MM.csv` y catálogo de septiembre. Enlaces publicados: [enero](https://www.mibici.net/site/assets/files/120163/datos_abiertos_2026_01.csv), [septiembre](https://www.mibici.net/site/assets/files/131825/datos_abiertos_2026_09.csv) y [catálogo](https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv). La ingesta resolvió los nueve enlaces desde el portal y conserva las URL en el manifiesto.
 - **Variables originales:** ID del viaje para deduplicación, inicio, fin, origen y destino; del catálogo, ID, nombre, capacidad, latitud y longitud. Los tipos y alias se verifican al descargar; el notebook documenta el esquema limpio.
 - **Tamaño real:** nueve meses, 3,362,065 registros originales y 3,358,273 viajes válidos; 471 IDs observados y 480 estaciones en el catálogo. Descartes: 3,034 registros inválidos y 758 duplicados. El [manifiesto](data_manifest.json) conserva cifras por archivo y hashes. No son contadores globales del portal.
@@ -30,7 +30,7 @@ Las fechas y parámetros se centralizan en `mibici/config.py`.
 | Conjunto | Periodo | Propósito |
 |---|---|---|
 | Entrenamiento | Enero-junio de 2026 | Ajustar transformaciones y modelos. |
-| Validación | Julio-agosto de 2026 | Elegir parámetros y revisar sensibilidad. |
+| Validación | Julio-agosto de 2026 | Comparar las configuraciones fijadas; sensibilidad pendiente. |
 | Prueba | Septiembre de 2026 | Una evaluación final tras fijar decisiones. |
 
 Los intervalos incluyen inicio y excluyen fin. Se descartan filas cuyo horizonte cruza un corte y el inicio sin historia suficiente. No se mezclan filas aleatoriamente. Imputación, escalado y parámetros se ajustan solo con entrenamiento. Los rezagos y medias excluyen la hora objetivo.
@@ -47,7 +47,7 @@ No hay inventarios publicados. Se define una **ocupación virtual**, cuya etique
 2. Ordenar eventos: salida al comenzar un viaje y llegada al terminarlo. Agregar eventos simultáneos y actualizar `q = clip(q + llegadas - salidas, 0, C)`.
 3. Al predecir en `t`, usar solamente el estado construido con eventos anteriores a `t`. Mantenerlo entre meses y particiones, sin reinicios informados por resultados futuros.
 4. Etiquetar el estado al cierre de la siguiente hora: riesgo sin bicicletas si `q/C <= 0.10`; riesgo sin anclajes si `q/C >= 0.90`; normal en otro caso.
-5. Revisar sensibilidad en validación con ocupación inicial de 25%, 50% y 75%, manteniendo umbrales fijos.
+5. Como mejora futura, revisar sensibilidad en validación con ocupación inicial de 25%, 50% y 75%, manteniendo umbrales fijos. Esta entrega ejecutó únicamente 50%; no se presenta la sensibilidad como realizada.
 
 El margen de 10% es una hipótesis para anticipar desbalances, no un umbral validado por el operador. Se mide el cierre de la hora; podría omitirse un desbalance transitorio.
 
@@ -87,7 +87,17 @@ Normalizar evita que el volumen total domine la forma del patrón. Las coordenad
 
 El [diagrama](arquitectura.svg) y su [justificación](arquitectura.md) separan fuentes, ingesta, almacenamiento, variables, entrenamiento y seguimiento. Se propone Parquet mensual, manifiesto SHA-256 y MLflow local con SQLite.
 
-Los runs registrarán equipo, P1/P2/P3 y commit; rango/cortes, versión del manifiesto, semilla y parámetros; métricas con prefijo y artefactos. Nombres propuestos: `P1_estacional_h1`, `P2_logistica_proxy_h1`, `P3_kmeans_perfil48`. Se compararán además dos configuraciones de una misma pregunta, sin contrastar directamente métricas de tareas diferentes.
+Los seis runs registran equipo, P1/P2/P3 y commit; rango/cortes, versiones de datos y variables, semilla e hiperparámetros; métricas con prefijo y artefactos. Se ejecutaron baseline y candidato para cada pregunta. La comparación se hace dentro de cada tarea. Las capturas muestran lista, detalle, artefacto y comparación.
+
+## 7. Resultados y alcance de la entrega
+
+El registro completo está en [resultados_mlflow.json](../reports/resultados_mlflow.json) y su [interpretación](../reports/resultados_mlflow.md). Código ejecutado: `43bf339792fef5d01326aa0ca0227fdd781675ff`, sin cambios pendientes durante las corridas.
+
+- **P1:** MAE en septiembre de 1.0264 (estacional) a 0.8719 (boosting); mejora aproximada de 15.1%. WAPE del candidato: 60.39%, no una exactitud de clasificación.
+- **P2:** F1 macro en septiembre de 0.8114 a 0.8574. El resultado corresponde al estado virtual, no a inventario observado. No autoriza rebalanceo automático.
+- **P3:** K-means supera a Ward en silhouette (0.1407 vs. 0.1232), Davies-Bouldin (1.9784 vs. 2.1388) y ARI entre entrenamiento/validación (0.5776 vs. 0.3116). La separación es baja y no demuestra tres tipos naturales bien definidos. No se calculó una evaluación de P3 sobre septiembre.
+
+El notebook exploratorio está ejecutado y contiene figuras incrustadas. El reporte final integra el Canvas original, arquitectura, resultados y capturas reales. Quedan como acciones humanas la revisión del nuevo PR, protección de `main`, ajuste de nombre del repositorio y evidencia individual de los cuatro integrantes. Las funciones propias se explican en Markdown por preferencia del autor; esto difiere del requisito literal de docstrings.
 
 ## Referencias
 
@@ -102,3 +112,9 @@ MLflow. (s. f.). *MLflow Tracking* [Documentación]. https://mlflow.org/docs/lat
 Scikit-learn developers. (s. f.). *Metrics and scoring: Quantifying the quality of predictions*. https://scikit-learn.org/stable/modules/model_evaluation.html
 
 Treveil, M., Omont, N., Stenac, C., Lefevre, K., Phan, D., Zentici, J., Lavoillotte, A., Miyazaki, M., & Heidmann, L. (2020). *Introducing MLOps: How to scale machine learning in the enterprise*. O'Reilly Media.
+
+Dorard, L. (2016, 18 de noviembre). *From data to AI with the Machine Learning Canvas (Part I)*. Own Machine Learning. https://medium.com/louis-dorard/from-data-to-ai-with-the-machine-learning-canvas-part-i-d171b867b047
+
+MiBici. (s. f.). *Término y condiciones*. Recuperado el 18 de octubre de 2026, de https://www.mibici.net/es/termino-y-condiciones/
+
+MiBici. (s. f.). *Aviso de privacidad*. Recuperado el 18 de octubre de 2026, de https://www.mibici.net/es/aviso-de-privacidad/
