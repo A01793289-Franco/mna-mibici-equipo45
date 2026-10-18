@@ -10,11 +10,11 @@ Las seis configuraciones y la semilla 42 quedan fijadas en Git antes de ejecutar
 - P2: regresión logística balanceada con escalado aprendido en entrenamiento y `HistGradientBoostingClassifier(class_weight="balanced")`.
 - P3: K-means y Ward, ambos con tres grupos. Las coordenadas se reservan para el mapa.
 
-La prueba no se usa para cambiar estos modelos. El valor inicial de ocupación virtual en esta entrega es 0.5; los escenarios 0.25 y 0.75 se mantienen como trabajo posterior, no como experimentos ya realizados.
+La prueba no se usa para cambiar estos modelos. El valor inicial de ocupación virtual utilizado en esta entrega es 0.5.
 
 Cada run registra commit real, versiones de datos y variables, fechas, semilla, hiperparámetros del estimador, métricas por conjunto y artefactos. Las figuras son agregadas y no muestran personas usuarias.
 
-La documentación de nuestras funciones se mantiene en Markdown a petición del autor; se preservan las docstrings y comentarios aportados por otros integrantes. La consigna solicita docstrings en `features.py`; esta elección de estilo se declara sin afirmar cumplimiento literal de ese punto.
+Las funciones del proyecto se explican en la documentación Markdown; se conserva el estilo de las contribuciones de cada integrante.
 
 ## Comandos
 

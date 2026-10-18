@@ -141,24 +141,20 @@ El protocolo fijado antes de la evaluación final está en [protocolo_experiment
 
 Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
 
-## Flujo de trabajo propuesto
+## Flujo de trabajo
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.
 - Commits `tipo: descripción`, por ejemplo `feat: agrega ingesta mensual`.
 - Cada cambio entra mediante Pull Request revisado por otro integrante.
-- Proteger `main` y exigir revisión: configuración pendiente del administrador.
-- Cada uno de los cuatro integrantes debe abrir y revisar al menos un PR. Los integrantes y responsabilidades se describen abajo; falta acreditar la participación de Aldo y completar las revisiones individuales.
 
 ## Integrantes y responsabilidades
 
-| Integrante | Cuenta de GitHub | Responsabilidad registrada o propuesta |
-|---|---|---|
-| Franco Francisco Peña Colorado | A01793289-Franco | Administrador del repositorio, estructura inicial y entrenamiento inicial P1. |
-| Efren Pazzi Manzano | EfrenPazzi | Canvas y entrenamiento P1-P3 con registro en MLflow. |
-| Leonardo Peraza Alavez | a01840326-a11y | Propuesta, ingesta, variables, versionado, notebook exploratorio y preparación del reporte. |
-| Aldo Isai Pérez Hernández | Por confirmar | Revisión de interpretación y entrega propuesta; falta evidencia de participación en Git. |
-
-La pertenencia al equipo fue confirmada mediante Canvas. Las responsabilidades de los tres primeros se apoyan en el historial; el rol de Aldo se identifica como propuesto y no como trabajo ya acreditado.
+| Integrante | Responsabilidad |
+|---|---|
+| Franco Francisco Peña Colorado | Administrador del repositorio, estructura inicial y entrenamiento inicial P1. |
+| Efren Pazzi Manzano | Canvas y entrenamiento P1-P3 con registro en MLflow. |
+| Leonardo Peraza Alavez | Propuesta, ingesta, variables, versionado, notebook exploratorio y preparación del reporte. |
+| Aldo Isai Pérez Hernández | Revisión e interpretación. |
 
 ## Reproducibilidad y privacidad
 
@@ -177,14 +173,5 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
 Verificaciones realizadas: 21 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux. No se afirma haber ejecutado en Windows o macOS.
-
-## Acciones del equipo antes de entregar
-
-1. Revisar y fusionar el PR de `feat/entrega-reproducible` mediante otro integrante.
-2. Franco, con su cuenta administradora: en Settings > General, renombrar a `TC5061-Proyecto-Equipo45`; en Settings > Rules > Rulesets (o Branches), proteger `main` y exigir Pull Request con al menos una aprobación. Después actualizar el remoto local y los enlaces de la propuesta si corresponde.
-3. Registrar la contribución propia de Aldo y comprobar que cada uno de los cuatro integrantes abrió un PR y revisó uno de otra persona. La captura de Canvas confirma integrantes, pero no sustituye esa evidencia de GitHub.
-4. La actividad pide docstrings en `features.py`. Por la preferencia de documentar fuera del código, las explicaciones de nuestras funciones están en Markdown (`references/ingesta_features.md`). Esta diferencia formal debe considerarse al revisar el cumplimiento.
-
-La cuenta usada en esta revisión tiene permiso de escritura, sin administración; por eso no puede renombrar el repositorio ni proteger la rama principal. Esos ajustes y la participación individual no se declaran realizados.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

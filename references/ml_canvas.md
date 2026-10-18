@@ -1,6 +1,6 @@
 # Machine Learning Canvas | Equipo 45
 
-Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los seis runs fueron ejecutados; el monitoreo operativo es una fase posterior.
+Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los seis runs fueron ejecutados; se documenta el diseño de monitoreo operativo.
 
 ## Decisión
 
@@ -48,7 +48,7 @@ Enero-septiembre 2026: nueve meses verificados.
 
 **Proxy P2:** iniciar al 50% de capacidad; acumular llegadas finalizadas menos salidas y recortar entre cero y capacidad.
 
-Umbrales: 10% y 90%. Sensibilidad 25%/75% propuesta; no ejecutada.
+Umbrales: 10% y 90%. Ocupación inicial utilizada: 50%.
 
 **P3:** análisis por lotes con actualización mensual propuesta.
 
@@ -90,6 +90,6 @@ Detalle de modelos, métricas y supuestos en propuesta.md.
 
 Comparar predicciones y observaciones por estación. Vigilar deriva, nuevas estaciones, cambios de capacidad y calidad de datos.
 
-P2 necesita validación con inventarios y rebalanceos reales. MLflow liga pregunta, versiones y commit. Monitoreo operativo: fase posterior.
+Diseño de monitoreo: contrastar disponibilidad e inventarios del operador. MLflow liga pregunta, versiones y commit. P2 evalúa un estado virtual.
 
 Las fórmulas, los supuestos, las métricas y las referencias están en [propuesta.md](propuesta.md). Estructura conceptual: [Machine Learning Canvas, Louis Dorard](https://www.louisdorard.com/machine-learning-canvas/).

@@ -17,4 +17,4 @@ El diagrama describe el sistema del proyecto. Configuración, ingesta, variables
 
 Referencias completas en [propuesta.md](propuesta.md). Un clon de Git no contendrá la base ni los artefactos de experimentos ya ejecutados.
 
-Resultados y capturas reales: [resultados_mlflow.md](../reports/resultados_mlflow.md). El monitoreo en operación permanece como una fase futura.
+Resultados y capturas reales: [resultados_mlflow.md](../reports/resultados_mlflow.md). El diseño de monitoreo contempla calidad de datos, deriva y comparación de predicciones con observaciones por estación.

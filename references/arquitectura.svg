@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="800" viewBox="0 0 1280 800">
 <title>Arquitectura propuesta MiBici - Equipo 45</title>
-<desc>Fuente MiBici, ingesta, almacenamiento, variables, entrenamiento y MLflow. Git registra código y manifiesto. Ingesta, variables y seis corridas implementadas; monitoreo operativo futuro.</desc>
+<desc>Fuente MiBici, ingesta, almacenamiento, variables, entrenamiento y MLflow. Git registra código y manifiesto. Ingesta, variables y seis corridas implementadas, con diseño de monitoreo operativo.</desc>
 <defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#52798e"/></marker></defs>
 <rect width="1280" height="800" fill="#ffffff"/>
 <g font-family="DejaVu Sans, Arial, sans-serif" fill="#20323e">

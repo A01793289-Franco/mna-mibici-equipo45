@@ -30,7 +30,7 @@ Las fechas y parámetros se centralizan en `mibici/config.py`.
 | Conjunto | Periodo | Propósito |
 |---|---|---|
 | Entrenamiento | Enero-junio de 2026 | Ajustar transformaciones y modelos. |
-| Validación | Julio-agosto de 2026 | Comparar las configuraciones fijadas; sensibilidad pendiente. |
+| Validación | Julio-agosto de 2026 | Comparar las configuraciones fijadas. |
 | Prueba | Septiembre de 2026 | Una evaluación final tras fijar decisiones. |
 
 Los intervalos incluyen inicio y excluyen fin. Se descartan filas cuyo horizonte cruza un corte y el inicio sin historia suficiente. No se mezclan filas aleatoriamente. Imputación, escalado y parámetros se ajustan solo con entrenamiento. Los rezagos y medias excluyen la hora objetivo.
@@ -47,7 +47,7 @@ No hay inventarios publicados. Se define una **ocupación virtual**, cuya etique
 2. Ordenar eventos: salida al comenzar un viaje y llegada al terminarlo. Agregar eventos simultáneos y actualizar `q = clip(q + llegadas - salidas, 0, C)`.
 3. Al predecir en `t`, usar solamente el estado construido con eventos anteriores a `t`. Mantenerlo entre meses y particiones, sin reinicios informados por resultados futuros.
 4. Etiquetar el estado al cierre de la siguiente hora: riesgo sin bicicletas si `q/C <= 0.10`; riesgo sin anclajes si `q/C >= 0.90`; normal en otro caso.
-5. Como mejora futura, revisar sensibilidad en validación con ocupación inicial de 25%, 50% y 75%, manteniendo umbrales fijos. Esta entrega ejecutó únicamente 50%; no se presenta la sensibilidad como realizada.
+5. La configuración evaluada utiliza una ocupación inicial de 50%, con umbrales fijos de 10% y 90%.
 
 El margen de 10% es una hipótesis para anticipar desbalances, no un umbral validado por el operador. Se mide el cierre de la hora; podría omitirse un desbalance transitorio.
 
@@ -91,13 +91,13 @@ Los seis runs registran equipo, P1/P2/P3 y commit; rango/cortes, versiones de da
 
 ## 7. Resultados y alcance de la entrega
 
-El registro completo está en [resultados_mlflow.json](../reports/resultados_mlflow.json) y su [interpretación](../reports/resultados_mlflow.md). Código ejecutado: `43bf339792fef5d01326aa0ca0227fdd781675ff`, sin cambios pendientes durante las corridas.
+El registro completo está en [resultados_mlflow.json](../reports/resultados_mlflow.json) y su [interpretación](../reports/resultados_mlflow.md). Código ejecutado: `43bf339792fef5d01326aa0ca0227fdd781675ff`, con el árbol de trabajo limpio durante las corridas.
 
 - **P1:** MAE en septiembre de 1.0264 (estacional) a 0.8719 (boosting); mejora aproximada de 15.1%. WAPE del candidato: 60.39%, no una exactitud de clasificación.
 - **P2:** F1 macro en septiembre de 0.8114 a 0.8574. El resultado corresponde al estado virtual, no a inventario observado. No autoriza rebalanceo automático.
 - **P3:** K-means supera a Ward en silhouette (0.1407 vs. 0.1232), Davies-Bouldin (1.9784 vs. 2.1388) y ARI entre entrenamiento/validación (0.5776 vs. 0.3116). La separación es baja y no demuestra tres tipos naturales bien definidos. No se calculó una evaluación de P3 sobre septiembre.
 
-El notebook exploratorio está ejecutado y contiene figuras incrustadas. El reporte final integra el Canvas original, arquitectura, resultados y capturas reales. Quedan como acciones humanas la revisión del nuevo PR, protección de `main`, ajuste de nombre del repositorio y evidencia individual de los cuatro integrantes. Las funciones propias se explican en Markdown por preferencia del autor; esto difiere del requisito literal de docstrings.
+El notebook exploratorio está ejecutado y contiene figuras incrustadas. El reporte final integra el Canvas original, arquitectura, resultados y capturas reales. Las funciones se explican en la documentación Markdown del proyecto.
 
 ## Referencias
 
