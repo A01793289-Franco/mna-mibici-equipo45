@@ -14,7 +14,7 @@ La prueba no se usa para cambiar estos modelos. El valor inicial de ocupación v
 
 Cada run registra commit real, versiones de datos y variables, fechas, semilla, hiperparámetros del estimador, métricas por conjunto y artefactos. Las figuras son agregadas y no muestran personas usuarias.
 
-Las funciones del proyecto se explican en la documentación Markdown; se conserva el estilo de las contribuciones de cada integrante.
+Las funciones de `features.py` incluyen docstrings sobre su operación y su pertinencia para P1-P3. La documentación Markdown amplía los supuestos y las decisiones del proyecto.
 
 ## Comandos
 

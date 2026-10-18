@@ -141,6 +141,10 @@ El protocolo fijado antes de la evaluación final está en [protocolo_experiment
 
 Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
 
+Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
+
+Las seis corridas documentadas conservan el commit de ejecución y la versión de variables que registraron originalmente. La incorporación de docstrings actualizó el hash del módulo y la versión del manifiesto; la reconstrucción comprobó que los cinco Parquet siguen siendo idénticos. Esta [verificación](reports/documentacion_features_verificacion.json) permite distinguir una actualización documental de un cambio en las variables.
+
 ## Flujo de trabajo
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.

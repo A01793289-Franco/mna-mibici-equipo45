@@ -12,7 +12,7 @@ python -m mibici.features --verify
 python -m unittest discover -s tests -v
 ```
 
-Las explicaciones de nuestra contribución se mantienen en este documento Markdown. Se conservan los comentarios de la plantilla incorporados por otros integrantes.
+Cada función de `features.py` incluye una docstring que explica su operación, su utilidad para P1, P2 o P3 y los cuidados temporales pertinentes. Este documento Markdown amplía las decisiones y los comandos de ejecución. Se conservan los comentarios de la plantilla incorporados por otros integrantes.
 
 Los parámetros opcionales se consultan con `--help`. `--data-dir` permite usar otra carpeta local en ambos módulos. La ingesta admite `--start` y `--end` en formato `AAAA-MM-01`, con fin excluido; no acepta meses incompletos. Los cortes de entrenamiento/validación/prueba permanecen centralizados en `config.py`.
 
@@ -52,7 +52,7 @@ Las columnas predictoras autorizadas están en `P1_FEATURE_COLUMNS`, `P2_FEATURE
 
 P1 escribe `p1_hourly.parquet` con `target_departures`. P2 escribe `p2_hourly.parquet` con `target_risk`: 0 normal, 1 riesgo sin bicicletas, 2 riesgo sin anclajes. Ambos incluyen `split` y descartan la historia inicial incompleta. El inventario futuro se utiliza únicamente para construir la etiqueta, nunca como predictor.
 
-P3 escribe `p3_train.parquet`, `p3_val.parquet` y `p3_test.parquet`. Cada perfil se calcula solo en su ventana, excluye el primer día parcial y exige al menos 14 días completos, ambas clases de día y actividad no nula. Las coordenadas sirven para mapas, no son dimensiones de clustering. No se han entrenado agrupaciones con estas tablas.
+P3 escribe `p3_train.parquet`, `p3_val.parquet` y `p3_test.parquet`. Cada perfil se calcula solo en su ventana, excluye el primer día parcial y exige al menos 14 días completos, ambas clases de día y actividad no nula. Las coordenadas sirven para mapas, no son dimensiones de clustering. Los modelos de agrupación utilizan entrenamiento y validación, como se documenta en los resultados de MLflow.
 
 ## Supuestos y limitaciones
 
@@ -62,11 +62,17 @@ El catálogo posterior es estático. Las estaciones sin capacidad conocida se ex
 
 Para sensibilidad, `python -m mibici.features --initial-occupancy 0.25` reconstruye las salidas y el manifiesto con ese escenario; `0.75` permite el otro contraste. Estas opciones sobrescriben la versión local de variables. Para volver al escenario de la propuesta, ejecutar el comando sin argumentos. La ocupación inicial queda registrada en el manifiesto.
 
-## Evidencia y siguientes pasos
+## Evidencia de ejecución
 
 [feature_manifest.json](feature_manifest.json) liga la versión de origen, el código, columnas predictoras, filas por conjunto, clases, exclusiones y hashes de las tablas. [La verificación de reproducción](../reports/ingesta_features_verificacion.json) documenta dos ejecuciones y las comprobaciones automáticas.
 
 Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. El entrenamiento y la evaluación ya se ejecutaron con seis runs reales en MLflow. El notebook exploratorio está ejecutado, las capturas están en reports/figures/ y los resultados en reports/resultados_mlflow.md. Las condiciones publicadas del portal se documentan en references/condiciones_datos.md.
+
+### Trazabilidad de la documentación
+
+El hash de `features.py` incluye su documentación. Añadir docstrings actualiza `features_sha256` y `feature_version`, aunque las transformaciones sean las mismas. Se reconstruyeron las tablas y se verificó que los cinco Parquet conservan filas y SHA-256 idénticos. El [registro de verificación](../reports/documentacion_features_verificacion.json) relaciona ambas versiones.
+
+Los resultados históricos de MLflow siguen vinculados al commit `43bf339792fef5d01326aa0ca0227fdd781675ff` y a la versión que usaron. Esa revisión de Git conserva el código y los manifiestos correspondientes. El manifiesto actual identifica el módulo con docstrings; no reemplaza los metadatos de las corridas históricas.
 
 ## Documentación de módulos y funciones
 
