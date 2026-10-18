@@ -1,5 +1,3 @@
-"""Verificaciones de calidad, reproducción y disponibilidad temporal con datos sintéticos."""
-
 from contextlib import redirect_stdout
 from datetime import date
 import io

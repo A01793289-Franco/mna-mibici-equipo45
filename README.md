@@ -10,8 +10,10 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 
 ## Estado actual
 
-Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. Faltan la evidencia final (capturas), el notebook exploratorio y la evaluación única sobre septiembre.
+Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. El notebook exploratorio quedó ejecutado y las seis corridas finalizaron desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`. P1-P2 incluyen la evaluación única de septiembre; P3 compara entrenamiento y validación. Las capturas y el PDF están incluidos.
 
+- [PDF de la propuesta y evidencia](reports/TC5061_Propuesta_Proyecto_Equipo45.pdf).
+- [Resultados de las seis corridas](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros](reports/resultados_mlflow.json).
 - [ML Canvas editable](references/ml_canvas.md).
 - [ML Canvas en PDF](references/Machine%20Learning%20Canvas.pdf).
 - [Propuesta: datos, partición, pipelines, modelos y métricas](references/propuesta.md).
@@ -22,9 +24,9 @@ Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproduci
 
 ## Datos y configuración
 
-Fuente: [datos abiertos de MiBici](https://www.mibici.net/es/datos-abiertos/). Se proponen nueve meses completos, enero-septiembre de 2026, y el catálogo de septiembre.
+Fuente: [datos abiertos de MiBici](https://www.mibici.net/es/datos-abiertos/). Se utilizaron nueve meses completos, enero-septiembre de 2026, y el catálogo de septiembre.
 
-Entrenamiento: enero-junio; validación: julio-agosto; prueba: septiembre. Los intervalos incluyen inicio y excluyen fin. Las variables de cada hora solo podrán usar eventos anteriores al momento de predecir.
+Entrenamiento: enero-junio; validación: julio-agosto; prueba: septiembre. Los intervalos incluyen inicio y excluyen fin. Las variables de cada hora solo usan eventos anteriores al momento de predecir.
 
 La ingesta obtuvo **3,362,065 registros originales y 3,358,273 viajes válidos** en nueve meses: 3,034 registros inválidos y 758 duplicados descartados. Se observaron 471 IDs de estación; el catálogo contiene 480 estaciones válidas. Los IDs 405 y 407 no aparecen en él. Son cifras del rango descargado, no contadores globales del portal.
 
@@ -40,6 +42,8 @@ mibici/
   config.py
   dataset.py
   features.py
+  train.py
+  train_p1.py
 references/
   Machine Learning Canvas.pdf
   ml_canvas.md
@@ -47,11 +51,17 @@ references/
   arquitectura.md
   arquitectura.svg
   ingesta_features.md
+  condiciones_datos.md
+  protocolo_experimento.md
   data_manifest.json
   feature_manifest.json
-notebooks/
+notebooks/1.0-lpa-exploracion-mibici.ipynb
 models/
-reports/figures/
+reports/
+  TC5061_Propuesta_Proyecto_Equipo45.pdf
+  resultados_mlflow.json
+  resultados_mlflow.md
+  figures/
 tests/
 docs/
 requirements.txt
@@ -103,7 +113,7 @@ La información personal no se incluye en Parquet de modelado. Las tablas agrega
 Con los datos y las variables ya generados (sección anterior), desde la raíz y con el entorno activado:
 
 ```bash
-python -m mibici.train --question all      # P1, P2 y P3 (también: --question P1, P2 o P3)
+python -m mibici.train --question all
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 
@@ -127,26 +137,45 @@ Cada run registra:
 
 Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
 
-## Flujo de trabajo propuesto
+El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md). Para evaluar septiembre una sola vez con las configuraciones ya fijadas se añade `--final-test`.
+
+Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
+
+Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
+
+Las seis corridas documentadas conservan el commit de ejecución y la versión de variables que registraron originalmente. La incorporación de docstrings actualizó el hash del módulo y la versión del manifiesto; la reconstrucción comprobó que los cinco Parquet siguen siendo idénticos. Esta [verificación](reports/documentacion_features_verificacion.json) permite distinguir una actualización documental de un cambio en las variables.
+
+## Flujo de trabajo
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.
 - Commits `tipo: descripción`, por ejemplo `feat: agrega ingesta mensual`.
 - Cada cambio entra mediante Pull Request revisado por otro integrante.
-- Proteger `main` y exigir revisión: configuración pendiente del administrador.
-- Cada uno de los cuatro integrantes debe abrir y revisar al menos un PR. Nombres y roles quedan pendientes de confirmación del equipo.
+
+## Integrantes y responsabilidades
+
+| Integrante | Responsabilidad |
+|---|---|
+| Franco Francisco Peña Colorado | Administrador del repositorio, estructura inicial y entrenamiento inicial P1. |
+| Efren Pazzi Manzano | Canvas y entrenamiento P1-P3 con registro en MLflow. |
+| Leonardo Peraza Alavez | Propuesta, ingesta, variables, versionado, notebook exploratorio y preparación del reporte. |
+| Aldo Isai Pérez Hernández | Revisión e interpretación. |
 
 ## Reproducibilidad y privacidad
 
-Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos de datos. La versión de variables referencia la versión de ingesta. Cada futuro run deberá registrar esas versiones, commit, pregunta, fechas, semilla, modelo, parámetros, métricas con prefijo y al menos un artefacto.
+Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos de datos. La versión de variables referencia la versión de ingesta. Cada run registra esas versiones, commit, pregunta, fechas, semilla, modelo, parámetros, métricas con prefijo y al menos un artefacto.
 
-`.gitignore` excluye datos, modelos serializados, `mlruns`, `mlartifacts`, la base local de MLflow y archivos de entorno. MIT cubre el código; las condiciones de uso de los datos deberán documentarse como indica la propuesta.
+`.gitignore` excluye datos, modelos serializados, `mlruns`, `mlartifacts`, la base local de MLflow y archivos de entorno. MIT cubre el código; las condiciones publicadas de los datos y sus límites se documentan en [condiciones_datos.md](references/condiciones_datos.md).
 
-## Pendientes de la entrega completa
+## Evidencia y resultados obtenidos
 
-1. Ejecutar `python -m mibici.train --question all` con el código ya confirmado en Git y revisar los resultados.
-2. Crear el notebook exploratorio.
-3. Capturar lista, detalle, artefacto y comparación de runs en la interfaz de MLflow.
-4. Completar participación de cuatro integrantes, revisiones y protección de `main`.
-5. Documentar condiciones de uso de las fuentes, integrar el PDF final y ajustar el nombre del repositorio.
+| Pregunta | Baseline | Candidato | Interpretación |
+|---|---|---|---|
+| P1 | MAE de prueba: 1.0264 | MAE de prueba: 0.8719 | El candidato reduce el error absoluto alrededor de 15.1%; aún tiene WAPE de 60.39%. |
+| P2 | F1 macro de prueba: 0.8114 | F1 macro de prueba: 0.8574 | Mejora la concordancia con el proxy; no demuestra disponibilidad real. |
+| P3 | K-means: silhouette 0.1407, ARI 0.5776 | Ward: silhouette 0.1232, ARI 0.3116 | K-means resulta preferible, pero los perfiles se superponen. |
+
+Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
+
+Verificaciones realizadas: 21 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux. No se afirma haber ejecutado en Windows o macOS.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

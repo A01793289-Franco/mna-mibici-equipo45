@@ -1,4 +1,4 @@
-"""Construye tablas reproducibles para P1-P3 sin ajustar modelos ni usar futuro en predictores."""
+"""Construye variables de demanda P1, riesgo virtual P2 y perfiles de uso P3."""
 
 import argparse
 from datetime import datetime, timezone
@@ -14,7 +14,7 @@ from mibici.dataset import canonical_hash, sha256_file, source_hash, verify_mani
 
 
 def local_time(value):
-    """Convierte un límite de calendario a la zona horaria local de MiBici."""
+    """Convierte una fecha a la zona del proyecto para alinear los cortes de P1-P3."""
     value = pd.Timestamp(value)
     return (
         value.tz_localize(cfg.TIMEZONE) if value.tzinfo is None else value.tz_convert(cfg.TIMEZONE)
@@ -22,7 +22,11 @@ def local_time(value):
 
 
 def load_events(manifest, data_dir):
-    """Lee un mes a la vez y agrega eventos simultáneos; llegadas solo al finalizar el viaje."""
+    """Lee los Parquet del manifiesto y agrega salidas y llegadas por estación e instante.
+
+    Una llegada se cuenta al finalizar el viaje. Esta separación permite construir
+    demanda P1, flujos P2 y perfiles P3 sin anticipar el regreso de una bicicleta.
+    """
     parts = []
     for source in manifest["trips"]:
         trips = pd.read_parquet(Path(data_dir) / source["clean_path"])
@@ -52,7 +56,12 @@ def load_events(manifest, data_dir):
 
 
 def hourly_counts(events, start, end):
-    """P1-P3: completa horas tras la primera actividad, suponiendo operación continua posterior."""
+    """Agrega eventos por hora y completa ceros desde la primera actividad observada.
+
+    Devuelve salidas y llegadas por estación-hora para P1-P3. La cuadrícula regular
+    permite interpretar los rezagos en horas; supone operación continua desde el alta
+    observada y no demuestra que la estación estuviera siempre disponible.
+    """
     events = events.copy()
     events["timestamp"] = events.timestamp.dt.floor(cfg.FREQUENCY)
     counts = events.groupby(["station_id", "timestamp"])[["departures", "arrivals"]].sum()
@@ -70,7 +79,11 @@ def hourly_counts(events, start, end):
 
 
 def temporal_split(times, end=cfg.END_DATE_EXCLUSIVE):
-    """Asigna P1-P2 por tiempo y excluye horizontes que rebasan los límites del conjunto."""
+    """Asigna train, val, test o excluded con los cortes temporales de config.py.
+
+    Para P1-P2 exige que todo el horizonte objetivo quede dentro del conjunto.
+    Así evita usar una etiqueta que cruce hacia el siguiente periodo de evaluación.
+    """
     target_end = times + pd.Timedelta(hours=cfg.HORIZON_HOURS)
     train_end, validation_end = local_time(cfg.TRAIN_END), local_time(cfg.VALIDATION_END)
     return pd.Series(
@@ -89,7 +102,12 @@ def temporal_split(times, end=cfg.END_DATE_EXCLUSIVE):
 
 
 def p1_features(hourly, end=cfg.END_DATE_EXCLUSIVE):
-    """P1: calendario conocido, rezagos y medias desplazadas; objetivo separado de los predictores."""
+    """Construye calendario, rezagos y medias previas para pronosticar demanda P1.
+
+    Devuelve los predictores, la partición y las salidas de la hora como objetivo.
+    Los rezagos se calculan por estación y las medias se desplazan una hora para
+    representar ciclos y persistencia sin incluir la demanda que se quiere predecir.
+    """
     frame = hourly.sort_values(["station_id", "timestamp"]).copy()
     frame["hour"] = frame.timestamp.dt.hour.astype("int8")
     frame["weekday"] = frame.timestamp.dt.dayofweek.astype("int8")
@@ -112,7 +130,12 @@ def p1_features(hourly, end=cfg.END_DATE_EXCLUSIVE):
 
 
 def virtual_occupancy(events, keys, stations, initial=cfg.INITIAL_OCCUPANCY):
-    """P2: simula por evento con recorte y consulta el estado estrictamente anterior a cada límite."""
+    """Simula ocupación P2 con capacidad, estado inicial y flujos ordenados por evento.
+
+    Devuelve ocupación antes de t, ocupación antes de t+horizonte y cantidad de
+    eventos agregados recortados a los límites de capacidad. Solo el primer estado
+    es predictor; el segundo define la etiqueta. Es un proxy, no inventario real.
+    """
     if not 0 < initial < 1:
         raise ValueError("La ocupación inicial debe estar entre cero y uno")
     capacity = stations.set_index("station_id").capacity.to_dict()
@@ -141,7 +164,12 @@ def virtual_occupancy(events, keys, stations, initial=cfg.INITIAL_OCCUPANCY):
 
 
 def p2_features(p1, hourly, events, stations, initial=cfg.INITIAL_OCCUPANCY):
-    """P2: añade estado virtual actual y flujos pasados; la ocupación futura solo define la etiqueta."""
+    """Añade ocupación virtual y flujos rezagados a los predictores de riesgo P2.
+
+    La ocupación futura define normal, riesgo sin bicicletas o riesgo sin anclajes,
+    y se guarda únicamente como objetivo. Devuelve la tabla y diagnósticos de
+    recortes y exclusiones, necesarios para interpretar las limitaciones del proxy.
+    """
     frame = p1[["station_id", "timestamp", "split", *cfg.P1_FEATURE_COLUMNS]].copy()
     flows = hourly.sort_values(["station_id", "timestamp"]).copy()
     flows["net_flow"] = flows.arrivals - flows.departures
@@ -170,9 +198,11 @@ def p2_features(p1, hourly, events, stations, initial=cfg.INITIAL_OCCUPANCY):
 
 
 def station_profiles(hourly, stations, start, end, min_days=cfg.MIN_PROFILE_DAYS):
-    """P3: compara la forma de 48 medias horarias sin que domine el volumen total.
+    """Crea perfiles P3 de 48 medias horarias laborales y de fin de semana.
 
-    Excluye el primer día parcial, la cobertura insuficiente y los perfiles nulos.
+    Usa solo la ventana solicitada, excluye el primer día parcial y exige cobertura
+    mínima y perfiles completos no nulos. Normaliza la suma a uno para comparar
+    formas de uso; añade coordenadas como metadatos para el mapa de estaciones.
     """
     first_day = hourly.groupby("station_id").timestamp.min().dt.normalize() + pd.Timedelta(days=1)
     frame = hourly[
@@ -203,7 +233,11 @@ def station_profiles(hourly, stations, start, end, min_days=cfg.MIN_PROFILE_DAYS
 
 
 def verify_features(manifest, data_dir, source_version):
-    """Comprueba versión de origen, código y hashes para detectar variables desactualizadas."""
+    """Comprueba la versión de origen, el código, la configuración y cada Parquet.
+
+    Rechaza archivos ausentes, modificados o generados con otra versión del módulo,
+    para mantener la trazabilidad de las variables usadas en los experimentos P1-P3.
+    """
     payload = {
         key: value
         for key, value in manifest.items()
@@ -230,7 +264,12 @@ def build_features(
     output_manifest=cfg.FEATURE_MANIFEST_PATH,
     initial=cfg.INITIAL_OCCUPANCY,
 ):
-    """Genera P1, P2 y perfiles P3 por partición desde los Parquet verificados de ingesta."""
+    """Genera las tablas P1-P3 desde la ingesta verificada y devuelve su manifiesto.
+
+    Escribe Parquet, conteos, parámetros del proxy y hashes de datos, código y
+    configuración. La versión resultante permite ligar un experimento con las
+    variables exactas que utilizó, manteniendo el entrenamiento fuera del notebook.
+    """
     source = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
     verify_manifest(source, data_dir)
     stations = pd.read_parquet(Path(data_dir) / source["stations"]["clean_path"])
@@ -305,8 +344,8 @@ def build_features(
 
 
 def main():
-    """Expone construcción y comprobación de variables en Windows, macOS y Linux."""
-    parser = argparse.ArgumentParser(description=__doc__)
+    """Expone la construcción de P1-P3 y la verificación de hashes desde la terminal."""
+    parser = argparse.ArgumentParser(description="Construye tablas reproducibles para P1-P3 sin ajustar modelos ni usar futuro en predictores.")
     parser.add_argument(
         "--data-dir", type=Path, default=cfg.DATA_DIR, help="Carpeta local utilizada en la ingesta"
     )

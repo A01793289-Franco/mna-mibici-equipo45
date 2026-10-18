@@ -1,0 +1,52 @@
+{
+  "verification_date": "2026-10-18",
+  "change": "Docstrings en features.py; transformaciones sin cambios.",
+  "historical_run_commit": "43bf339792fef5d01326aa0ca0227fdd781675ff",
+  "data_version": "4bd1e3ecd2beb758f102660a4dcc7e11e726f25245e2da51cec43be6f22b560f",
+  "previous_feature_version": "b588c6194acd2227f1ff9de4c097d536b8465d30dc9633b4a3284019ec60e09b",
+  "current_feature_version": "651d75eb8153cb0c7b19916a1dfc990f52bc65351e9b92aa3455c589024f9aa4",
+  "documented_functions": [
+    "local_time",
+    "load_events",
+    "hourly_counts",
+    "temporal_split",
+    "p1_features",
+    "virtual_occupancy",
+    "p2_features",
+    "station_profiles",
+    "verify_features",
+    "build_features",
+    "main"
+  ],
+  "executable_ast_unchanged": true,
+  "rebuild_completed": true,
+  "all_parquet_hashes_and_rows_unchanged": true,
+  "unchanged_files": {
+    "p1": {
+      "path": "processed/p1_hourly.parquet",
+      "sha256": "b66f92d7bdb6c4838190e0cc90ae85a0f108ec1fbdad0be7114ec878368080c7",
+      "rows": 2556542
+    },
+    "p2": {
+      "path": "processed/p2_hourly.parquet",
+      "sha256": "0aef8cfb009888b2a3c0e5544f57b6ad57b799e2f0b71492d05a49e1d9e8f337",
+      "rows": 2551458
+    },
+    "p3_train": {
+      "path": "processed/p3_train.parquet",
+      "sha256": "6919057928c0ee17c6e7e744e3fc209e20f1dbb52782381aec41db3b720e3470",
+      "rows": 397
+    },
+    "p3_val": {
+      "path": "processed/p3_val.parquet",
+      "sha256": "564ddba20888721b1e0e0bc73c95b1c9be582c264d7a5d93605bed2b3ac92a0b",
+      "rows": 468
+    },
+    "p3_test": {
+      "path": "processed/p3_test.parquet",
+      "sha256": "5a88e5b7bbbb2ef948fd31f81f7a7d655d73a180c8451d2070673924c76d7a0e",
+      "rows": 468
+    }
+  },
+  "unit_tests_passed": 21
+}

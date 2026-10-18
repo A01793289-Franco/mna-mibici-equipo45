@@ -1,5 +1,3 @@
-"""Descarga, limpia y versiona los archivos mensuales de MiBici."""
-
 import argparse
 import codecs
 import csv
@@ -48,7 +46,6 @@ TRIP_SCHEMA = pa.schema(
 
 
 def sha256_file(path):
-    """Calcula el hash por bloques, sin cargar el archivo completo."""
     digest = hashlib.sha256()
     with Path(path).open("rb") as stream:
         for block in iter(lambda: stream.read(1024 * 1024), b""):
@@ -57,19 +54,16 @@ def sha256_file(path):
 
 
 def canonical_hash(value):
-    """Identifica contenido JSON con un orden independiente del sistema operativo."""
     return hashlib.sha256(
         json.dumps(value, sort_keys=True, ensure_ascii=False).encode()
     ).hexdigest()
 
 
 def source_hash(path):
-    """Identifica código normalizando LF/CRLF para compartir versiones entre sistemas."""
     return hashlib.sha256(Path(path).read_text(encoding="utf-8").encode("utf-8")).hexdigest()
 
 
 def write_json(path, value):
-    """Publica un manifiesto completo mediante reemplazo atómico."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_suffix(".tmp")
@@ -78,7 +72,6 @@ def write_json(path, value):
 
 
 def http_session():
-    """Crea una sesión identificable con reintentos para fallas transitorias."""
     session = requests.Session()
     session.headers.update(cfg.REQUEST_HEADERS)
     retry = Retry(total=3, backoff_factor=1, status_forcelist=[429, 500, 502, 503, 504])
@@ -87,7 +80,6 @@ def http_session():
 
 
 class CSVLinks(HTMLParser):
-    """Extrae enlaces CSV del portal, sin fijar los identificadores de cada mes."""
 
     def __init__(self):
         super().__init__()
@@ -100,7 +92,6 @@ class CSVLinks(HTMLParser):
 
 
 def discover_sources(session, start, end):
-    """Resuelve todos los meses completos solicitados; falla si falta alguno."""
     response = session.get(cfg.DATA_PORTAL_URL, timeout=cfg.DOWNLOAD_TIMEOUT)
     response.raise_for_status()
     parser = CSVLinks()
@@ -118,7 +109,6 @@ def discover_sources(session, start, end):
 
 
 def download_file(session, url, path, expected_hash=None, refresh=False):
-    """Descarga atómicamente y rechaza cambios respecto de la versión registrada."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists() and not refresh:
@@ -140,7 +130,6 @@ def download_file(session, url, path, expected_hash=None, refresh=False):
 
 
 def csv_format(path):
-    """Detecta UTF-8, Windows-1252 o Latin-1 y el delimitador de cada archivo."""
     for encoding in ("utf-8-sig", "cp1252", "latin-1"):
         try:
             with codecs.open(path, "r", encoding=encoding) as stream:
@@ -155,7 +144,6 @@ def csv_format(path):
 
 
 def column_mapping(columns, aliases):
-    """Normaliza acentos, espacios y variantes de las columnas necesarias."""
 
     def normalize(text):
         text = unicodedata.normalize("NFKD", str(text)).encode("ascii", "ignore").decode()
@@ -172,7 +160,6 @@ def column_mapping(columns, aliases):
 
 
 def local_dates(values):
-    """Interpreta fechas locales: ISO o día/mes/año, y conserva zona horaria explícita."""
     values = values.str.strip()
     iso = values.str.match(r"^\d{4}-\d{2}-\d{2}", na=False)
     aware = values.str.contains(r"(?:Z|[+-]\d{2}:?\d{2})$", case=False, na=False)
@@ -186,7 +173,6 @@ def local_dates(values):
 
 
 def normalize_trips(frame, start, end, seen):
-    """Conserva viajes válidos únicos; elimina atributos personales antes de escribir."""
     frame = frame.rename(columns=column_mapping(frame.columns, TRIP_ALIASES))
     frame = frame[list(TRIP_ALIASES)].copy()
     for name in ("trip_id", "origin_id", "destination_id"):
@@ -211,7 +197,6 @@ def normalize_trips(frame, start, end, seen):
 
 
 def clean_month(source, data_dir, seen):
-    """Limpia por bloques y escribe un Parquet mensual con esquema fijo."""
     raw = data_dir / source["raw_path"]
     encoding, separator = csv_format(raw)
     header = pd.read_csv(raw, encoding=encoding, sep=separator, nrows=0)
@@ -259,7 +244,6 @@ def clean_month(source, data_dir, seen):
 
 
 def clean_stations(raw, target):
-    """Normaliza catálogo y descarta capacidades/coordenadas inválidas; detecta IDs ambiguos."""
     encoding, separator = csv_format(raw)
     frame = pd.read_csv(raw, encoding=encoding, sep=separator, dtype="string")
     raw_rows = len(frame)
@@ -296,7 +280,6 @@ def clean_stations(raw, target):
 
 
 def verify_manifest(manifest, data_dir):
-    """Comprueba todos los archivos crudos y limpios antes de reutilizar la versión."""
     for item in [*manifest["trips"], manifest["stations"]]:
         for kind in ("raw", "clean"):
             path = Path(data_dir) / item[f"{kind}_path"]
@@ -316,7 +299,6 @@ def ingest(
     manifest_path=cfg.MANIFEST_PATH,
     refresh=False,
 ):
-    """Reconstruye meses completos y publica una versión verificable de datos sin muestras personales."""
     if start.day != 1 or end.day != 1 or start >= end:
         raise ValueError("Usa meses completos: fechas inicial y final en día 1, fin excluido")
     data_dir, manifest_path = Path(data_dir), Path(manifest_path)
@@ -405,8 +387,7 @@ def ingest(
 
 
 def main():
-    """Expone ingesta, actualización explícita y verificación desde la terminal."""
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Descarga, limpia y versiona los archivos mensuales de MiBici.")
     parser.add_argument(
         "--start",
         type=date.fromisoformat,

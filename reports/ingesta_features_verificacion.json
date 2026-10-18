@@ -1,11 +1,11 @@
 {
-  "checked_at": "2026-10-16T21:24:04.662782+00:00",
+  "checked_at": "2026-10-16T21:53:52.787551+00:00",
   "python": "3.13.15",
   "complete_rebuilds": 2,
   "identical_data_manifest": true,
   "identical_feature_manifest": true,
-  "data_version": "17e91a04faef0f3d3d9b823d026f72160b218e24fb333ff1fbb3edecfda74197",
-  "feature_version": "e1af5e180b47b7bba7206e7620894a7ac3a2508ea736c959716e063e89fc12ea",
+  "data_version": "4bd1e3ecd2beb758f102660a4dcc7e11e726f25245e2da51cec43be6f22b560f",
+  "feature_version": "b588c6194acd2227f1ff9de4c097d536b8465d30dc9633b4a3284019ec60e09b",
   "raw_and_parquet_hashes_verified": true,
   "synthetic_tests_passed": 10,
   "p3_profiles_normalized": true,
@@ -39,5 +39,14 @@
       "val": 662771,
       "test": 337250
     }
+  },
+  "documentation_update": {
+    "our_docstrings_moved_to_markdown": 34,
+    "our_makefile_comments_moved_to_markdown": 2,
+    "teammate_makefile_comment_lines_preserved": 17,
+    "previous_data_version": "17e91a04faef0f3d3d9b823d026f72160b218e24fb333ff1fbb3edecfda74197",
+    "previous_feature_version": "e1af5e180b47b7bba7206e7620894a7ac3a2508ea736c959716e063e89fc12ea",
+    "clean_parquet_unchanged": true,
+    "feature_parquet_unchanged": true
   }
 }
