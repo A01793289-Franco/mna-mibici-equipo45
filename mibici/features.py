@@ -1,5 +1,3 @@
-"""Construye tablas reproducibles para P1-P3 sin ajustar modelos ni usar futuro en predictores."""
-
 import argparse
 from datetime import datetime, timezone
 from importlib.metadata import version
@@ -14,7 +12,6 @@ from mibici.dataset import canonical_hash, sha256_file, source_hash, verify_mani
 
 
 def local_time(value):
-    """Convierte un límite de calendario a la zona horaria local de MiBici."""
     value = pd.Timestamp(value)
     return (
         value.tz_localize(cfg.TIMEZONE) if value.tzinfo is None else value.tz_convert(cfg.TIMEZONE)
@@ -22,7 +19,6 @@ def local_time(value):
 
 
 def load_events(manifest, data_dir):
-    """Lee un mes a la vez y agrega eventos simultáneos; llegadas solo al finalizar el viaje."""
     parts = []
     for source in manifest["trips"]:
         trips = pd.read_parquet(Path(data_dir) / source["clean_path"])
@@ -52,7 +48,6 @@ def load_events(manifest, data_dir):
 
 
 def hourly_counts(events, start, end):
-    """P1-P3: completa horas tras la primera actividad, suponiendo operación continua posterior."""
     events = events.copy()
     events["timestamp"] = events.timestamp.dt.floor(cfg.FREQUENCY)
     counts = events.groupby(["station_id", "timestamp"])[["departures", "arrivals"]].sum()
@@ -70,7 +65,6 @@ def hourly_counts(events, start, end):
 
 
 def temporal_split(times, end=cfg.END_DATE_EXCLUSIVE):
-    """Asigna P1-P2 por tiempo y excluye horizontes que rebasan los límites del conjunto."""
     target_end = times + pd.Timedelta(hours=cfg.HORIZON_HOURS)
     train_end, validation_end = local_time(cfg.TRAIN_END), local_time(cfg.VALIDATION_END)
     return pd.Series(
@@ -89,7 +83,6 @@ def temporal_split(times, end=cfg.END_DATE_EXCLUSIVE):
 
 
 def p1_features(hourly, end=cfg.END_DATE_EXCLUSIVE):
-    """P1: calendario conocido, rezagos y medias desplazadas; objetivo separado de los predictores."""
     frame = hourly.sort_values(["station_id", "timestamp"]).copy()
     frame["hour"] = frame.timestamp.dt.hour.astype("int8")
     frame["weekday"] = frame.timestamp.dt.dayofweek.astype("int8")
@@ -112,7 +105,6 @@ def p1_features(hourly, end=cfg.END_DATE_EXCLUSIVE):
 
 
 def virtual_occupancy(events, keys, stations, initial=cfg.INITIAL_OCCUPANCY):
-    """P2: simula por evento con recorte y consulta el estado estrictamente anterior a cada límite."""
     if not 0 < initial < 1:
         raise ValueError("La ocupación inicial debe estar entre cero y uno")
     capacity = stations.set_index("station_id").capacity.to_dict()
@@ -141,7 +133,6 @@ def virtual_occupancy(events, keys, stations, initial=cfg.INITIAL_OCCUPANCY):
 
 
 def p2_features(p1, hourly, events, stations, initial=cfg.INITIAL_OCCUPANCY):
-    """P2: añade estado virtual actual y flujos pasados; la ocupación futura solo define la etiqueta."""
     frame = p1[["station_id", "timestamp", "split", *cfg.P1_FEATURE_COLUMNS]].copy()
     flows = hourly.sort_values(["station_id", "timestamp"]).copy()
     flows["net_flow"] = flows.arrivals - flows.departures
@@ -170,10 +161,6 @@ def p2_features(p1, hourly, events, stations, initial=cfg.INITIAL_OCCUPANCY):
 
 
 def station_profiles(hourly, stations, start, end, min_days=cfg.MIN_PROFILE_DAYS):
-    """P3: compara la forma de 48 medias horarias sin que domine el volumen total.
-
-    Excluye el primer día parcial, la cobertura insuficiente y los perfiles nulos.
-    """
     first_day = hourly.groupby("station_id").timestamp.min().dt.normalize() + pd.Timedelta(days=1)
     frame = hourly[
         (hourly.timestamp >= local_time(start)) & (hourly.timestamp < local_time(end))
@@ -203,7 +190,6 @@ def station_profiles(hourly, stations, start, end, min_days=cfg.MIN_PROFILE_DAYS
 
 
 def verify_features(manifest, data_dir, source_version):
-    """Comprueba versión de origen, código y hashes para detectar variables desactualizadas."""
     payload = {
         key: value
         for key, value in manifest.items()
@@ -230,7 +216,6 @@ def build_features(
     output_manifest=cfg.FEATURE_MANIFEST_PATH,
     initial=cfg.INITIAL_OCCUPANCY,
 ):
-    """Genera P1, P2 y perfiles P3 por partición desde los Parquet verificados de ingesta."""
     source = json.loads(Path(manifest_path).read_text(encoding="utf-8"))
     verify_manifest(source, data_dir)
     stations = pd.read_parquet(Path(data_dir) / source["stations"]["clean_path"])
@@ -305,8 +290,7 @@ def build_features(
 
 
 def main():
-    """Expone construcción y comprobación de variables en Windows, macOS y Linux."""
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = argparse.ArgumentParser(description="Construye tablas reproducibles para P1-P3 sin ajustar modelos ni usar futuro en predictores.")
     parser.add_argument(
         "--data-dir", type=Path, default=cfg.DATA_DIR, help="Carpeta local utilizada en la ingesta"
     )

@@ -1,5 +1,3 @@
-"""Configuración acordada para la propuesta del equipo 45."""
-
 from datetime import date
 from pathlib import Path
 
@@ -75,12 +73,10 @@ P2_FEATURE_COLUMNS = (
 
 
 def data_path(path, data_dir=DATA_DIR):
-    """Resuelve una ruta de datos centralizada para un directorio local alternativo."""
     return Path(data_dir) / Path(path).relative_to(DATA_DIR)
 
 
 def create_directories():
-    """Crea las carpetas locales de la plantilla sin descargar datos."""
     for directory in (
         RAW_DIR,
         INTERIM_DIR,

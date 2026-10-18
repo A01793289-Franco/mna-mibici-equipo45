@@ -12,6 +12,8 @@ python -m mibici.features --verify
 python -m unittest discover -s tests -v
 ```
 
+Las explicaciones de nuestra contribución se mantienen en este documento Markdown. Se conservan los comentarios de la plantilla incorporados por otros integrantes.
+
 Los parámetros opcionales se consultan con `--help`. `--data-dir` permite usar otra carpeta local en ambos módulos. La ingesta admite `--start` y `--end` en formato `AAAA-MM-01`, con fin excluido; no acepta meses incompletos. Los cortes de entrenamiento/validación/prueba permanecen centralizados en `config.py`.
 
 ## Descarga y limpieza
@@ -65,3 +67,55 @@ Para sensibilidad, `python -m mibici.features --initial-occupancy 0.25` reconstr
 [feature_manifest.json](feature_manifest.json) liga la versión de origen, el código, columnas predictoras, filas por conjunto, clases, exclusiones y hashes de las tablas. [La verificación de reproducción](../reports/ingesta_features_verificacion.json) documenta dos ejecuciones y las comprobaciones automáticas.
 
 Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. Quedan pendientes entrenamiento, evaluación y registro de baselines reales en MLflow, notebook exploratorio y capturas de la interfaz. Las condiciones de uso del portal todavía deben documentarse en la entrega final.
+
+## Documentación de módulos y funciones
+
+| Archivo | Elemento | Función |
+|---|---|---|
+| mibici/config.py | `(módulo)` | Configuración acordada para la propuesta del equipo 45. |
+| mibici/config.py | `data_path` | Resuelve una ruta de datos centralizada para un directorio local alternativo. |
+| mibici/config.py | `create_directories` | Crea las carpetas locales de la plantilla sin descargar datos. |
+| mibici/dataset.py | `(módulo)` | Descarga, limpia y versiona los archivos mensuales de MiBici. |
+| mibici/dataset.py | `sha256_file` | Calcula el hash por bloques, sin cargar el archivo completo. |
+| mibici/dataset.py | `canonical_hash` | Identifica contenido JSON con un orden independiente del sistema operativo. |
+| mibici/dataset.py | `source_hash` | Identifica código normalizando LF/CRLF para compartir versiones entre sistemas. |
+| mibici/dataset.py | `write_json` | Publica un manifiesto completo mediante reemplazo atómico. |
+| mibici/dataset.py | `http_session` | Crea una sesión identificable con reintentos para fallas transitorias. |
+| mibici/dataset.py | `CSVLinks` | Extrae enlaces CSV del portal, sin fijar los identificadores de cada mes. |
+| mibici/dataset.py | `discover_sources` | Resuelve todos los meses completos solicitados; falla si falta alguno. |
+| mibici/dataset.py | `download_file` | Descarga atómicamente y rechaza cambios respecto de la versión registrada. |
+| mibici/dataset.py | `csv_format` | Detecta UTF-8, Windows-1252 o Latin-1 y el delimitador de cada archivo. |
+| mibici/dataset.py | `column_mapping` | Normaliza acentos, espacios y variantes de las columnas necesarias. |
+| mibici/dataset.py | `local_dates` | Interpreta fechas locales: ISO o día/mes/año, y conserva zona horaria explícita. |
+| mibici/dataset.py | `normalize_trips` | Conserva viajes válidos únicos; elimina atributos personales antes de escribir. |
+| mibici/dataset.py | `clean_month` | Limpia por bloques y escribe un Parquet mensual con esquema fijo. |
+| mibici/dataset.py | `clean_stations` | Normaliza catálogo y descarta capacidades/coordenadas inválidas; detecta IDs ambiguos. |
+| mibici/dataset.py | `verify_manifest` | Comprueba todos los archivos crudos y limpios antes de reutilizar la versión. |
+| mibici/dataset.py | `ingest` | Reconstruye meses completos y publica una versión verificable de datos sin muestras personales. |
+| mibici/dataset.py | `main` | Expone ingesta, actualización explícita y verificación desde la terminal. |
+| mibici/features.py | `(módulo)` | Construye tablas reproducibles para P1-P3 sin ajustar modelos ni usar futuro en predictores. |
+| mibici/features.py | `local_time` | Convierte un límite de calendario a la zona horaria local de MiBici. |
+| mibici/features.py | `load_events` | Lee un mes a la vez y agrega eventos simultáneos; llegadas solo al finalizar el viaje. |
+| mibici/features.py | `hourly_counts` | P1-P3: completa horas tras la primera actividad, suponiendo operación continua posterior. |
+| mibici/features.py | `temporal_split` | Asigna P1-P2 por tiempo y excluye horizontes que rebasan los límites del conjunto. |
+| mibici/features.py | `p1_features` | P1: calendario conocido, rezagos y medias desplazadas; objetivo separado de los predictores. |
+| mibici/features.py | `virtual_occupancy` | P2: simula por evento con recorte y consulta el estado estrictamente anterior a cada límite. |
+| mibici/features.py | `p2_features` | P2: añade estado virtual actual y flujos pasados; la ocupación futura solo define la etiqueta. |
+| mibici/features.py | `station_profiles` | P3: compara la forma de 48 medias horarias sin que domine el volumen total. Excluye el primer día parcial, la cobertura insuficiente y los perfiles nulos. |
+| mibici/features.py | `verify_features` | Comprueba versión de origen, código y hashes para detectar variables desactualizadas. |
+| mibici/features.py | `build_features` | Genera P1, P2 y perfiles P3 por partición desde los Parquet verificados de ingesta. |
+| mibici/features.py | `main` | Expone construcción y comprobación de variables en Windows, macOS y Linux. |
+| tests/test_data_features.py | `(módulo)` | Verificaciones de calidad, reproducción y disponibilidad temporal con datos sintéticos. |
+
+## Comandos opcionales del Makefile
+
+| Comando | Función |
+|---|---|
+| `make requirements` | Instala las dependencias de Python. |
+| `make clean` | Elimina archivos de Python compilados y carpetas de caché. |
+| `make lint` | Comprueba el formato con las herramientas de la plantilla. |
+| `make format` | Aplica isort y black al módulo. |
+| `make create_environment` | Conserva el comando de virtualenvwrapper de la plantilla; el README explica la alternativa con venv. |
+| `make data` | Ejecuta la ingesta reproducible. |
+| `make features` | Construye las tablas para P1-P3. |
+| `make help` | Muestra las descripciones de comandos conservadas en la plantilla; ingesta y variables se consultan en este documento. |

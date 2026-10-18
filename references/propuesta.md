@@ -1,6 +1,6 @@
 # Propuesta de solución | Equipo 45
 
-Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; los baselines siguen pendientes de entrenamiento y evaluación. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
+Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo de evaluación se fija antes de ejecutar la prueba final. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
 
 ## 1. Problemas y decisiones
 
@@ -17,11 +17,11 @@ P1 y P2 se recalcularían cada hora. P3 se construye con entrenamiento, se contr
 ## 2. Datos propuestos
 
 - **Fuente:** [portal de MiBici](https://www.mibici.net/es/datos-abiertos/). Se proponen nueve meses completos, enero-septiembre de 2026, para incluir variaciones semanales y mensuales. No representan un ciclo anual completo.
-- **Archivos:** CSV `datos_abiertos_AAAA_MM.csv` y catálogo de septiembre. Enlaces publicados: [enero](https://www.mibici.net/site/assets/files/120163/datos_abiertos_2026_01.csv), [septiembre](https://www.mibici.net/site/assets/files/131825/datos_abiertos_2026_09.csv) y [catálogo](https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv). La ingesta resolverá los nueve enlaces desde el portal y conservará las URL.
-- **Variables originales:** ID del viaje para deduplicación, inicio, fin, origen y destino; del catálogo, ID, nombre, capacidad, latitud y longitud. Los nombres originales y tipos deben verificarse al descargar.
+- **Archivos:** CSV `datos_abiertos_AAAA_MM.csv` y catálogo de septiembre. Enlaces publicados: [enero](https://www.mibici.net/site/assets/files/120163/datos_abiertos_2026_01.csv), [septiembre](https://www.mibici.net/site/assets/files/131825/datos_abiertos_2026_09.csv) y [catálogo](https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv). La ingesta resolvió los nueve enlaces desde el portal y conserva las URL en el manifiesto.
+- **Variables originales:** ID del viaje para deduplicación, inicio, fin, origen y destino; del catálogo, ID, nombre, capacidad, latitud y longitud. Los tipos y alias se verifican al descargar; el notebook documenta el esquema limpio.
 - **Tamaño real:** nueve meses, 3,362,065 registros originales y 3,358,273 viajes válidos; 471 IDs observados y 480 estaciones en el catálogo. Descartes: 3,034 registros inválidos y 758 duplicados. El [manifiesto](data_manifest.json) conserva cifras por archivo y hashes. No son contadores globales del portal.
 - **Privacidad:** excluir identificadores de usuarios, edad, género y otros atributos personales de las tablas de modelado. El ID del viaje es un control local de calidad, no un predictor. Artefactos y mapas mostrarán agregados por estación/hora.
-- **Condiciones de uso:** el portal permite descargar CSV; antes de entregar se debe registrar el texto o enlace de las condiciones aplicables y fecha de consulta. La descarga abierta no se interpreta como una licencia específica ni como permiso para redistribuir información personal. MIT cubre el código del repositorio.
+- **Condiciones de uso:** se revisaron el portal, sus [términos](https://www.mibici.net/es/termino-y-condiciones/) y el [aviso de privacidad](https://www.mibici.net/es/aviso-de-privacidad/) el 18 de octubre de 2026. No se identificó una licencia específica de redistribución de los CSV; no se atribuye MIT a los datos. La entrega usa agregados y excluye los archivos por viaje. Ver [condiciones_datos.md](condiciones_datos.md).
 
 ## 3. Partición y disponibilidad temporal
 
@@ -65,7 +65,7 @@ La simulación omite rebalanceos, averías y capacidad histórica; el recorte pu
 
 ### P2 | Riesgo virtual
 
-**Pipeline:** viajes válidos -> eventos/flujo -> estado virtual causal -> etiqueta futura -> calendario, ocupación virtual y flujos históricos -> partición temporal -> imputación/escalado ajustados en entrenamiento -> clasificador -> evaluación.
+**Pipeline:** viajes válidos -> eventos/flujo -> estado virtual causal -> etiqueta futura -> calendario, ocupación virtual y flujos históricos -> partición temporal -> escalado ajustado en entrenamiento (las tablas verificadas no contienen faltantes en los predictores) -> clasificador -> evaluación.
 
 Se excluyen el flujo y estado de la hora objetivo. P2 no usará predicciones de P1 en esta versión: integrarlas exigiría obtener predicciones temporales fuera de muestra.
 

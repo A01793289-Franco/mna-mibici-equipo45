@@ -430,6 +430,7 @@ def run_p1(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
         "max_iter": model.max_iter,
         "max_leaf_nodes": model.max_leaf_nodes,
     }
+    params.update(model.get_params())
     log_run(run_name, "P1", "candidato", params, metrics, [figure], context)
     results[run_name] = metrics
     _print_results("P1", results)
@@ -480,6 +481,8 @@ def run_p2(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
             "low_occupancy": cfg.LOW_OCCUPANCY,
             "high_occupancy": cfg.HIGH_OCCUPANCY,
         }
+        estimator = model.steps[-1][1] if hasattr(model, "steps") else model
+        params.update(estimator.get_params())
         log_run(run_name, "P2", kind, params, metrics, [figure], context, undefined)
         results[run_name] = metrics
     _print_results("P2", results)
@@ -527,6 +530,7 @@ def run_p3(tables=None, figures_dir=cfg.FIGURES_DIR, output_dir=cfg.PROCESSED_DI
             "min_profile_days": cfg.MIN_PROFILE_DAYS,
             "coordenadas_en_agrupacion": "no (solo para el mapa)",
         }
+        params.update(CLUSTERERS[key]().get_params())
         undefined = [] if "val_ari" in metrics else ["val_ari"]
         log_run(run_name, "P3", kind, params, metrics, [figure, assignments], context, undefined)
         results[run_name] = metrics

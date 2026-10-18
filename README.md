@@ -103,7 +103,7 @@ La información personal no se incluye en Parquet de modelado. Las tablas agrega
 Con los datos y las variables ya generados (sección anterior), desde la raíz y con el entorno activado:
 
 ```bash
-python -m mibici.train --question all      # P1, P2 y P3 (también: --question P1, P2 o P3)
+python -m mibici.train --question all
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 
@@ -127,19 +127,34 @@ Cada run registra:
 
 Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
 
+El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md). Para evaluar septiembre una sola vez con las configuraciones ya fijadas se añade `--final-test`.
+
+Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
+
 ## Flujo de trabajo propuesto
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.
 - Commits `tipo: descripción`, por ejemplo `feat: agrega ingesta mensual`.
 - Cada cambio entra mediante Pull Request revisado por otro integrante.
 - Proteger `main` y exigir revisión: configuración pendiente del administrador.
-- Cada uno de los cuatro integrantes debe abrir y revisar al menos un PR. Nombres y roles quedan pendientes de confirmación del equipo.
+- Cada uno de los cuatro integrantes debe abrir y revisar al menos un PR. Los integrantes y responsabilidades se describen abajo; falta acreditar la participación de Aldo y completar las revisiones individuales.
+
+## Integrantes y responsabilidades
+
+| Integrante | Cuenta de GitHub | Responsabilidad registrada o propuesta |
+|---|---|---|
+| Franco Francisco Peña Colorado | A01793289-Franco | Administrador del repositorio, estructura inicial y entrenamiento inicial P1. |
+| Efren Pazzi Manzano | EfrenPazzi | Canvas y entrenamiento P1-P3 con registro en MLflow. |
+| Leonardo Peraza Alavez | a01840326-a11y | Propuesta, ingesta, variables, versionado, notebook exploratorio y preparación del reporte. |
+| Aldo Isai Pérez Hernández | Por confirmar | Revisión de interpretación y entrega propuesta; falta evidencia de participación en Git. |
+
+La pertenencia al equipo fue confirmada mediante Canvas. Las responsabilidades de los tres primeros se apoyan en el historial; el rol de Aldo se identifica como propuesto y no como trabajo ya acreditado.
 
 ## Reproducibilidad y privacidad
 
 Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos de datos. La versión de variables referencia la versión de ingesta. Cada futuro run deberá registrar esas versiones, commit, pregunta, fechas, semilla, modelo, parámetros, métricas con prefijo y al menos un artefacto.
 
-`.gitignore` excluye datos, modelos serializados, `mlruns`, `mlartifacts`, la base local de MLflow y archivos de entorno. MIT cubre el código; las condiciones de uso de los datos deberán documentarse como indica la propuesta.
+`.gitignore` excluye datos, modelos serializados, `mlruns`, `mlartifacts`, la base local de MLflow y archivos de entorno. MIT cubre el código; las condiciones publicadas de los datos y sus límites se documentan en [condiciones_datos.md](references/condiciones_datos.md).
 
 ## Pendientes de la entrega completa
 
