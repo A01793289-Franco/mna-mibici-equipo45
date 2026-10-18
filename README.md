@@ -10,7 +10,7 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 
 ## Estado actual
 
-Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible y funciones de variables para P1-P3. La ingesta y las variables se ejecutaron con los nueve meses seleccionados. Entrenamiento y runs reales de MLflow siguen pendientes.
+Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. Faltan la evidencia final (capturas), el notebook exploratorio y la evaluación única sobre septiembre.
 
 - [ML Canvas editable](references/ml_canvas.md).
 - [ML Canvas en PDF](references/Machine%20Learning%20Canvas.pdf).
@@ -98,6 +98,35 @@ La primera ejecución descarga los CSV; las posteriores reutilizan los archivos 
 
 La información personal no se incluye en Parquet de modelado. Las tablas agregadas se guardan en `data/processed`; las limpias mensuales, en `data/interim`. [La documentación](references/ingesta_features.md) explica las columnas permitidas como predictores, supuestos de cobertura y manejo del proxy.
 
+## Experimento base en MLflow
+
+Con los datos y las variables ya generados (sección anterior), desde la raíz y con el entorno activado:
+
+```bash
+python -m mibici.train --question all      # P1, P2 y P3 (también: --question P1, P2 o P3)
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
+```
+
+La interfaz queda en <http://127.0.0.1:5000>, experimento `mibici-equipo45`. `python -m mibici.train_p1` sigue funcionando y equivale a `--question P1`.
+
+| Run | Pregunta | Modelo | Métricas principales (validación) |
+|---|---|---|---|
+| `P1_estacional_h1` | P1 | Baseline: misma estación y hora de la semana anterior | `val_mae`, `val_rmse`, `val_wape` |
+| `P1_hgb_poisson_h1` | P1 | `HistGradientBoostingRegressor` con pérdida de Poisson | `val_mae`, `val_rmse`, `val_wape` |
+| `P2_logistica_proxy_h1` | P2 | Baseline: regresión logística balanceada de tres clases | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
+| `P2_hgb_proxy_h1` | P2 | `HistGradientBoostingClassifier` balanceado | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
+| `P3_kmeans_perfil48` | P3 | Baseline: K-means con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
+| `P3_ward_perfil48` | P3 | Agrupamiento jerárquico Ward con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
+
+Cada run registra:
+
+- **Etiquetas:** `equipo`, `pregunta` (P1, P2 o P3), `tipo` (baseline o candidato), `git_commit` y `git_dirty`.
+- **Parámetros:** semilla, fechas de partición, horizonte, `data_version`, `feature_version`, columnas usadas, filas por conjunto y los parámetros del modelo.
+- **Métricas:** con prefijo `val_` (y `train_` en P3). Una métrica no definida, por ejemplo la AP de una clase sin ejemplos, no se registra y queda anotada en la etiqueta `metricas_no_definidas`.
+- **Artefactos:** figura de cada run (demanda por hora, matriz de confusión, o mapa y perfiles de los grupos) y, en P3, la tabla de grupos por estación. Las figuras también se guardan en `reports/figures/`.
+
+Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
+
 ## Flujo de trabajo propuesto
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.
@@ -114,9 +143,9 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 ## Pendientes de la entrega completa
 
-1. Entrenar y evaluar los baselines de P1-P3 desde el código del repositorio.
-2. Crear el notebook exploratorio y registrar los experimentos reales en MLflow.
-3. Capturar lista, detalle, artefacto y comparación de runs.
+1. Ejecutar `python -m mibici.train --question all` con el código ya confirmado en Git y revisar los resultados.
+2. Crear el notebook exploratorio.
+3. Capturar lista, detalle, artefacto y comparación de runs en la interfaz de MLflow.
 4. Completar participación de cuatro integrantes, revisiones y protección de `main`.
 5. Documentar condiciones de uso de las fuentes, integrar el PDF final y ajustar el nombre del repositorio.
 
