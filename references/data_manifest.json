@@ -3,8 +3,8 @@
   "start": "2026-01-01",
   "end_exclusive": "2026-10-01",
   "timezone": "America/Mexico_City",
-  "normalizer_sha256": "7f2bbfa409dd0fe72d668291cbde7be3a4fcbc04440f218f74767c5d7329facc",
-  "config_sha256": "3b30efcf46a05c3c379e3f50ffe455bdc499a2e5548673bcc1af9cfa2211f444",
+  "normalizer_sha256": "53363c75d667bf66da47035f3255e770c0c4f58957e20aa58b305b5d139087e3",
+  "config_sha256": "dd186e85c4e91538f324edd2ae32b0bb43cf93345cabd84a3787ba947a16a4fa",
   "packages": {
     "pandas": "3.0.6",
     "pyarrow": "25.0.0"
@@ -168,6 +168,6 @@
       407
     ]
   },
-  "data_version": "4bd1e3ecd2beb758f102660a4dcc7e11e726f25245e2da51cec43be6f22b560f",
-  "created_at": "2026-10-16T21:53:26.559437+00:00"
+  "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+  "created_at": "2026-10-24T23:31:07.450752+00:00"
 }
