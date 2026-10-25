@@ -3,6 +3,7 @@
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 import numpy as np
 import pandas as pd
@@ -140,12 +141,24 @@ class TestChampion(unittest.TestCase):
         }
         self.assertEqual(train.pick_champion("P2", candidates), "b")
 
-    def test_baseline_winning_means_nothing_to_register(self):
+    def test_only_runs_with_a_model_compete_and_baselines_are_reported(self):
         candidates = {
             "base": ("r1", {"val_mae": 0.5}, False),
             "modelo": ("r2", {"val_mae": 0.7}, True),
+            "otro": ("r3", {"val_mae": 0.9}, True),
         }
-        self.assertIsNone(train.pick_champion("P1", candidates))
+        self.assertEqual(train.pick_champion("P1", candidates), "modelo")
+        self.assertEqual(train.baselines_beating("P1", "modelo", candidates), ["base"])
+
+    def test_no_baseline_listed_when_model_wins(self):
+        candidates = {
+            "base": ("r1", {"val_mae": 0.9}, False),
+            "modelo": ("r2", {"val_mae": 0.7}, True),
+        }
+        self.assertEqual(train.baselines_beating("P1", "modelo", candidates), [])
+
+    def test_no_model_means_nothing_to_register(self):
+        self.assertIsNone(train.pick_champion("P1", {"base": ("r1", {"val_mae": 0.5}, False)}))
 
     def test_undefined_metric_disqualifies_run(self):
         candidates = {
@@ -154,6 +167,46 @@ class TestChampion(unittest.TestCase):
         }
         self.assertEqual(train.pick_champion("P2", candidates), "b")
         self.assertIsNone(train.pick_champion("P2", {"a": candidates["a"]}))
+
+
+class TestSearchGrid(unittest.TestCase):
+    def test_default_grid_has_between_6_and_12_combinations(self):
+        combos = train.search_combinations()
+        self.assertTrue(6 <= len(combos) <= 12)
+        self.assertEqual(len({tuple(combo.items()) for combo in combos}), len(combos))
+
+
+class TestPersistence(unittest.TestCase):
+    """Regla de P2: la clase de la próxima hora es la de la ocupación virtual actual."""
+
+    def frame(self, occupancy, target):
+        return pd.DataFrame({"virtual_occupancy": occupancy, "target_risk": target})
+
+    def test_classes_follow_thresholds_inclusively(self):
+        data = self.frame([0.0, 0.10, 0.11, 0.5, 0.89, 0.90, 1.0], [0] * 7)
+        self.assertEqual(train.persistence_classes(data).tolist(), [1, 1, 0, 0, 0, 2, 2])
+
+    def test_rule_is_perfect_when_state_does_not_change(self):
+        data = self.frame([0.05, 0.5, 0.95] * 10, [1, 0, 2] * 10)
+        predicted = train.persistence_classes(data)
+        metrics, _ = train.classification_metrics(
+            data.target_risk, predicted, train.one_hot_probabilities(predicted), "val"
+        )
+        self.assertEqual(metrics["val_f1_macro"], 1.0)
+        self.assertEqual(metrics["val_ap_macro"], 1.0)
+
+    def test_rule_fails_when_state_always_changes(self):
+        data = self.frame([0.05, 0.5, 0.95] * 10, [2, 1, 0] * 10)
+        predicted = train.persistence_classes(data)
+        metrics, _ = train.classification_metrics(
+            data.target_risk, predicted, train.one_hot_probabilities(predicted), "val"
+        )
+        self.assertLess(metrics["val_f1_macro"], 0.5)
+
+    def test_one_hot_probabilities_have_one_column_per_class(self):
+        np.testing.assert_array_equal(
+            train.one_hot_probabilities([2, 0]), [[0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]
+        )
 
 
 class TestMlflowRuns(unittest.TestCase):
@@ -228,6 +281,54 @@ class TestMlflowRuns(unittest.TestCase):
         alias = client.get_model_version_by_alias(train.REGISTERED_MODELS["P1"], "champion")
         self.assertEqual(alias.run_id, candidate.info.run_id)
 
+    def tune(self, question, runner, table):
+        grid = {"learning_rate": (0.1,), "max_leaf_nodes": (7, 15), "max_iter": (20,)}
+        with mock.patch.object(train, "SEARCH_GRID", grid):
+            with mock.patch.object(train, "SEARCH_SAMPLE_ROWS", 200):
+                results = runner(
+                    table,
+                    final_test=True,
+                    figures_dir=self.root / "figs",
+                    context=self.context,
+                    tune=True,
+                )
+        client, runs = self.runs(question)
+        parent = max(
+            (run for run in runs if run.info.run_name == f"{question}_busqueda_hgb_h1"),
+            key=lambda run: run.info.start_time,
+        )
+        children = [
+            run for run in runs if run.data.tags.get("mlflow.parentRunId") == parent.info.run_id
+        ]
+        return results, client, parent, children
+
+    def test_p1_tuning_has_parent_with_children_and_no_test_metrics(self):
+        results, client, parent, children = self.tune("P1", train.run_p1, demand_table())
+        self.assertEqual(len(children), 2)
+        for child in children:
+            self.assertIn("val_mae", child.data.metrics)
+            self.assertIn("max_leaf_nodes", child.data.params)
+            self.assertFalse(any(name.startswith("test_") for name in child.data.metrics))
+        best = min(child.data.metrics["val_mae"] for child in children)
+        self.assertAlmostEqual(parent.data.metrics["mejor_val_mae"], best)
+        self.assertTrue(client.list_artifacts(parent.info.run_id, "tablas"))
+        self.assertIn("P1_hgb_poisson_ajustado_h1", results)
+        self.assertIn("test_mae", results["P1_hgb_poisson_ajustado_h1"])
+        tuned = [
+            run for run in self.runs("P1")[1] if run.info.run_name == "P1_hgb_poisson_ajustado_h1"
+        ]
+        self.assertEqual(tuned[-1].data.params["busqueda_run_id"], parent.info.run_id)
+
+    def test_p2_tuning_uses_f1_macro_and_adds_tuned_candidate(self):
+        results, _, parent, children = self.tune("P2", train.run_p2, risk_table())
+        self.assertEqual(len(children), 2)
+        best = max(child.data.metrics["val_f1_macro"] for child in children)
+        self.assertAlmostEqual(parent.data.metrics["mejor_val_f1_macro"], best)
+        self.assertFalse(
+            any(name.startswith("test_") for child in children for name in child.data.metrics)
+        )
+        self.assertIn("P2_hgb_ajustado_proxy_h1", results)
+
     def test_register_false_leaves_registry_untouched(self):
         client = self.mlflow.tracking.MlflowClient()
         before = len(client.search_model_versions(f"name = '{train.REGISTERED_MODELS['P1']}'"))
@@ -248,17 +349,22 @@ class TestMlflowRuns(unittest.TestCase):
 
     def test_p2_logs_class_metrics_and_confusion_matrix(self):
         results = train.run_p2(risk_table(), figures_dir=self.root / "figs", context=self.context)
-        self.assertEqual(set(results), {"P2_logistica_proxy_h1", "P2_hgb_proxy_h1"})
+        self.assertEqual(
+            set(results),
+            {"P2_persistencia_proxy_h1", "P2_logistica_proxy_h1", "P2_hgb_proxy_h1"},
+        )
         client, runs = self.runs("P2")
-        self.assertEqual(len(runs), 2)
+        self.assertEqual(len(runs), 3)
         for run in runs:
             self.assertIn("val_f1_macro", run.data.metrics)
             self.assertIn("val_recall_riesgo_sin_bicicletas", run.data.metrics)
             self.assertTrue(client.list_artifacts(run.info.run_id, "figuras"))
-            self.assertEqual(len(run.outputs.model_outputs), 1)
+            expected = 0 if run.info.run_name == "P2_persistencia_proxy_h1" else 1
+            self.assertEqual(len(run.outputs.model_outputs), expected)
         champion = client.get_model_version_by_alias(train.REGISTERED_MODELS["P2"], "champion")
-        latest = sorted(runs, key=lambda run: run.info.start_time)[-2:]
-        winner = max(latest, key=lambda run: run.data.metrics["val_f1_macro"])
+        latest = sorted(runs, key=lambda run: run.info.start_time)[-3:]
+        models = [run for run in latest if run.info.run_name != "P2_persistencia_proxy_h1"]
+        winner = max(models, key=lambda run: run.data.metrics["val_f1_macro"])
         self.assertEqual(champion.run_id, winner.info.run_id)
 
     def test_p3_logs_groups_map_and_table(self):

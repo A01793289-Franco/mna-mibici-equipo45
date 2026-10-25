@@ -17,6 +17,7 @@ con ``--final-test``, para no elegir decisiones mirando ese conjunto.
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
 import math
 from pathlib import Path
@@ -67,6 +68,16 @@ MODEL_ARTIFACT = "model"
 # MLflow guarda con skops; HistGradientBoosting usa este tipo y hay que declararlo como confiable.
 TRUSTED_TYPES = ["sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor"]
 INPUT_EXAMPLE_ROWS = 5
+
+# Búsqueda de hiperparámetros (opción --tune): cuadrícula pequeña evaluada solo en validación y
+# sobre una muestra aleatoria reproducible del entrenamiento, para que no tarde horas. Los rangos
+# viven aquí y no en config.py porque el hash de config.py forma parte de los manifiestos de datos.
+SEARCH_SAMPLE_ROWS = 300_000
+SEARCH_GRID = {
+    "learning_rate": (0.05, 0.1),
+    "max_leaf_nodes": (15, 31, 63),
+    "max_iter": (100, 300),
+}
 
 
 # ---------------------------------------------------------------------------
@@ -151,9 +162,9 @@ def weekly_baseline(train, frame):
     return prediction.to_numpy()
 
 
-def make_demand_model():
+def make_demand_model(**params):
     """Candidato de P1: gradiente boosting con pérdida de Poisson para conteos."""
-    return HistGradientBoostingRegressor(loss="poisson", random_state=cfg.SEED)
+    return HistGradientBoostingRegressor(loss="poisson", random_state=cfg.SEED, **params)
 
 
 # ---------------------------------------------------------------------------
@@ -167,9 +178,27 @@ def make_risk_baseline():
     )
 
 
-def make_risk_model():
+def make_risk_model(**params):
     """Candidato de P2: gradiente boosting con pesos calculados en entrenamiento."""
-    return HistGradientBoostingClassifier(class_weight="balanced", random_state=cfg.SEED)
+    return HistGradientBoostingClassifier(class_weight="balanced", random_state=cfg.SEED, **params)
+
+
+def persistence_classes(frame):
+    """Regla sin aprendizaje: la clase de la próxima hora es la de la ocupación virtual actual.
+
+    "Sin bicicletas" si ``virtual_occupancy <= LOW_OCCUPANCY``, "sin anclajes" si es
+    ``>= HIGH_OCCUPANCY`` y "normal" en otro caso: los mismos umbrales con los que se define la
+    etiqueta, aplicados a la ocupación de la hora actual en vez de la siguiente.
+    """
+    occupancy = frame["virtual_occupancy"].to_numpy(dtype=float)
+    return np.select(
+        [occupancy <= cfg.LOW_OCCUPANCY, occupancy >= cfg.HIGH_OCCUPANCY], [1, 2], default=0
+    ).astype("int8")
+
+
+def one_hot_probabilities(classes):
+    """Probabilidades 0/1 en el orden de ``P2_CLASSES``, para calcular AP de una regla dura."""
+    return (np.asarray(classes)[:, None] == np.asarray(P2_CLASSES)[None, :]).astype(float)
 
 
 def class_probabilities(model, features):
@@ -351,6 +380,18 @@ def _common_params(context, features, rows):
     }
 
 
+def run_tags(question, kind, context, undefined=()):
+    """Etiquetas comunes de todos los runs."""
+    return {
+        "equipo": cfg.TEAM,
+        "pregunta": question,
+        "tipo": kind,
+        "git_commit": context["git_commit"],
+        "git_dirty": context["git_dirty"],
+        "metricas_no_definidas": ",".join(undefined) or "ninguna",
+    }
+
+
 def log_run(
     run_name,
     question,
@@ -362,6 +403,7 @@ def log_run(
     undefined=(),
     model=None,
     input_example=None,
+    nested=False,
 ):
     """Crea un run con etiquetas, parámetros, métricas finitas y artefactos. Regresa su id.
 
@@ -371,17 +413,8 @@ def log_run(
     """
     import mlflow
 
-    with mlflow.start_run(run_name=run_name) as run:
-        mlflow.set_tags(
-            {
-                "equipo": cfg.TEAM,
-                "pregunta": question,
-                "tipo": kind,
-                "git_commit": context["git_commit"],
-                "git_dirty": context["git_dirty"],
-                "metricas_no_definidas": ",".join(undefined) or "ninguna",
-            }
-        )
+    with mlflow.start_run(run_name=run_name, nested=nested) as run:
+        mlflow.set_tags(run_tags(question, kind, context, undefined))
         mlflow.log_params({key: str(value) for key, value in params.items()})
         mlflow.log_metrics({k: v for k, v in metrics.items() if math.isfinite(v)})
         for artifact in artifacts:
@@ -424,37 +457,52 @@ def model_uri(run_id):
 
 
 def pick_champion(question, candidates):
-    """Elige el run ganador usando solo la métrica de validación definida en CHAMPION_RULE.
+    """Elige el modelo ganador usando solo la métrica de validación definida en CHAMPION_RULE.
 
-    ``candidates`` es ``{run_name: (run_id, metrics, tiene_modelo)}``. Gana el mejor run entre
-    todos, baseline incluido; si es un baseline sin modelo no hay nada que registrar y regresa
-    ``None``. Una métrica ausente o no finita descalifica al run.
+    ``candidates`` es ``{run_name: (run_id, metrics, tiene_modelo)}``. Solo compiten los runs que
+    guardaron un estimador, porque el registro necesita algo que se pueda cargar y usar. Una
+    métrica ausente o no finita descalifica al run. Regresa ``None`` si ninguno califica.
     """
     metric, higher_is_better = CHAMPION_RULE[question]
     valid = {
         name: item
         for name, item in candidates.items()
-        if metric in item[1] and math.isfinite(item[1][metric])
+        if item[2] and metric in item[1] and math.isfinite(item[1][metric])
     }
     if not valid:
         return None
     sign = 1 if higher_is_better else -1
-    best = max(valid, key=lambda name: sign * valid[name][1][metric])
-    return best if valid[best][2] else None
+    return max(valid, key=lambda name: sign * valid[name][1][metric])
+
+
+def baselines_beating(question, best, candidates):
+    """Nombres de los runs sin modelo (baselines) que superan al ganador en la métrica de elección."""
+    metric, higher_is_better = CHAMPION_RULE[question]
+    sign = 1 if higher_is_better else -1
+    reference = candidates[best][1][metric]
+    return [
+        name
+        for name, (_, metrics, has_model) in candidates.items()
+        if not has_model
+        and math.isfinite(metrics.get(metric, math.nan))
+        and sign * metrics[metric] > sign * reference
+    ]
 
 
 def register_champion(question, candidates):
     """Registra el modelo ganador en el Model Registry y le asigna el alias ``champion``.
 
     Cada ejecución crea una versión nueva del modelo registrado; el alias se mueve a la versión
-    del ganador actual. Regresa ``(nombre_del_run, version)`` o ``None`` si no hay modelo.
+    del ganador actual. Si una regla sin aprendizaje (baseline) lo supera en validación, el modelo
+    se registra igual, pero la versión queda etiquetada ``supera_baselines=no`` y se avisa.
+    Regresa ``(nombre_del_run, version)`` o ``None`` si no hay modelo.
     """
     import mlflow
     from mlflow.tracking import MlflowClient
 
     best = pick_champion(question, candidates)
     if best is None:
-        print(f"{question}: el mejor run en validación no es un modelo; no se registra nada.")
+        print(f"{question}: ningún run guardó un modelo; no se registra nada.")
         return None
     run_id = candidates[best][0]
     name = REGISTERED_MODELS[question]
@@ -462,10 +510,122 @@ def register_champion(question, candidates):
     client = MlflowClient()
     client.set_registered_model_alias(name, CHAMPION_ALIAS, version.version)
     metric = CHAMPION_RULE[question][0]
+    beaten_by = baselines_beating(question, best, candidates)
     client.set_model_version_tag(name, version.version, "run_name", best)
     client.set_model_version_tag(name, version.version, "criterio", f"{metric} en validación")
+    client.set_model_version_tag(
+        name,
+        version.version,
+        "supera_baselines",
+        "no: " + ", ".join(beaten_by) if beaten_by else "si",
+    )
     print(f"{question}: {name} v{version.version} @{CHAMPION_ALIAS} <- {best}", flush=True)
+    if beaten_by:
+        print(
+            f"Aviso {question}: {', '.join(beaten_by)} supera al modelo en {metric}; "
+            "el modelo no aporta frente a esa regla.",
+            flush=True,
+        )
     return best, int(version.version)
+
+
+def search_combinations():
+    """Combinaciones de ``SEARCH_GRID`` como lista de diccionarios, en orden estable."""
+    names = list(SEARCH_GRID)
+    return [dict(zip(names, values)) for values in itertools.product(*SEARCH_GRID.values())]
+
+
+def _combo_label(combo):
+    return ", ".join(f"{key}={value}" for key, value in combo.items())
+
+
+def plot_search(table, metric, higher_is_better, title, path):
+    """Métrica de validación por combinación, con la ganadora resaltada."""
+    ordered = table.sort_values(metric, ascending=not higher_is_better).reset_index(drop=True)
+    colors = ["#1f77b4" if index == 0 else "#9aa5b1" for index in ordered.index]
+    fig, ax = plt.subplots(figsize=(8, 0.4 * len(ordered) + 1.5))
+    ax.barh(ordered["combinacion"][::-1], ordered[metric][::-1], color=colors[::-1])
+    ax.set_xlabel(metric)
+    ax.set_title(title)
+    low, high = ordered[metric].min(), ordered[metric].max()
+    margin = max((high - low) * 0.5, 1e-3)
+    ax.set_xlim(low - margin, high + margin)
+    return _save(fig, path)
+
+
+def run_search(question, train, validation, features, figures_dir, context):
+    """Búsqueda en cuadrícula con un run padre y un run hijo por combinación.
+
+    Cada hijo entrena en una muestra de entrenamiento y mide únicamente en validación completa:
+    nunca calcula métricas ``test_``. Regresa el diccionario de la mejor combinación según la
+    métrica de ``CHAMPION_RULE``, la tabla de resultados y el id del run padre.
+    """
+    import mlflow
+
+    metric, higher_is_better = CHAMPION_RULE[question]
+    target = P1_TARGET if question == "P1" else P2_TARGET
+    make = make_demand_model if question == "P1" else make_risk_model
+    sample = train.sample(n=min(SEARCH_SAMPLE_ROWS, len(train)), random_state=cfg.SEED)
+    parent_name = f"{question}_busqueda_hgb_{HORIZON_LABEL}"
+    rows = []
+    with mlflow.start_run(run_name=parent_name) as parent:
+        mlflow.set_tags(run_tags(question, "busqueda", context))
+        mlflow.log_params(
+            {
+                "modelo": "HistGradientBoosting",
+                "criterio": f"{metric} en validación",
+                "cuadricula": json.dumps({k: list(v) for k, v in SEARCH_GRID.items()}),
+                "combinaciones": len(search_combinations()),
+                "filas_muestra_entrenamiento": len(sample),
+                "filas_entrenamiento": len(train),
+                "filas_validacion": len(validation),
+                "seed": cfg.SEED,
+            }
+        )
+        for index, combo in enumerate(search_combinations(), start=1):
+            model = make(**combo).fit(sample[features], sample[target])
+            if question == "P1":
+                values = regression_metrics(
+                    validation[target], model.predict(validation[features]), "val"
+                )
+                undefined = []
+            else:
+                probabilities = class_probabilities(model, validation[features])
+                predicted = np.asarray(P2_CLASSES)[probabilities.argmax(axis=1)]
+                values, undefined = classification_metrics(
+                    validation[target], predicted, probabilities, "val"
+                )
+            log_run(
+                f"{parent_name}_c{index:02d}",
+                question,
+                "busqueda_hijo",
+                {"modelo": "HistGradientBoosting", "combinacion": index, **combo},
+                values,
+                [],
+                context,
+                undefined,
+                nested=True,
+            )
+            rows.append({"combinacion": _combo_label(combo), **combo, **values})
+        table = pd.DataFrame(rows)
+        best_index = int(table[metric].idxmax() if higher_is_better else table[metric].idxmin())
+        best = {key: table.loc[best_index, key] for key in SEARCH_GRID}
+        best = {key: type(SEARCH_GRID[key][0])(value) for key, value in best.items()}
+        mlflow.log_params({f"mejor_{key}": value for key, value in best.items()})
+        mlflow.log_metric(f"mejor_{metric}", float(table.loc[best_index, metric]))
+        Path(figures_dir).mkdir(parents=True, exist_ok=True)
+        csv = Path(figures_dir) / f"{question.lower()}_busqueda_hgb_{HORIZON_LABEL}.csv"
+        table.to_csv(csv, index=False)
+        figure = plot_search(
+            table,
+            metric,
+            higher_is_better,
+            f"{question}: {metric} por combinación (validación, muestra de entrenamiento)",
+            Path(figures_dir) / f"{question.lower()}_busqueda_hgb_{HORIZON_LABEL}.png",
+        )
+        mlflow.log_artifact(str(figure), artifact_path="figuras")
+        mlflow.log_artifact(str(csv), artifact_path="tablas")
+        return best, table, parent.info.run_id
 
 
 def _print_results(question, results):
@@ -488,7 +648,12 @@ def _split_frames(data, final_test):
 
 
 def run_p1(
-    tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None, register=True
+    tables=None,
+    final_test=False,
+    figures_dir=cfg.FIGURES_DIR,
+    context=None,
+    register=True,
+    tune=False,
 ):
     """P1: baseline estacional y gradiente boosting de Poisson. Regresa métricas por run."""
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p1"])
@@ -518,40 +683,51 @@ def run_p1(
     results[run_name] = metrics
     candidates = {run_name: (run_id, metrics, False)}
 
-    model = make_demand_model().fit(train[features], train[P1_TARGET])
-    predictions = {name: model.predict(frame[features]) for name, frame in evaluated.items()}
-    metrics = {}
-    for name, frame in evaluated.items():
-        metrics.update(regression_metrics(frame[P1_TARGET], predictions[name], name))
-    figure = plot_demand_by_hour(
-        evaluated["val"],
-        predictions["val"],
-        f"P1 gradiente boosting: demanda por hora ({HORIZON_LABEL}, validación)",
-        Path(figures_dir) / f"p1_hgb_poisson_{HORIZON_LABEL}.png",
-    )
-    run_name = f"P1_hgb_poisson_{HORIZON_LABEL}"
-    params = {
-        **_common_params(context, features, rows),
-        "modelo": "HistGradientBoostingRegressor",
-        "loss": "poisson",
-        "learning_rate": model.learning_rate,
-        "max_iter": model.max_iter,
-        "max_leaf_nodes": model.max_leaf_nodes,
-    }
-    params.update(model.get_params())
-    run_id = log_run(
-        run_name,
-        "P1",
-        "candidato",
-        params,
-        metrics,
-        [figure],
-        context,
-        model=model,
-        input_example=train[features],
-    )
-    results[run_name] = metrics
-    candidates[run_name] = (run_id, metrics, True)
+    variants = [("hgb_poisson", {}, {})]
+    if tune:
+        best, _, search_id = run_search(
+            "P1", train, evaluated["val"], features, figures_dir, context
+        )
+        variants.append(
+            (
+                "hgb_poisson_ajustado",
+                best,
+                {"busqueda_run_id": search_id, **{f"mejor_{k}": v for k, v in best.items()}},
+            )
+        )
+    for key, overrides, extra in variants:
+        model = make_demand_model(**overrides).fit(train[features], train[P1_TARGET])
+        predictions = {name: model.predict(frame[features]) for name, frame in evaluated.items()}
+        metrics = {}
+        for name, frame in evaluated.items():
+            metrics.update(regression_metrics(frame[P1_TARGET], predictions[name], name))
+        figure = plot_demand_by_hour(
+            evaluated["val"],
+            predictions["val"],
+            f"P1 {key}: demanda por hora ({HORIZON_LABEL}, validación)",
+            Path(figures_dir) / f"p1_{key}_{HORIZON_LABEL}.png",
+        )
+        run_name = f"P1_{key}_{HORIZON_LABEL}"
+        params = {
+            **_common_params(context, features, rows),
+            "modelo": "HistGradientBoostingRegressor",
+            "loss": "poisson",
+            **extra,
+        }
+        params.update(model.get_params())
+        run_id = log_run(
+            run_name,
+            "P1",
+            "candidato",
+            params,
+            metrics,
+            [figure],
+            context,
+            model=model,
+            input_example=train[features],
+        )
+        results[run_name] = metrics
+        candidates[run_name] = (run_id, metrics, True)
     _print_results("P1", results)
     if register:
         register_champion("P1", candidates)
@@ -559,9 +735,14 @@ def run_p1(
 
 
 def run_p2(
-    tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None, register=True
+    tables=None,
+    final_test=False,
+    figures_dir=cfg.FIGURES_DIR,
+    context=None,
+    register=True,
+    tune=False,
 ):
-    """P2: regresión logística balanceada y gradiente boosting. Regresa métricas por run."""
+    """P2: regla de persistencia, regresión logística balanceada y boosting. Regresa métricas."""
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p2"])
     context = context or run_context()
     features = list(cfg.P2_FEATURE_COLUMNS)
@@ -575,15 +756,38 @@ def run_p2(
     results = {}
     registry_candidates = {}
     candidates = [
+        ("persistencia_proxy", "baseline", None, "regla: clase de la ocupación virtual actual"),
         ("logistica_proxy", "baseline", make_risk_baseline(), "LogisticRegression"),
         ("hgb_proxy", "candidato", make_risk_model(), "HistGradientBoostingClassifier"),
     ]
+    extras = {}
+    if tune:
+        best, _, search_id = run_search(
+            "P2", train, evaluated["val"], features, figures_dir, context
+        )
+        candidates.append(
+            (
+                "hgb_ajustado_proxy",
+                "candidato",
+                make_risk_model(**best),
+                "HistGradientBoostingClassifier (hiperparámetros ajustados)",
+            )
+        )
+        extras["hgb_ajustado_proxy"] = {
+            "busqueda_run_id": search_id,
+            **{f"mejor_{k}": v for k, v in best.items()},
+        }
     for key, kind, model, description in candidates:
-        model.fit(train[features], train[P2_TARGET])
+        if model is not None:
+            model.fit(train[features], train[P2_TARGET])
         metrics, undefined, predicted = {}, [], {}
         for name, frame in evaluated.items():
-            probabilities = class_probabilities(model, frame[features])
-            predicted[name] = np.asarray(P2_CLASSES)[probabilities.argmax(axis=1)]
+            if model is None:
+                predicted[name] = persistence_classes(frame)
+                probabilities = one_hot_probabilities(predicted[name])
+            else:
+                probabilities = class_probabilities(model, frame[features])
+                predicted[name] = np.asarray(P2_CLASSES)[probabilities.argmax(axis=1)]
             values, missing = classification_metrics(
                 frame[P2_TARGET], predicted[name], probabilities, name
             )
@@ -600,13 +804,15 @@ def run_p2(
             **_common_params(context, features, rows),
             **class_counts,
             "modelo": description,
-            "class_weight": "balanced",
             "initial_occupancy": cfg.INITIAL_OCCUPANCY,
             "low_occupancy": cfg.LOW_OCCUPANCY,
             "high_occupancy": cfg.HIGH_OCCUPANCY,
+            **extras.get(key, {}),
         }
-        estimator = model.steps[-1][1] if hasattr(model, "steps") else model
-        params.update(estimator.get_params())
+        if model is not None:
+            params["class_weight"] = "balanced"
+            estimator = model.steps[-1][1] if hasattr(model, "steps") else model
+            params.update(estimator.get_params())
         run_id = log_run(
             run_name,
             "P2",
@@ -617,10 +823,10 @@ def run_p2(
             context,
             undefined,
             model=model,
-            input_example=train[features],
+            input_example=train[features] if model is not None else None,
         )
         results[run_name] = metrics
-        registry_candidates[run_name] = (run_id, metrics, True)
+        registry_candidates[run_name] = (run_id, metrics, model is not None)
     _print_results("P2", results)
     if register:
         register_champion("P2", registry_candidates)
@@ -689,6 +895,11 @@ def main(argv=None):
         help="añade métricas test_ (septiembre); úsalo una sola vez, con decisiones ya fijas",
     )
     parser.add_argument(
+        "--tune",
+        action="store_true",
+        help="P1 y P2: busca hiperparámetros del boosting (run padre con hijos) y añade un run ajustado",
+    )
+    parser.add_argument(
         "--no-register",
         action="store_true",
         help="entrena y registra runs, pero no crea versiones ni alias en el Model Registry",
@@ -705,6 +916,7 @@ def main(argv=None):
         if question != "P3":
             kwargs["final_test"] = args.final_test
             kwargs["register"] = not args.no_register
+            kwargs["tune"] = args.tune
         RUNNERS[question](**kwargs)
     print("\nListo. Para ver los runs: mlflow ui --backend-store-uri", cfg.TRACKING_URI)
 

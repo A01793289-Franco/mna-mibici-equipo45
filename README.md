@@ -124,14 +124,24 @@ python -m mibici.train --question all
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db
 ```
 
+Para repetir además la búsqueda de hiperparámetros del boosting (P1 y P2; unos 2 y 5 minutos respectivamente con 300,000 filas de muestra), agrega `--tune`:
+
+```bash
+python -m mibici.train --question all --tune
+```
+
+Crea un run padre `P1_busqueda_hgb_h1` (y `P2_busqueda_hgb_h1`) con un run hijo por combinación y, a partir de la mejor, los runs `P1_hgb_poisson_ajustado_h1` y `P2_hgb_ajustado_proxy_h1`. La cuadrícula está documentada en el [protocolo](references/protocolo_experimento.md). Para compararlas en la interfaz (modo *Model training*), expande el run padre en la tabla de runs, marca sus hijos y pulsa *Compare*.
+
 La interfaz queda en <http://127.0.0.1:5000>, experimento `mibici-equipo45`. `python -m mibici.train_p1` sigue funcionando y equivale a `--question P1`.
 
 | Run | Pregunta | Modelo | Métricas principales (validación) |
 |---|---|---|---|
 | `P1_estacional_h1` | P1 | Baseline: misma estación y hora de la semana anterior | `val_mae`, `val_rmse`, `val_wape` |
 | `P1_hgb_poisson_h1` | P1 | `HistGradientBoostingRegressor` con pérdida de Poisson | `val_mae`, `val_rmse`, `val_wape` |
+| `P2_persistencia_proxy_h1` | P2 | Baseline sin aprendizaje: la clase de la próxima hora es la de la ocupación virtual actual | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
 | `P2_logistica_proxy_h1` | P2 | Baseline: regresión logística balanceada de tres clases | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
 | `P2_hgb_proxy_h1` | P2 | `HistGradientBoostingClassifier` balanceado | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
+| `P1_hgb_poisson_ajustado_h1`, `P2_hgb_ajustado_proxy_h1` | P1, P2 | Con `--tune`: boosting con la mejor combinación de la búsqueda (solo validación) | `val_mae` / `val_f1_macro` |
 | `P3_kmeans_perfil48` | P3 | Baseline: K-means con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
 | `P3_ward_perfil48` | P3 | Agrupamiento jerárquico Ward con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
 
@@ -152,10 +162,10 @@ Al terminar P1 y P2 se elige el ganador **solo con métricas de validación** y 
 
 | Pregunta | Modelo registrado | Criterio |
 |---|---|---|
-| P1 | `mibici-p1-demanda` | menor `val_mae` entre todos los runs de P1 (si gana el baseline, no se registra nada) |
-| P2 | `mibici-p2-riesgo` | mayor `val_f1_macro` entre los runs de P2 |
+| P1 | `mibici-p1-demanda` | menor `val_mae` entre los runs que guardan un modelo |
+| P2 | `mibici-p2-riesgo` | mayor `val_f1_macro` entre los runs que guardan un modelo |
 
-Cada ejecución crea una versión nueva y mueve el alias `champion` a la del ganador. Con `--no-register` se entrena sin tocar el registro. Las métricas `test_` (septiembre) nunca participan en la elección.
+Los baselines sin modelo (estacional, persistencia) no se registran, pero se comparan: si uno supera al ganador, la versión queda con la etiqueta `supera_baselines=no: <run>` y el entrenamiento lo avisa. Cada ejecución crea una versión nueva y mueve el alias `champion` a la del ganador. Con `--no-register` se entrena sin tocar el registro. Las métricas `test_` (septiembre) nunca participan en la elección.
 
 ```bash
 python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
