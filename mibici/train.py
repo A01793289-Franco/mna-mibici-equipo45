@@ -845,8 +845,15 @@ def run_p2(
     context=None,
     register=True,
     tune=False,
+    initial_occupancy=cfg.INITIAL_OCCUPANCY,
+    suffix="",
 ):
-    """P2: regla de persistencia, regresión logística balanceada y boosting. Regresa métricas."""
+    """P2: regla de persistencia, regresión logística balanceada y boosting. Regresa métricas.
+
+    ``initial_occupancy`` es la ocupación inicial con la que se construyó la tabla ``tables``; solo
+    se registra como parámetro. ``suffix`` se agrega a los nombres de run y de figura (por ejemplo
+    ``_occ25``) para distinguir los escenarios de sensibilidad.
+    """
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p2"])
     context = context or run_context()
     features = list(cfg.P2_FEATURE_COLUMNS)
@@ -897,18 +904,18 @@ def run_p2(
             )
             metrics.update(values)
             undefined += missing
-        run_name = f"P2_{key}_{HORIZON_LABEL}"
+        run_name = f"P2_{key}_{HORIZON_LABEL}{suffix}"
         figure = plot_confusion(
             evaluated["val"][P2_TARGET],
             predicted["val"],
-            f"P2 {key}: matriz de confusión (validación)",
-            Path(figures_dir) / f"p2_{key}_{HORIZON_LABEL}.png",
+            f"P2 {key}{suffix}: matriz de confusión (validación)",
+            Path(figures_dir) / f"p2_{key}_{HORIZON_LABEL}{suffix}.png",
         )
         params = {
             **_common_params(context, features, rows),
             **class_counts,
             "modelo": description,
-            "initial_occupancy": cfg.INITIAL_OCCUPANCY,
+            "initial_occupancy": initial_occupancy,
             "low_occupancy": cfg.LOW_OCCUPANCY,
             "high_occupancy": cfg.HIGH_OCCUPANCY,
             **extras.get(key, {}),

@@ -73,6 +73,7 @@ tests/
   test_train.py
   test_predict.py
   test_stations.py
+  test_sensitivity.py
 docs/
 requirements.txt
 pyproject.toml
@@ -149,6 +150,7 @@ La interfaz queda en <http://127.0.0.1:5000>, experimento `mibici-equipo45`. `py
 | `P3_kmeans_perfil48` | P3 | Baseline: K-means con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
 | `P3_ward_perfil48` | P3 | Agrupamiento jerárquico Ward con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
 | `P3_barrido_k_perfil48` | P3 | Barrido de k=2 a 8 para K-means y Ward (una métrica por paso k, tabla y figura) | `*_train_silhouette`, `*_train_davies_bouldin`, `*_val_ari` |
+| `P2_*_h1_occ25`, `_occ50`, `_occ75`, `P2_sensibilidad_ocupacion_inicial` | P2 | Con `python -m mibici.sensitivity`: los tres modelos de P2 con la ocupación inicial del proxy en 25%, 50% y 75%, y un run resumen | `val_f1_macro`, `val_balanced_accuracy` |
 
 Cada run registra:
 
@@ -158,6 +160,16 @@ Cada run registra:
 - **Artefactos:** figura de cada run (demanda por hora, matriz de confusión, o mapa y perfiles de los grupos) y, en P3, la tabla de grupos por estación. Las figuras también se guardan en `reports/figures/`.
 
 Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
+
+### Sensibilidad de P2 a la ocupación inicial
+
+La etiqueta de P2 parte de una ocupación virtual inicial arbitraria (50%). Para ver si las conclusiones dependen de ese supuesto:
+
+```bash
+python -m mibici.sensitivity
+```
+
+Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia, regresión logística y boosting con cada una, y registra un run por modelo y escenario (sufijo `_occ25`, `_occ50`, `_occ75`, parámetro `initial_occupancy`) más un run resumen. Tarda unos 3 minutos. No escribe tablas ni manifiestos (por eso no usa `features --initial-occupancy`, que sobrescribiría `data/processed/` y `feature_manifest.json`), no registra modelos y solo usa validación. Comprueba además que la tabla en memoria con 50% es idéntica a la guardada. Resultados en [reports/resultados_mlflow.md](reports/resultados_mlflow.md) y figura en `reports/figures/sensibilidad/`.
 
 ### Modelo guardado, registro y predicción
 
@@ -226,6 +238,6 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
-Verificaciones realizadas: 21 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

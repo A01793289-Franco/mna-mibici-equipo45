@@ -148,6 +148,20 @@ El detalle está en el cuaderno [2.0-analisis-errores-p1.ipynb](../notebooks/2.0
 
 El error absoluto sigue a la demanda: las horas pico (7 a 9 h y 17 a 19 h) son 6 de las 24 horas y reúnen 38% del error absoluto total, y el decil de mayor demanda reciente concentra 23%. En términos relativos ocurre lo contrario: el WAPE baja de 1.61 en el decil de menor demanda a 0.43 en el de mayor, y de 1.2 a 1.4 en la madrugada y la noche a 0.54 a 0.58 en las horas pico; por eso el WAPE global de 64% proviene sobre todo de estaciones-hora con pocas salidas, donde el conteo tiene mucha variación aleatoria (hipótesis razonable, no medida aquí). El sesgo medio es casi nulo (-0.003; entre -0.017 y 0.022 por decil), con una ligera subestimación a las 18 h (0.073) y en el decil más alto. El error no está concentrado en pocas estaciones: las 10 con mayor error suman 7.9% del total y las 50 primeras, 24.9%; son estaciones grandes del centro cuyo WAPE (0.39) es menor que el del resto (0.68), de modo que fallan por tamaño y no por ser difíciles. Como siguiente paso conviene probar variables de feriados, eventos y clima si hay una fuente reproducible, complementar el WAPE con una métrica adecuada para conteos pequeños (como la desviación de Poisson) y revisar la subestimación de las 18 h.
 
+## Sensibilidad de P2 a la ocupación inicial
+
+La etiqueta de P2 depende de una ocupación virtual que parte de 50% de la capacidad, un supuesto sin respaldo en datos. `python -m mibici.sensitivity` repitió P2 con 25% y 75% (solo validación; figura `reports/figures/sensibilidad/p2_sensibilidad_ocupacion_inicial.png`).
+
+| Ocupación inicial | Persistencia F1 macro | Logística F1 macro | Boosting F1 macro | Boosting exactitud balanceada | Clase normal (entrenamiento) | Sin bicicletas | Sin anclajes | Eventos recortados |
+|---|---|---|---|---|---|---|---|---|
+| 25% | 0.8821 | 0.8226 | 0.8703 | 0.9084 | 53.5% | 33.7% | 12.8% | 447,988 |
+| 50% | 0.8824 | 0.8223 | 0.8708 | 0.9085 | 53.5% | 33.6% | 12.9% | 447,278 |
+| 75% | 0.8829 | 0.8215 | 0.8709 | 0.9085 | 53.7% | 33.4% | 12.9% | 447,283 |
+
+El resultado es estable: entre 25% y 75% el F1 macro cambia 0.0008 en la regla de persistencia, 0.0011 en la logística y 0.0006 en el boosting, y el orden de los modelos no cambia (la persistencia sigue por encima del boosting, y este de la logística). Las proporciones de clase varían menos de 0.4 puntos porcentuales en entrenamiento. Por lo tanto, las conclusiones de P2 no dependen del valor inicial elegido.
+
+Una explicación probable (no medida aparte aquí) es que la ocupación se recorta a [0, 1] en cada evento y el diagnóstico de `p2_features` cuenta unos 447 mil eventos recortados en los tres escenarios. Cada recorte reinicia el estado en un extremo, de modo que el efecto del valor inicial se borra pronto. Eso hace al proxy poco sensible al supuesto inicial, pero también significa que la etiqueta depende más de la dinámica de recortes que de un inventario real. No sustituye datos observados de disponibilidad: la estabilidad frente a este supuesto no valida el proxy frente a la realidad. Septiembre no se usó.
+
 ## Trazabilidad y evidencia
 
 Los seis runs finalizaron y registran `git_dirty=false`, el mismo commit, las mismas versiones de datos y variables, parámetros del estimador, etiquetas y al menos una figura. Las capturas auténticas de la interfaz están en `reports/figures/mlflow_*.png`; las tablas provienen del registro local y el JSON conserva la precisión completa. Los nombres de las corridas, no sus IDs locales, se reproducen al ejecutar los comandos del README.

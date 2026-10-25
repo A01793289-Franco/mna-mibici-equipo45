@@ -47,6 +47,10 @@ Después de la evaluación única de septiembre se añadió una búsqueda de hip
 
 La etiqueta de P2 es la clase de la ocupación virtual de la hora siguiente, y la ocupación virtual de la hora actual es un predictor. La regla `P2_persistencia_proxy_h1` predice que la clase no cambia: "sin bicicletas" si `virtual_occupancy <= 0.10`, "sin anclajes" si `>= 0.90`, "normal" en otro caso. Usa los umbrales que definen la etiqueta y no tiene parámetros que ajustar con datos, por lo que no hay búsqueda de hiperparámetros. Se agregó después de la evaluación única de septiembre, como control de rigor; su comparación se hace en validación y no se calculó para septiembre, de modo que esa evaluación no se vuelve a usar.
 
+## Sensibilidad de P2 a la ocupación inicial
+
+La ocupación virtual parte de un valor arbitrario (`INITIAL_OCCUPANCY = 0.5`). `python -m mibici.sensitivity` repite P2 con 0.25, 0.5 y 0.75 (`P2_INITIAL_OCCUPANCY_CHECKS`) reconstruyendo la tabla en memoria con `features.p2_features`, sin escribir Parquet ni manifiestos. Los tres modelos se entrenan y evalúan igual que en el experimento base, solo con validación y sin registrar modelos en el Model Registry. Se compara el F1 macro, la exactitud balanceada, la proporción de clases y los eventos recortados. No se elige una ocupación inicial a partir de estos resultados.
+
 ## Comandos
 
 ```bash
@@ -55,6 +59,7 @@ python -m mibici.features --verify
 python -m unittest discover -s tests -v
 python -m mibici.train --question all --final-test
 python -m mibici.train --question all --tune
+python -m mibici.sensitivity
 python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 ```
