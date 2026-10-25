@@ -58,6 +58,7 @@ references/
   data_manifest.json
   feature_manifest.json
 notebooks/1.0-lpa-exploracion-mibici.ipynb
+notebooks/2.0-analisis-errores-p1.ipynb
 models/
 reports/
   TC5061_Propuesta_Proyecto_Equipo45.pdf
@@ -181,6 +182,14 @@ python -m mibici.predict --question P2 --timestamp 2026-09-15T08:00 --output sal
 El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md).
 
 Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
+
+Análisis de errores de P1: [2.0-analisis-errores-p1.ipynb](notebooks/2.0-analisis-errores-p1.ipynb). Descompone el error del modelo `champion` por hora, por decil de demanda y por estación (solo validación) y concluye dónde falla; las conclusiones están resumidas en [resultados_mlflow.md](reports/resultados_mlflow.md). Requiere haber entrenado antes (carga el modelo del registro de MLflow). Para ejecutarlo de principio a fin desde la raíz:
+
+```bash
+python -c "import nbformat; from nbclient import NotebookClient; nb = nbformat.read('notebooks/2.0-analisis-errores-p1.ipynb', 4); NotebookClient(nb, resources={'metadata': {'path': 'notebooks'}}).execute(); nbformat.write(nb, 'notebooks/2.0-analisis-errores-p1.ipynb')"
+```
+
+También se puede abrir en VS Code o Jupyter y usar *Run All*.
 
 Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
