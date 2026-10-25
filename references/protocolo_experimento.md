@@ -20,6 +20,10 @@ Las funciones de `features.py` incluyen docstrings sobre su operación y su pert
 
 k=3 se fijó antes del experimento. Para contrastarlo se agregó el run `P3_barrido_k_perfil48`, que entrena K-means y Ward con k de 2 a 8 y registra silhouette, Davies-Bouldin y ARI por k. Usa únicamente `p3_train` y `p3_val`; `p3_test.parquet` no se lee ni se usa para decidir. El rango de k vive en `mibici/train.py` (`P3_K_VALUES`). La decisión sobre k y su interpretación están en `reports/resultados_mlflow.md`.
 
+## Estación como variable categórica en P1
+
+Se agregó `P1_hgb_poisson_estacion_h1`, que usa `station_id` como categórica. Es otra iteración posterior a septiembre, por lo que se evalúa en validación y no se evaluó en septiembre. Las categorías se aprenden solo con el entrenamiento: las 254 estaciones con más filas (empate por `station_id`) conservan su categoría y el resto, más las estaciones no vistas, se agrupan en "otras". Las columnas (`P1_FEATURE_COLUMNS_V2`) y la codificación están en `mibici/train.py` y `mibici/stations.py`, no en `config.py`, cuyo hash forma parte de los manifiestos de datos; `P1_FEATURE_COLUMNS` queda sin cambios.
+
 ## Elección y registro del modelo
 
 Después de entrenar P1 y P2 se registra en MLflow Model Registry un modelo por pregunta y se le asigna el alias `champion`. La regla usa únicamente métricas de validación, nunca `test_`:

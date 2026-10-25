@@ -265,9 +265,12 @@ class TestMlflowRuns(unittest.TestCase):
         results = train.run_p1(
             demand_table(), figures_dir=self.root / "figs", context=self.context
         )
-        self.assertEqual(set(results), {"P1_estacional_h1", "P1_hgb_poisson_h1"})
+        self.assertEqual(
+            set(results),
+            {"P1_estacional_h1", "P1_hgb_poisson_h1", "P1_hgb_poisson_estacion_h1"},
+        )
         client, runs = self.runs("P1")
-        self.assertEqual(len(runs), 2)
+        self.assertEqual(len(runs), 3)
         for run in runs:
             self.assertEqual(run.data.tags["equipo"], cfg.TEAM)
             self.assertEqual(run.data.tags["git_commit"], "abc123")
@@ -298,7 +301,12 @@ class TestMlflowRuns(unittest.TestCase):
         predicted = model.predict(val[list(cfg.P1_FEATURE_COLUMNS)])
         self.assertAlmostEqual(np.abs(val["target_departures"] - predicted).mean(), expected)
         alias = client.get_model_version_by_alias(train.REGISTERED_MODELS["P1"], "champion")
-        self.assertEqual(alias.run_id, candidate.info.run_id)
+        models = sorted(
+            (run for run in runs if run.outputs.model_outputs),
+            key=lambda run: run.info.start_time,
+        )[-2:]
+        winner = min(models, key=lambda run: run.data.metrics["val_mae"])
+        self.assertEqual(alias.run_id, winner.info.run_id)
 
     def tune(self, question, runner, table):
         grid = {"learning_rate": (0.1,), "max_leaf_nodes": (7, 15), "max_iter": (20,)}
@@ -347,6 +355,21 @@ class TestMlflowRuns(unittest.TestCase):
             any(name.startswith("test_") for child in children for name in child.data.metrics)
         )
         self.assertIn("P2_hgb_ajustado_proxy_h1", results)
+
+    def test_station_model_is_saved_and_handles_unseen_stations(self):
+        train.run_p1(demand_table(), figures_dir=self.root / "figs", context=self.context)
+        client, runs = self.runs("P1")
+        station_runs = [r for r in runs if r.info.run_name == "P1_hgb_poisson_estacion_h1"]
+        run = max(station_runs, key=lambda item: item.info.start_time)
+        self.assertEqual(len(run.outputs.model_outputs), 1)
+        self.assertEqual(run.data.params["categorical_features"], "['station_group']")
+        uri = f"runs:/{run.info.run_id}/{train.MODEL_ARTIFACT}"
+        info = self.mlflow.models.get_model_info(uri)
+        self.assertEqual(info.signature.inputs.input_names(), list(train.P1_FEATURE_COLUMNS_V2))
+        model = self.mlflow.sklearn.load_model(uri)
+        frame = demand_table().head(5)[list(train.P1_FEATURE_COLUMNS_V2)].copy()
+        frame["station_id"] = 99999  # estación que no está en entrenamiento
+        self.assertEqual(len(model.predict(frame)), 5)
 
     def test_register_false_leaves_registry_untouched(self):
         client = self.mlflow.tracking.MlflowClient()

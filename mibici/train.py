@@ -50,6 +50,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from mibici import config as cfg
+from mibici.stations import GROUP_COLUMN, MAX_CATEGORIES, StationGrouper
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -57,6 +58,9 @@ import matplotlib.pyplot as plt  # noqa: E402
 P1_TARGET = "target_departures"
 P2_TARGET = "target_risk"
 P2_CLASSES = (0, 1, 2)
+# Variables de P1 más la estación como categórica. Se define aquí y no en config.py porque el hash
+# de config.py forma parte de los manifiestos de datos; P1_FEATURE_COLUMNS queda intacta.
+P1_FEATURE_COLUMNS_V2 = (*cfg.P1_FEATURE_COLUMNS, "station_id")
 HORIZON_LABEL = f"h{cfg.HORIZON_HOURS}"
 
 # Registro de modelos: un nombre por pregunta y el alias de la versión elegida.
@@ -67,6 +71,13 @@ CHAMPION_RULE = {"P1": ("val_mae", False), "P2": ("val_f1_macro", True)}
 MODEL_ARTIFACT = "model"
 # MLflow guarda con skops; HistGradientBoosting usa este tipo y hay que declararlo como confiable.
 TRUSTED_TYPES = ["sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor"]
+# Tipos adicionales que skops pide declarar para el modelo con estación categórica: la clase propia
+# y dos piezas internas de scikit-learn (el preprocesador de categóricas del boosting).
+STATION_MODEL_TRUSTED_TYPES = [
+    "mibici.stations.StationGrouper",
+    "functools.partial",
+    "sklearn.utils.validation.check_array",
+]
 INPUT_EXAMPLE_ROWS = 5
 
 # Búsqueda de hiperparámetros (opción --tune): cuadrícula pequeña evaluada solo en validación y
@@ -165,6 +176,23 @@ def weekly_baseline(train, frame):
 def make_demand_model(**params):
     """Candidato de P1: gradiente boosting con pérdida de Poisson para conteos."""
     return HistGradientBoostingRegressor(loss="poisson", random_state=cfg.SEED, **params)
+
+
+def make_demand_station_model(**params):
+    """Candidato de P1 con la estación como categórica (las menos frecuentes van a "otras").
+
+    El agrupamiento de estaciones forma parte del modelo, así que se aprende solo con el
+    entrenamiento y viaja con el modelo guardado: al predecir basta pasar ``station_id``.
+    """
+    return make_pipeline(
+        StationGrouper(max_categories=MAX_CATEGORIES),
+        HistGradientBoostingRegressor(
+            loss="poisson",
+            categorical_features=[GROUP_COLUMN],
+            random_state=cfg.SEED,
+            **params,
+        ),
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -472,6 +500,14 @@ def log_run(
         return run.info.run_id
 
 
+def trusted_types(model):
+    """Tipos que skops debe aceptar al guardar y cargar este modelo."""
+    steps = getattr(model, "steps", [])
+    if steps and isinstance(steps[0][1], StationGrouper):
+        return [*TRUSTED_TYPES, *STATION_MODEL_TRUSTED_TYPES]
+    return list(TRUSTED_TYPES)
+
+
 def log_model(model, input_example):
     """Guarda el modelo en el run activo con firma y ejemplo de entrada."""
     import mlflow
@@ -489,7 +525,7 @@ def log_model(model, input_example):
             name=MODEL_ARTIFACT,
             signature=signature,
             input_example=example,
-            skops_trusted_types=TRUSTED_TYPES,
+            skops_trusted_types=trusted_types(model),
         )
 
 
@@ -730,7 +766,16 @@ def run_p1(
     results[run_name] = metrics
     candidates = {run_name: (run_id, metrics, False)}
 
-    variants = [("hgb_poisson", {}, {})]
+    variants = [("hgb_poisson", make_demand_model, {}, features, "HistGradientBoostingRegressor")]
+    variants.append(
+        (
+            "hgb_poisson_estacion",
+            make_demand_station_model,
+            {},
+            list(P1_FEATURE_COLUMNS_V2),
+            "StationGrouper + HistGradientBoostingRegressor",
+        )
+    )
     if tune:
         best, _, search_id = run_search(
             "P1", train, evaluated["val"], features, figures_dir, context
@@ -738,13 +783,15 @@ def run_p1(
         variants.append(
             (
                 "hgb_poisson_ajustado",
-                best,
+                lambda: make_demand_model(**best),
                 {"busqueda_run_id": search_id, **{f"mejor_{k}": v for k, v in best.items()}},
+                features,
+                "HistGradientBoostingRegressor",
             )
         )
-    for key, overrides, extra in variants:
-        model = make_demand_model(**overrides).fit(train[features], train[P1_TARGET])
-        predictions = {name: model.predict(frame[features]) for name, frame in evaluated.items()}
+    for key, factory, extra, columns, description in variants:
+        model = factory().fit(train[columns], train[P1_TARGET])
+        predictions = {name: model.predict(frame[columns]) for name, frame in evaluated.items()}
         metrics = {}
         for name, frame in evaluated.items():
             metrics.update(regression_metrics(frame[P1_TARGET], predictions[name], name))
@@ -756,12 +803,22 @@ def run_p1(
         )
         run_name = f"P1_{key}_{HORIZON_LABEL}"
         params = {
-            **_common_params(context, features, rows),
-            "modelo": "HistGradientBoostingRegressor",
+            **_common_params(context, columns, rows),
+            "modelo": description,
             "loss": "poisson",
             **extra,
         }
-        params.update(model.get_params())
+        estimator = model.steps[-1][1] if hasattr(model, "steps") else model
+        params.update(estimator.get_params())
+        if hasattr(model, "steps"):
+            grouper = model.steps[0][1]
+            params.update(
+                {
+                    "station_id": "categórica: estaciones frecuentes y 'otras'",
+                    "categorias_estacion": grouper.n_categories_,
+                    "estaciones_en_otras": grouper.n_grouped_stations_,
+                }
+            )
         run_id = log_run(
             run_name,
             "P1",
@@ -771,7 +828,7 @@ def run_p1(
             [figure],
             context,
             model=model,
-            input_example=train[features],
+            input_example=train[columns],
         )
         results[run_name] = metrics
         candidates[run_name] = (run_id, metrics, True)

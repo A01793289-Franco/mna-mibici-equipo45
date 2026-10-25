@@ -84,9 +84,8 @@ def predict_hour(question, timestamp, table=None, model=None, columns=None, alia
     if model is None:
         model, columns = load_champion(question, alias)
     if table is None:
-        table = pd.read_parquet(
-            features_table(question), columns=["station_id", "timestamp", *columns]
-        )
+        needed = list(dict.fromkeys(["station_id", "timestamp", *columns]))
+        table = pd.read_parquet(features_table(question), columns=needed)
     missing = [name for name in columns if name not in table.columns]
     if missing:
         raise PredictionError(f"Faltan columnas que pide el modelo: {', '.join(missing)}")

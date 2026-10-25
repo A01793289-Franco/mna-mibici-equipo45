@@ -128,6 +128,20 @@ Hasta aquí k=3 era una decisión fijada antes del experimento. El run `P3_barri
 
 **Límite.** La silhouette sigue siendo baja en todos los k (máximo 0.14): los perfiles forman un continuo y los grupos se superponen. k=3 es la opción mejor respaldada entre las probadas, no una separación nítida. El ARI de 0.58 indica estabilidad parcial entre periodos.
 
+## P1 con la estación como variable categórica
+
+El candidato por defecto solo distingue estaciones por sus rezagos. `P1_hgb_poisson_estacion_h1` agrega `station_id` como variable categórica: cada una de las 254 estaciones con más horas de datos en entrenamiento tiene su propia categoría y el resto de las estaciones, junto con cualquier estación que no esté en entrenamiento, comparten la categoría "otras" (255 categorías en total, el máximo del boosting). La agrupación se aprende solo con el entrenamiento, es parte del modelo guardado (`StationGrouper` en `mibici/stations.py`) y las pruebas comprueban que una estación nueva no hace fallar la predicción. Los hiperparámetros son los de la configuración por defecto, para comparar solo el efecto de la estación.
+
+| Run (validación) | val_mae | val_rmse | val_wape | val_r2 |
+|---|---|---|---|---|
+| P1_estacional_h1 | 0.8988 | 1.8185 | 0.7676 | 0.4067 |
+| P1_hgb_poisson_h1 | 0.7614 | 1.4363 | 0.6503 | 0.6299 |
+| P1_hgb_poisson_estacion_h1 | 0.7498 | 1.4446 | 0.6403 | 0.6256 |
+
+Con la estación el MAE baja de 0.7614 a 0.7498 (cerca de 1.5%) y el WAPE de 0.6503 a 0.6403; es una mejora mayor que la del ajuste de hiperparámetros (0.7552), obtenida sin ajustar nada. A cambio, el RMSE sube de 1.4363 a 1.4446 y el R² baja de 0.6299 a 0.6256: el modelo acierta un poco mejor en los errores típicos, pero no mejora, e incluso empeora un poco, en los errores grandes. La ganancia es modesta.
+
+La cobertura limita el efecto. En entrenamiento hay 413 estaciones: 254 tienen categoría propia y 159 quedan en "otras". En validación hay 470 estaciones, 57 de ellas sin ningún dato de entrenamiento, y 287,795 de las 665,747 filas de validación (43%) caen en "otras", donde el modelo no distingue estación. Por regla de elección (menor `val_mae`) este modelo queda como `champion` de P1. La mejora justifica conservarlo, porque el costo es una pieza adicional y pequeña, pero no es una mejora grande, y habría que probar si combinarlo con los hiperparámetros ajustados o con otra codificación (por ejemplo un promedio por estación calculado solo con entrenamiento) mejora más. No se evaluó en septiembre.
+
 ## Trazabilidad y evidencia
 
 Los seis runs finalizaron y registran `git_dirty=false`, el mismo commit, las mismas versiones de datos y variables, parámetros del estimador, etiquetas y al menos una figura. Las capturas auténticas de la interfaz están en `reports/figures/mlflow_*.png`; las tablas provienen del registro local y el JSON conserva la precisión completa. Los nombres de las corridas, no sus IDs locales, se reproducen al ejecutar los comandos del README.

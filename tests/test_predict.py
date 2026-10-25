@@ -66,9 +66,10 @@ class TestPredict(unittest.TestCase):
         rows = self.p1[self.p1["timestamp"] == when].sort_values("station_id")
         self.assertEqual(result["station_id"].tolist(), rows["station_id"].tolist())
         model = self.mlflow.sklearn.load_model("models:/mibici-p1-demanda@champion")
-        np.testing.assert_allclose(
-            result["demanda_esperada"], model.predict(rows[list(cfg.P1_FEATURE_COLUMNS)])
-        )
+        columns = self.mlflow.models.get_model_info(
+            "models:/mibici-p1-demanda@champion"
+        ).signature.inputs.input_names()
+        np.testing.assert_allclose(result["demanda_esperada"], model.predict(rows[columns]))
 
     def test_p2_has_class_names_and_probabilities_that_add_one(self):
         when = self.p2["timestamp"].iloc[600]

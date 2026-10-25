@@ -45,6 +45,7 @@ mibici/
   train.py
   train_p1.py
   predict.py
+  stations.py
 references/
   Machine Learning Canvas.pdf
   ml_canvas.md
@@ -70,6 +71,7 @@ tests/
   test_data_features.py
   test_train.py
   test_predict.py
+  test_stations.py
 docs/
 requirements.txt
 pyproject.toml
@@ -138,6 +140,7 @@ La interfaz queda en <http://127.0.0.1:5000>, experimento `mibici-equipo45`. `py
 |---|---|---|---|
 | `P1_estacional_h1` | P1 | Baseline: misma estación y hora de la semana anterior | `val_mae`, `val_rmse`, `val_wape` |
 | `P1_hgb_poisson_h1` | P1 | `HistGradientBoostingRegressor` con pérdida de Poisson | `val_mae`, `val_rmse`, `val_wape` |
+| `P1_hgb_poisson_estacion_h1` | P1 | Boosting de Poisson con la estación como variable categórica (254 estaciones frecuentes y "otras") | `val_mae`, `val_rmse`, `val_wape` |
 | `P2_persistencia_proxy_h1` | P2 | Baseline sin aprendizaje: la clase de la próxima hora es la de la ocupación virtual actual | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
 | `P2_logistica_proxy_h1` | P2 | Baseline: regresión logística balanceada de tres clases | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
 | `P2_hgb_proxy_h1` | P2 | `HistGradientBoostingClassifier` balanceado | `val_f1_macro`, `val_balanced_accuracy`, `val_ap_macro` |
