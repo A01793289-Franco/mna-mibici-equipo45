@@ -20,8 +20,10 @@ import argparse
 import itertools
 import json
 import math
+import os
 from pathlib import Path
 import subprocess
+import time
 import warnings
 
 import matplotlib
@@ -42,6 +44,7 @@ from sklearn.metrics import (
     f1_score,
     mean_absolute_error,
     precision_recall_fscore_support,
+    precision_recall_curve,
     r2_score,
     root_mean_squared_error,
     silhouette_score,
@@ -50,7 +53,15 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from mibici import config as cfg
+from mibici.deployable import PersistenceRisk, SeasonalDemand, StationGroups
 from mibici.stations import GROUP_COLUMN, MAX_CATEGORIES, StationGrouper
+from mibici.tracking import (
+    check_registered_model,
+    log_bundle,
+    log_model_check,
+    project_run,
+    verify_inputs,
+)
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
@@ -64,10 +75,10 @@ P1_FEATURE_COLUMNS_V2 = (*cfg.P1_FEATURE_COLUMNS, "station_id")
 HORIZON_LABEL = f"h{cfg.HORIZON_HOURS}"
 
 # Registro de modelos: un nombre por pregunta y el alias de la versión elegida.
-REGISTERED_MODELS = {"P1": "mibici-p1-demanda", "P2": "mibici-p2-riesgo"}
+REGISTERED_MODELS = {"P1": "mibici-p1-demanda", "P2": "mibici-p2-riesgo", "P3": "mibici-p3-grupos"}
 CHAMPION_ALIAS = "champion"
 # Regla de elección del campeón: solo métricas de validación. (métrica, True si mayor es mejor)
-CHAMPION_RULE = {"P1": ("val_mae", False), "P2": ("val_f1_macro", True)}
+CHAMPION_RULE = {"P1": ("val_mae", False), "P2": ("val_f1_macro", True), "P3": ("val_ari", True)}
 MODEL_ARTIFACT = "model"
 # MLflow guarda con skops; HistGradientBoosting usa este tipo y hay que declararlo como confiable.
 TRUSTED_TYPES = ["sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor"]
@@ -250,7 +261,7 @@ CLUSTERERS = {
 P3_K_VALUES = tuple(range(2, 9))
 
 
-def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS):
+def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS, model=None):
     """Silhouette y Davies-Bouldin en entrenamiento; ARI entre entrenamiento y validación.
 
     El ARI compara las etiquetas del perfil de entrenamiento con las de una agrupación ajustada
@@ -258,7 +269,11 @@ def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS):
     ``(etiquetas_train, métricas)``.
     """
     columns = list(cfg.P3_FEATURE_COLUMNS)
-    labels = CLUSTERERS[algorithm](k).fit_predict(train[columns].to_numpy())
+    labels = (
+        model.labels_
+        if model is not None
+        else CLUSTERERS[algorithm](k).fit_predict(train[columns].to_numpy())
+    )
     metrics = {
         "train_silhouette": float(silhouette_score(train[columns], labels)),
         "train_davies_bouldin": float(davies_bouldin_score(train[columns], labels)),
@@ -277,6 +292,14 @@ def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS):
         metrics["val_ari"] = float(
             adjusted_rand_score(train_by_station.loc[common], val_by_station.loc[common])
         )
+    if model is not None:
+        predicted = model.predict(val[columns])
+        if 1 < len(np.unique(predicted)) < len(predicted):
+            metrics["val_assignment_silhouette"] = float(silhouette_score(val[columns], predicted))
+            metrics["val_assignment_davies_bouldin"] = float(
+                davies_bouldin_score(val[columns], predicted)
+            )
+        metrics["val_assignment_ari"] = float(adjusted_rand_score(val_labels, predicted))
     return labels, metrics
 
 
@@ -347,6 +370,25 @@ def plot_confusion(y_true, y_pred, title, path):
     ax.set_title(title)
     ax.tick_params(axis="x", labelrotation=20)
     return _save(fig, path)
+
+
+def plot_precision_recall(y_true, probabilities, path):
+    fig, ax = plt.subplots(figsize=(7, 4))
+    for label, name in enumerate(cfg.P2_CLASS_NAMES):
+        binary = np.asarray(y_true) == label
+        if binary.any() and not binary.all():
+            precision, recall, _ = precision_recall_curve(binary, probabilities[:, label])
+            ax.plot(recall, precision, label=name)
+    ax.set(xlabel="Recall", ylabel="Precisión", title="P2: precisión-recall en validación")
+    ax.legend(fontsize=8)
+    return _save(fig, path)
+
+
+def inference_cost(model, features):
+    sample = features.head(min(1000, len(features)))
+    start = time.perf_counter()
+    model.predict(sample)
+    return (time.perf_counter() - start) * 1000 / len(sample)
 
 
 def plot_k_sweep(table, title, path):
@@ -423,18 +465,22 @@ def run_context():
 
 
 def configure_mlflow(
-    tracking_uri=cfg.TRACKING_URI,
+    tracking_uri=None,
     experiment=cfg.EXPERIMENT_NAME,
     artifact_root=cfg.ROOT_DIR / "mlartifacts",
 ):
     """Apunta MLflow a la base local y crea el experimento con una carpeta de artefactos fija."""
     import mlflow
 
+    tracking_uri = tracking_uri or os.environ.get("MLFLOW_TRACKING_URI") or cfg.TRACKING_URI
     mlflow.set_tracking_uri(tracking_uri)
     if mlflow.get_experiment_by_name(experiment) is None:
-        mlflow.create_experiment(
-            experiment, artifact_location=Path(artifact_root).resolve().as_uri()
-        )
+        if tracking_uri.startswith(("http://", "https://")):
+            mlflow.create_experiment(experiment)
+        else:
+            mlflow.create_experiment(
+                experiment, artifact_location=Path(artifact_root).resolve().as_uri()
+            )
     mlflow.set_experiment(experiment)
     return mlflow
 
@@ -461,8 +507,12 @@ def run_tags(question, kind, context, undefined=()):
         "equipo": cfg.TEAM,
         "pregunta": question,
         "tipo": kind,
+        "question": question.lower(),
+        "stage_of_work": {"baseline": "baseline", "candidato": "candidate"}.get(kind, "search"),
         "git_commit": context["git_commit"],
         "git_dirty": context["git_dirty"],
+        "data_version": context["data_version"],
+        "feature_version": context["feature_version"],
         "metricas_no_definidas": ",".join(undefined) or "ninguna",
     }
 
@@ -479,6 +529,8 @@ def log_run(
     model=None,
     input_example=None,
     nested=False,
+    training=None,
+    target=None,
 ):
     """Crea un run con etiquetas, parámetros, métricas finitas y artefactos. Regresa su id.
 
@@ -488,10 +540,14 @@ def log_run(
     """
     import mlflow
 
-    with mlflow.start_run(run_name=run_name, nested=nested) as run:
+    with mlflow.start_run(
+        run_name=run_name, nested=nested or mlflow.active_run() is not None
+    ) as run:
         mlflow.set_tags(run_tags(question, kind, context, undefined))
+        mlflow.set_tag("model_family", params.get("modelo", type(model).__name__))
         mlflow.log_params({key: str(value) for key, value in params.items()})
         mlflow.log_metrics({k: v for k, v in metrics.items() if math.isfinite(v)})
+        log_bundle(context, params, training, target)
         for artifact in artifacts:
             folder = "figuras" if Path(artifact).suffix == ".png" else "tablas"
             mlflow.log_artifact(str(artifact), artifact_path=folder)
@@ -505,6 +561,8 @@ def trusted_types(model):
     steps = getattr(model, "steps", [])
     if steps and isinstance(steps[0][1], StationGrouper):
         return [*TRUSTED_TYPES, *STATION_MODEL_TRUSTED_TYPES]
+    if isinstance(model, (PersistenceRisk, SeasonalDemand, StationGroups)):
+        return [*TRUSTED_TYPES, f"mibici.deployable.{type(model).__name__}"]
     return list(TRUSTED_TYPES)
 
 
@@ -520,13 +578,21 @@ def log_model(model, input_example):
         # Aviso informativo sobre enteros y valores faltantes; las variables enteras no los tienen.
         warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer")
         signature = infer_signature(example, model.predict(example))
-        return mlflow.sklearn.log_model(
+        info = mlflow.sklearn.log_model(
             model,
             name=MODEL_ARTIFACT,
             signature=signature,
             input_example=example,
             skops_trusted_types=trusted_types(model),
+            code_paths=[str(cfg.ROOT_DIR / "mibici")],
+            pip_requirements=[
+                line
+                for line in (cfg.ROOT_DIR / "requirements.txt").read_text().splitlines()
+                if line and not line.startswith("-e")
+            ],
         )
+    log_model_check(model, example)
+    return info
 
 
 def model_uri(run_id):
@@ -555,7 +621,17 @@ def pick_champion(question, candidates):
     if not valid:
         return None
     sign = 1 if higher_is_better else -1
-    return max(valid, key=lambda name: sign * valid[name][1][metric])
+
+    def score(name):
+        values = valid[name][1]
+        return (
+            sign * values[metric],
+            values.get("train_silhouette", 0.0),
+            -values.get("train_davies_bouldin", 0.0),
+            -values.get("inference_seconds_per_1000", 0.0),
+        )
+
+    return max(valid, key=score)
 
 
 def baselines_beating(question, best, candidates):
@@ -591,6 +667,30 @@ def register_champion(question, candidates):
     name = REGISTERED_MODELS[question]
     version = mlflow.register_model(model_uri(run_id), name)
     client = MlflowClient()
+    source = client.get_run(run_id)
+    description = (
+        f"Equipo {cfg.TEAM}, {question}. Selección por {CHAMPION_RULE[question][0]} en validación; "
+        "la prueba no participa. P2 es un proxy simulado; P3 asigna perfiles por centroides "
+        "(K-means) o por perfil de entrenamiento más cercano (Ward)."
+    )
+    client.update_registered_model(name, description=description)
+    client.update_model_version(name, version.version, description=f"{description} Run: {run_id}.")
+    for key, value in {
+        "equipo": cfg.TEAM,
+        "question": question.lower(),
+        "git_commit": source.data.tags.get("git_commit", "desconocido"),
+        "data_version": source.data.params.get("data_version", "desconocido"),
+        "feature_version": source.data.params.get("feature_version", "desconocido"),
+        "experiment_id": source.info.experiment_id,
+    }.items():
+        client.set_model_version_tag(name, version.version, key, value)
+    candidate_alias = f"validated-{version.version}"
+    client.set_registered_model_alias(name, candidate_alias, version.version)
+    try:
+        check_registered_model(name, candidate_alias)
+    finally:
+        client.delete_registered_model_alias(name, candidate_alias)
+    client.set_model_version_tag(name, version.version, "validation_status", "passed")
     client.set_registered_model_alias(name, CHAMPION_ALIAS, version.version)
     metric = CHAMPION_RULE[question][0]
     beaten_by = baselines_beating(question, best, candidates)
@@ -651,8 +751,9 @@ def run_search(question, train, validation, features, figures_dir, context):
     sample = train.sample(n=min(SEARCH_SAMPLE_ROWS, len(train)), random_state=cfg.SEED)
     parent_name = f"{question}_busqueda_hgb_{HORIZON_LABEL}"
     rows = []
-    with mlflow.start_run(run_name=parent_name) as parent:
+    with mlflow.start_run(run_name=parent_name, nested=mlflow.active_run() is not None) as parent:
         mlflow.set_tags(run_tags(question, "busqueda", context))
+        mlflow.set_tag("model_family", "HistGradientBoosting")
         mlflow.log_params(
             {
                 "modelo": "HistGradientBoosting",
@@ -666,7 +767,9 @@ def run_search(question, train, validation, features, figures_dir, context):
             }
         )
         for index, combo in enumerate(search_combinations(), start=1):
+            start = time.perf_counter()
             model = make(**combo).fit(sample[features], sample[target])
+            fit_seconds = time.perf_counter() - start
             if question == "P1":
                 values = regression_metrics(
                     validation[target], model.predict(validation[features]), "val"
@@ -678,16 +781,51 @@ def run_search(question, train, validation, features, figures_dir, context):
                 values, undefined = classification_metrics(
                     validation[target], predicted, probabilities, "val"
                 )
+            values["fit_seconds"] = fit_seconds
+            values["inference_seconds_per_1000"] = inference_cost(model, validation[features])
+            folder = Path(figures_dir) / f"{question.lower()}_search_c{index:02d}"
+            if question == "P1":
+                figure = plot_demand_by_hour(
+                    validation,
+                    model.predict(validation[features]),
+                    "P1: búsqueda, validación",
+                    folder / "demand.png",
+                )
+                artifacts = [figure]
+            else:
+                artifacts = [
+                    plot_confusion(
+                        validation[target],
+                        predicted,
+                        "P2: búsqueda, validación",
+                        folder / "confusion.png",
+                    ),
+                    plot_precision_recall(
+                        validation[target], probabilities, folder / "precision_recall.png"
+                    ),
+                ]
             log_run(
                 f"{parent_name}_c{index:02d}",
                 question,
                 "busqueda_hijo",
-                {"modelo": "HistGradientBoosting", "combinacion": index, **combo},
+                {
+                    **_common_params(
+                        context, features, {"train": len(sample), "val": len(validation)}
+                    ),
+                    "modelo": "HistGradientBoosting",
+                    "combinacion": index,
+                    "training_scope": "sample",
+                    **model.get_params(),
+                },
                 values,
-                [],
+                artifacts,
                 context,
                 undefined,
                 nested=True,
+                model=model,
+                input_example=sample[features],
+                training=sample[[*features, target]],
+                target=target,
             )
             rows.append({"combinacion": _combo_label(combo), **combo, **values})
         table = pd.DataFrame(rows)
@@ -747,7 +885,11 @@ def run_p1(
     rows = {name: len(frame) for name, frame in frames.items()}
     results = {}
 
-    predictions = {name: weekly_baseline(train, frame) for name, frame in evaluated.items()}
+    baseline_features = ["station_id", *features]
+    baseline = SeasonalDemand().fit(train[baseline_features], train[P1_TARGET])
+    predictions = {
+        name: baseline.predict(frame[baseline_features]) for name, frame in evaluated.items()
+    }
     metrics = {}
     for name, frame in evaluated.items():
         metrics.update(regression_metrics(frame[P1_TARGET], predictions[name], name))
@@ -759,12 +901,27 @@ def run_p1(
     )
     run_name = f"P1_estacional_{HORIZON_LABEL}"
     params = {
-        **_common_params(context, features, rows),
+        **_common_params(context, baseline_features, rows),
         "modelo": "misma estación y hora, semana anterior",
     }
-    run_id = log_run(run_name, "P1", "baseline", params, metrics, [figure], context)
+    metrics["inference_seconds_per_1000"] = inference_cost(
+        baseline, evaluated["val"][baseline_features]
+    )
+    run_id = log_run(
+        run_name,
+        "P1",
+        "baseline",
+        params,
+        metrics,
+        [figure],
+        context,
+        model=baseline,
+        input_example=train[baseline_features],
+        training=train[[*baseline_features, P1_TARGET]],
+        target=P1_TARGET,
+    )
     results[run_name] = metrics
-    candidates = {run_name: (run_id, metrics, False)}
+    candidates = {run_name: (run_id, metrics, True)}
 
     variants = [("hgb_poisson", make_demand_model, {}, features, "HistGradientBoostingRegressor")]
     variants.append(
@@ -790,11 +947,15 @@ def run_p1(
             )
         )
     for key, factory, extra, columns, description in variants:
+        start = time.perf_counter()
         model = factory().fit(train[columns], train[P1_TARGET])
+        fit_seconds = time.perf_counter() - start
         predictions = {name: model.predict(frame[columns]) for name, frame in evaluated.items()}
         metrics = {}
         for name, frame in evaluated.items():
             metrics.update(regression_metrics(frame[P1_TARGET], predictions[name], name))
+        metrics["fit_seconds"] = fit_seconds
+        metrics["inference_seconds_per_1000"] = inference_cost(model, evaluated["val"][columns])
         figure = plot_demand_by_hour(
             evaluated["val"],
             predictions["val"],
@@ -829,6 +990,8 @@ def run_p1(
             context,
             model=model,
             input_example=train[columns],
+            training=train[[*columns, P1_TARGET]],
+            target=P1_TARGET,
         )
         results[run_name] = metrics
         candidates[run_name] = (run_id, metrics, True)
@@ -867,7 +1030,12 @@ def run_p2(
     results = {}
     registry_candidates = {}
     candidates = [
-        ("persistencia_proxy", "baseline", None, "regla: clase de la ocupación virtual actual"),
+        (
+            "persistencia_proxy",
+            "baseline",
+            PersistenceRisk(),
+            "regla: clase de la ocupación virtual actual",
+        ),
         ("logistica_proxy", "baseline", make_risk_baseline(), "LogisticRegression"),
         ("hgb_proxy", "candidato", make_risk_model(), "HistGradientBoostingClassifier"),
     ]
@@ -889,8 +1057,10 @@ def run_p2(
             **{f"mejor_{k}": v for k, v in best.items()},
         }
     for key, kind, model, description in candidates:
+        start = time.perf_counter()
         if model is not None:
             model.fit(train[features], train[P2_TARGET])
+        fit_seconds = time.perf_counter() - start
         metrics, undefined, predicted = {}, [], {}
         for name, frame in evaluated.items():
             if model is None:
@@ -904,12 +1074,20 @@ def run_p2(
             )
             metrics.update(values)
             undefined += missing
+        metrics["fit_seconds"] = fit_seconds
+        metrics["inference_seconds_per_1000"] = inference_cost(model, evaluated["val"][features])
         run_name = f"P2_{key}_{HORIZON_LABEL}{suffix}"
         figure = plot_confusion(
             evaluated["val"][P2_TARGET],
             predicted["val"],
             f"P2 {key}{suffix}: matriz de confusión (validación)",
             Path(figures_dir) / f"p2_{key}_{HORIZON_LABEL}{suffix}.png",
+        )
+        probabilities_val = class_probabilities(model, evaluated["val"][features])
+        pr_figure = plot_precision_recall(
+            evaluated["val"][P2_TARGET],
+            probabilities_val,
+            Path(figures_dir) / f"p2_{key}_{HORIZON_LABEL}{suffix}_pr.png",
         )
         params = {
             **_common_params(context, features, rows),
@@ -921,7 +1099,6 @@ def run_p2(
             **extras.get(key, {}),
         }
         if model is not None:
-            params["class_weight"] = "balanced"
             estimator = model.steps[-1][1] if hasattr(model, "steps") else model
             params.update(estimator.get_params())
         run_id = log_run(
@@ -930,11 +1107,13 @@ def run_p2(
             kind,
             params,
             metrics,
-            [figure],
+            [figure, pr_figure],
             context,
             undefined,
             model=model,
             input_example=train[features] if model is not None else None,
+            training=train[[*features, P2_TARGET]],
+            target=P2_TARGET,
         )
         results[run_name] = metrics
         registry_candidates[run_name] = (run_id, metrics, model is not None)
@@ -944,90 +1123,125 @@ def run_p2(
     return results
 
 
-def run_k_sweep(train, val, figures_dir, context):
-    """Un run con las métricas de cada k (paso = k), tabla CSV y figura como artefactos."""
+def log_cluster_candidate(
+    train, val, algorithm, k, run_name, kind, figures_dir, output_dir, context
+):
+    features = list(cfg.P3_FEATURE_COLUMNS)
+    start = time.perf_counter()
+    model = StationGroups(algorithm=algorithm, n_clusters=k).fit(train[features])
+    fit_seconds = time.perf_counter() - start
+    labels, metrics = cluster_metrics(train, val, algorithm, k, model=model)
+    metrics["fit_seconds"] = fit_seconds
+    metrics["inference_seconds_per_1000"] = inference_cost(model, val[features])
+    figure = plot_clusters(
+        train,
+        labels,
+        f"P3 {algorithm}: {k} grupos (entrenamiento)",
+        Path(figures_dir) / f"{run_name.lower()}.png",
+    )
+    assignments = Path(output_dir) / f"{run_name.lower()}.csv"
+    assignments.parent.mkdir(parents=True, exist_ok=True)
+    train[["station_id", "name", "latitude", "longitude"]].assign(cluster=labels).to_csv(
+        assignments, index=False
+    )
+    params = {
+        **_common_params(context, features, {"train": len(train), "val": len(val)}),
+        **model.get_params(),
+        "modelo": algorithm,
+        "assignment_rule": model.assignment_rule_,
+        "min_profile_days": cfg.MIN_PROFILE_DAYS,
+        "coordenadas_en_agrupacion": "no (solo para el mapa)",
+        "val_ari_definition": "independent_refit_between_periods",
+    }
+    run_id = log_run(
+        run_name,
+        "P3",
+        kind,
+        params,
+        metrics,
+        [figure, assignments],
+        context,
+        model=model,
+        input_example=train[features],
+        training=train[features],
+    )
+    return run_id, metrics
+
+
+def run_k_sweep(train, val, figures_dir, context, output_dir=None):
     import mlflow
 
-    table = k_sweep_table(train, val)
     figures_dir = Path(figures_dir)
     figures_dir.mkdir(parents=True, exist_ok=True)
-    csv = figures_dir / "p3_barrido_k_perfil48.csv"
-    table.to_csv(csv, index=False)
-    figure = plot_k_sweep(
-        table,
-        "P3: métricas por número de grupos (perfil de 48 valores)",
-        figures_dir / "p3_barrido_k_perfil48.png",
-    )
-    with mlflow.start_run(run_name="P3_barrido_k_perfil48"):
+    output_dir = Path(output_dir) if output_dir is not None else figures_dir / "assignments"
+    candidates, rows = {}, []
+    with mlflow.start_run(
+        run_name="P3_barrido_k_perfil48", nested=mlflow.active_run() is not None
+    ):
         mlflow.set_tags(run_tags("P3", "barrido", context))
-        mlflow.log_params(
-            {
-                "k_valores": ",".join(str(k) for k in P3_K_VALUES),
-                "algoritmos": ",".join(CLUSTERERS),
-                "k_fijado_antes": cfg.N_CLUSTERS,
-                "filas_entrenamiento": len(train),
-                "filas_validacion": len(val),
-                "seed": cfg.SEED,
-            }
+        mlflow.set_tag("model_family", "clustering")
+        params = {
+            **_common_params(
+                context, cfg.P3_FEATURE_COLUMNS, {"train": len(train), "val": len(val)}
+            ),
+            "k_valores": ",".join(str(k) for k in P3_K_VALUES),
+            "algoritmos": ",".join(CLUSTERERS),
+            "k_fijado_antes": cfg.N_CLUSTERS,
+        }
+        mlflow.log_params(params)
+        log_bundle(context, params)
+        for algorithm in CLUSTERERS:
+            for k in P3_K_VALUES:
+                name = f"P3_{algorithm}_k{k}_perfil48"
+                kind = "baseline" if algorithm == "kmeans" and k == cfg.N_CLUSTERS else "candidato"
+                run_id, metrics = log_cluster_candidate(
+                    train, val, algorithm, k, name, kind, figures_dir, output_dir, context
+                )
+                candidates[name] = (run_id, metrics, True)
+                rows.append({"algoritmo": algorithm, "k": k, **metrics})
+                for metric in ("train_silhouette", "train_davies_bouldin", "val_ari"):
+                    if math.isfinite(metrics.get(metric, math.nan)):
+                        mlflow.log_metric(f"{algorithm}_{metric}", metrics[metric], step=k)
+        table = pd.DataFrame(rows)
+        csv = figures_dir / "p3_barrido_k_perfil48.csv"
+        table.to_csv(csv, index=False)
+        figure = plot_k_sweep(
+            table,
+            "P3: métricas por número de grupos (perfil de 48 valores)",
+            figures_dir / "p3_barrido_k_perfil48.png",
         )
-        for row in table.to_dict("records"):
-            for metric in ("train_silhouette", "train_davies_bouldin", "val_ari"):
-                if math.isfinite(row[metric]):
-                    mlflow.log_metric(f"{row['algoritmo']}_{metric}", row[metric], step=row["k"])
         mlflow.log_artifact(str(figure), artifact_path="figuras")
         mlflow.log_artifact(str(csv), artifact_path="tablas")
-    print("\n=== P3: barrido de k ===", flush=True)
-    print(table.round(4).to_string(index=False), flush=True)
+    table.attrs["registry_candidates"] = candidates
     return table
 
 
-def run_p3(tables=None, figures_dir=cfg.FIGURES_DIR, output_dir=cfg.PROCESSED_DIR, context=None):
-    """P3: K-means (baseline) y Ward (candidato) sobre 48 medias horarias normalizadas."""
+def run_p3(
+    tables=None,
+    figures_dir=cfg.FIGURES_DIR,
+    output_dir=cfg.PROCESSED_DIR,
+    context=None,
+    register=True,
+):
     if tables is None:
         tables = {
             name: pd.read_parquet(cfg.FEATURE_FILES[f"p3_{name}"]) for name in ("train", "val")
         }
     train, val = tables["train"], tables["val"]
     context = context or run_context()
-    features = list(cfg.P3_FEATURE_COLUMNS)
-    rows = {"train": len(train), "val": len(val)}
-    results = {}
-    for key, kind, description in [
-        ("kmeans", "baseline", "KMeans"),
-        ("ward", "candidato", "AgglomerativeClustering(ward)"),
-    ]:
-        labels, metrics = cluster_metrics(train, val, key)
-        run_name = f"P3_{key}_perfil48"
-        figure = plot_clusters(
-            train,
-            labels,
-            f"P3 {key}: {cfg.N_CLUSTERS} grupos por perfil horario (entrenamiento)",
-            Path(figures_dir) / f"p3_{key}_perfil48.png",
+    results, candidates = {}, {}
+    for key, kind in [("kmeans", "baseline"), ("ward", "candidato")]:
+        name = f"P3_{key}_perfil48"
+        run_id, metrics = log_cluster_candidate(
+            train, val, key, cfg.N_CLUSTERS, name, kind, figures_dir, output_dir, context
         )
-        assignments = Path(output_dir) / f"p3_grupos_{key}.csv"
-        assignments.parent.mkdir(parents=True, exist_ok=True)
-        pd.DataFrame(
-            {
-                "station_id": train["station_id"],
-                "name": train["name"],
-                "latitude": train["latitude"],
-                "longitude": train["longitude"],
-                "cluster": labels,
-            }
-        ).to_csv(assignments, index=False)
-        params = {
-            **_common_params(context, features, rows),
-            "modelo": description,
-            "n_clusters": cfg.N_CLUSTERS,
-            "min_profile_days": cfg.MIN_PROFILE_DAYS,
-            "coordenadas_en_agrupacion": "no (solo para el mapa)",
-        }
-        params.update(CLUSTERERS[key]().get_params())
-        undefined = [] if "val_ari" in metrics else ["val_ari"]
-        log_run(run_name, "P3", kind, params, metrics, [figure, assignments], context, undefined)
-        results[run_name] = metrics
+        results[name] = metrics
+        candidates[name] = (run_id, metrics, True)
+    sweep = run_k_sweep(train, val, figures_dir, context, output_dir)
+    candidates.update(sweep.attrs["registry_candidates"])
+    if register:
+        register_champion("P3", candidates)
     _print_results("P3", results)
-    run_k_sweep(train, val, figures_dir, context)
     return results
 
 
@@ -1053,20 +1267,33 @@ def main(argv=None):
         action="store_true",
         help="entrena y registra runs, pero no crea versiones ni alias en el Model Registry",
     )
+    parser.add_argument(
+        "--figures-dir",
+        type=Path,
+        default=cfg.FIGURES_DIR,
+        help="Carpeta para figuras y tablas de esta ejecución",
+    )
     args = parser.parse_args(argv)
+    verify_inputs()
     configure_mlflow()
     context = run_context()
     print(f"Experimento: {cfg.EXPERIMENT_NAME} | commit: {context['git_commit'][:8]}", flush=True)
     if context["git_dirty"] == "true":
         print("Aviso: hay cambios sin commit; el commit registrado no describe el código exacto.")
     questions = list(RUNNERS) if args.question == "all" else [args.question]
-    for question in questions:
-        kwargs = {"context": context}
-        if question != "P3":
-            kwargs["final_test"] = args.final_test
-            kwargs["register"] = not args.no_register
-            kwargs["tune"] = args.tune
-        RUNNERS[question](**kwargs)
+    with project_run():
+        for question in questions:
+            kwargs = {
+                "context": context,
+                "register": not args.no_register,
+                "figures_dir": args.figures_dir,
+            }
+            if question != "P3":
+                kwargs["final_test"] = args.final_test
+                kwargs["tune"] = args.tune
+            else:
+                kwargs["output_dir"] = args.figures_dir / "assignments"
+            RUNNERS[question](**kwargs)
     print("\nListo. Para ver los runs: mlflow ui --backend-store-uri", cfg.TRACKING_URI)
 
 

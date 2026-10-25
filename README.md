@@ -45,6 +45,9 @@ mibici/
   train.py
   train_p1.py
   predict.py
+  deployable.py
+  tracking.py
+  verify_registry.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -169,24 +172,23 @@ La etiqueta de P2 parte de una ocupación virtual inicial arbitraria (50%). Para
 python -m mibici.sensitivity
 ```
 
-Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia, regresión logística y boosting con cada una, y registra un run por modelo y escenario (sufijo `_occ25`, `_occ50`, `_occ75`, parámetro `initial_occupancy`) más un run resumen. Tarda unos 3 minutos. No escribe tablas ni manifiestos (por eso no usa `features --initial-occupancy`, que sobrescribiría `data/processed/` y `feature_manifest.json`), no registra modelos y solo usa validación. Comprueba además que la tabla en memoria con 50% es idéntica a la guardada. Resultados en [reports/resultados_mlflow.md](reports/resultados_mlflow.md) y figura en `reports/figures/sensibilidad/`.
+Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia, regresión logística y boosting con cada una, y registra un run por modelo y escenario (sufijo `_occ25`, `_occ50`, `_occ75`, parámetro `initial_occupancy`) más un run resumen. Tarda unos 3 minutos. No escribe tablas ni manifiestos (por eso no usa `features --initial-occupancy`, que sobrescribiría `data/processed/` y `feature_manifest.json`), no promueve modelos en el Registry y solo usa validación. Comprueba además que la tabla en memoria con 50% es idéntica a la guardada. Resultados en [reports/resultados_mlflow.md](reports/resultados_mlflow.md) y figura en `reports/figures/sensibilidad/`.
 
 ### Modelo guardado, registro y predicción
 
-Cada run candidato (`P1_hgb_poisson_h1`, `P2_logistica_proxy_h1`, `P2_hgb_proxy_h1`) guarda su estimador con `mlflow.sklearn.log_model`, con su firma (columnas y tipos de entrada, tipo de salida) y cinco filas de ejemplo. En MLflow 3 el modelo no es una carpeta dentro de *Artifacts*: se ve en el run (pestaña *Overview*, sección *Registered models*) y en *Model registry* (modo *Model training* de la barra lateral). El baseline estacional de P1 y los agrupamientos de P3 no son estimadores predictivos y no guardan modelo.
+La integración de Tracking y Registry se documenta en [integracion_registry.md](references/integracion_registry.md). Los modelos de P1, P2 y P3, incluidas las reglas simples y cada combinación hija de búsqueda, se guardan con firma y ejemplo de entrada. Cada corrida añade los manifiestos en `data/`, la configuración efectiva en `config/` y una entrada de entrenamiento mediante `mlflow.log_input`. Las figuras y tablas permanecen organizadas en `figuras/` y `tablas/`.
 
-Al terminar P1 y P2 se elige el ganador **solo con métricas de validación** y se registra en el Model Registry con el alias `champion`:
+Se conserva `val_mae` como criterio de P1 y `val_f1_macro` en P2; P3 usa el ARI entre periodos y considera las métricas geométricas para desempatar. Las reglas simples también pueden ganar. Los modelos registrados se llaman `mibici-p1-demanda`, `mibici-p2-riesgo` y `mibici-p3-grupos`. Cada versión tiene descripción, linaje y alias `champion`, que solo se mueve después de comprobar una carga y predicción desde el Registry. `--no-register` conserva las corridas sin modificar los aliases.
 
-| Pregunta | Modelo registrado | Criterio |
-|---|---|---|
-| P1 | `mibici-p1-demanda` | menor `val_mae` entre los runs que guardan un modelo |
-| P2 | `mibici-p2-riesgo` | mayor `val_f1_macro` entre los runs que guardan un modelo |
+K-means asigna perfiles nuevos por centroide; Ward utiliza una regla explícita de vecino de entrenamiento más cercano. No se vuelve a ajustar el agrupador para predecir. Las métricas `val_assignment_*` distinguen ese uso de la estabilidad histórica `val_ari`.
 
-Los baselines sin modelo (estacional, persistencia) no se registran, pero se comparan: si uno supera al ganador, la versión queda con la etiqueta `supera_baselines=no: <run>` y el entrenamiento lo avisa. Cada ejecución crea una versión nueva y mueve el alias `champion` a la del ganador. Con `--no-register` se entrena sin tocar el registro. Las métricas `test_` (septiembre) nunca participan en la elección.
+El cliente respeta `MLFLOW_TRACKING_URI` y el run padre de MLflow Projects. Los detalles de conexión y la interfaz para el `MLproject` están en la guía de integración. Las búsquedas de esta rama no sustituyen la ejecución final desde el Project.
 
 ```bash
 python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
 python -m mibici.predict --question P2 --timestamp 2026-09-15T08:00 --output salida.csv
+python -m mibici.predict --question P3 --split val
+python -m mibici.verify_registry --question all
 ```
 
 `predict.py` carga el modelo `champion`, toma de la tabla de variables que construye `features.py` las filas de esa hora (en hora local de Ciudad de México si no se indica zona) y escribe `reports/predicciones/p1_20260915T0800.csv`, con una fila por estación: `demanda_esperada` en P1, y `clase`, `riesgo` y las tres probabilidades en P2. Si la hora no está en la tabla, por ejemplo por falta de 168 h de historia, termina con un mensaje que indica el rango disponible. Solo predice horas cuyas variables ya existen en la tabla; no calcula rezagos de horas futuras. En P2 el riesgo es el del estado virtual, no inventario observado.
@@ -238,6 +240,6 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
-Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+Verificaciones realizadas: 66 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

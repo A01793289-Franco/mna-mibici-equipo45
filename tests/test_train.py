@@ -287,7 +287,7 @@ class TestMlflowRuns(unittest.TestCase):
         client, runs = self.runs("P1")
         for run in runs:
             if run.info.run_name == "P1_estacional_h1":
-                self.assertEqual(run.outputs.model_outputs, [])
+                self.assertEqual(len(run.outputs.model_outputs), 1)
         candidates = [run for run in runs if run.info.run_name == "P1_hgb_poisson_h1"]
         candidate = max(candidates, key=lambda run: run.info.start_time)
         self.assertEqual(len(candidate.outputs.model_outputs), 1)
@@ -401,11 +401,10 @@ class TestMlflowRuns(unittest.TestCase):
             self.assertIn("val_f1_macro", run.data.metrics)
             self.assertIn("val_recall_riesgo_sin_bicicletas", run.data.metrics)
             self.assertTrue(client.list_artifacts(run.info.run_id, "figuras"))
-            expected = 0 if run.info.run_name == "P2_persistencia_proxy_h1" else 1
-            self.assertEqual(len(run.outputs.model_outputs), expected)
+            self.assertEqual(len(run.outputs.model_outputs), 1)
         champion = client.get_model_version_by_alias(train.REGISTERED_MODELS["P2"], "champion")
         latest = sorted(runs, key=lambda run: run.info.start_time)[-3:]
-        models = [run for run in latest if run.info.run_name != "P2_persistencia_proxy_h1"]
+        models = latest
         winner = max(models, key=lambda run: run.data.metrics["val_f1_macro"])
         self.assertEqual(champion.run_id, winner.info.run_id)
 

@@ -26,12 +26,9 @@ Se agregó `P1_hgb_poisson_estacion_h1`, que usa `station_id` como categórica. 
 
 ## Elección y registro del modelo
 
-Después de entrenar P1 y P2 se registra en MLflow Model Registry un modelo por pregunta y se le asigna el alias `champion`. La regla usa únicamente métricas de validación, nunca `test_`:
+La integración de la segunda entrega guarda modelos para las tres preguntas y conserva el alias `champion`. La regla principal usa solo validación: menor `val_mae` en P1, mayor `val_f1_macro` en P2 y mayor `val_ari` de estabilidad entre periodos en P3. Las reglas estacional y de persistencia son serializables y pueden ganar. Las métricas de prueba no participan en la elección.
 
-- P1 (`mibici-p1-demanda`): el modelo con menor `val_mae`.
-- P2 (`mibici-p2-riesgo`): el modelo con mayor `val_f1_macro`; una métrica no definida descalifica al run.
-
-Solo compiten los runs que guardan un estimador, porque el registro debe contener algo que se pueda cargar y usar. Los baselines sin modelo (estacional en P1, persistencia en P2) no se registran, pero se comparan: si uno supera al ganador en la métrica de elección, la versión registrada queda con la etiqueta `supera_baselines=no: <run>` y el entrenamiento lo avisa. Cada ejecución crea una versión nueva y mueve el alias al ganador. `python -m mibici.predict` usa siempre la versión con alias `champion`.
+Cada versión conserva descripción, run, experimento, commit y versiones de datos y variables. Antes de mover el alias se carga y comprueba la versión nueva; una comprobación fallida conserva el campeón anterior. Los detalles sobre artefactos, costos, desempates, asignación de P3 y compatibilidad con Projects están en [integracion_registry.md](integracion_registry.md).
 
 ## Segunda iteración: ajuste de hiperparámetros
 
