@@ -123,12 +123,47 @@ class TestClusters(unittest.TestCase):
             self.assertEqual(metrics["val_common_stations"], 60)
 
 
+class TestChampion(unittest.TestCase):
+    """La regla de elección usa solo métricas de validación."""
+
+    def test_p1_picks_lowest_val_mae_and_ignores_test_metrics(self):
+        candidates = {
+            "base": ("r1", {"val_mae": 0.9, "test_mae": 0.1}, False),
+            "modelo": ("r2", {"val_mae": 0.7, "test_mae": 5.0}, True),
+        }
+        self.assertEqual(train.pick_champion("P1", candidates), "modelo")
+
+    def test_p2_picks_highest_val_f1_macro(self):
+        candidates = {
+            "a": ("r1", {"val_f1_macro": 0.82}, True),
+            "b": ("r2", {"val_f1_macro": 0.87}, True),
+        }
+        self.assertEqual(train.pick_champion("P2", candidates), "b")
+
+    def test_baseline_winning_means_nothing_to_register(self):
+        candidates = {
+            "base": ("r1", {"val_mae": 0.5}, False),
+            "modelo": ("r2", {"val_mae": 0.7}, True),
+        }
+        self.assertIsNone(train.pick_champion("P1", candidates))
+
+    def test_undefined_metric_disqualifies_run(self):
+        candidates = {
+            "a": ("r1", {"val_f1_macro": float("nan")}, True),
+            "b": ("r2", {"val_f1_macro": 0.6}, True),
+        }
+        self.assertEqual(train.pick_champion("P2", candidates), "b")
+        self.assertIsNone(train.pick_champion("P2", {"a": candidates["a"]}))
+
+
 class TestMlflowRuns(unittest.TestCase):
     """Cada modelo debe quedar como un run con etiquetas, parámetros, métricas y artefactos."""
 
     @classmethod
     def setUpClass(cls):
-        cls.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)  # Windows mantiene abierto mlflow.db
+        cls.temp = tempfile.TemporaryDirectory(
+            ignore_cleanup_errors=True
+        )  # Windows mantiene abierto mlflow.db
         root = Path(cls.temp.name)
         cls.root = root
         cls.mlflow = train.configure_mlflow(
@@ -170,6 +205,38 @@ class TestMlflowRuns(unittest.TestCase):
             self.assertFalse(any(name.startswith("test_") for name in run.data.metrics))
             self.assertTrue(client.list_artifacts(run.info.run_id, "figuras"))
 
+    def test_p1_saves_model_with_signature_and_registers_champion(self):
+        results = train.run_p1(
+            demand_table(), figures_dir=self.root / "figs", context=self.context
+        )
+        client, runs = self.runs("P1")
+        for run in runs:
+            if run.info.run_name == "P1_estacional_h1":
+                self.assertEqual(run.outputs.model_outputs, [])
+        candidates = [run for run in runs if run.info.run_name == "P1_hgb_poisson_h1"]
+        candidate = max(candidates, key=lambda run: run.info.start_time)
+        self.assertEqual(len(candidate.outputs.model_outputs), 1)
+        uri = f"runs:/{candidate.info.run_id}/{train.MODEL_ARTIFACT}"
+        info = self.mlflow.models.get_model_info(uri)
+        self.assertEqual(info.signature.inputs.input_names(), list(cfg.P1_FEATURE_COLUMNS))
+        data = demand_table()
+        val = data[data.split == "val"]
+        expected = results["P1_hgb_poisson_h1"]["val_mae"]
+        model = self.mlflow.sklearn.load_model(uri)
+        predicted = model.predict(val[list(cfg.P1_FEATURE_COLUMNS)])
+        self.assertAlmostEqual(np.abs(val["target_departures"] - predicted).mean(), expected)
+        alias = client.get_model_version_by_alias(train.REGISTERED_MODELS["P1"], "champion")
+        self.assertEqual(alias.run_id, candidate.info.run_id)
+
+    def test_register_false_leaves_registry_untouched(self):
+        client = self.mlflow.tracking.MlflowClient()
+        before = len(client.search_model_versions(f"name = '{train.REGISTERED_MODELS['P1']}'"))
+        train.run_p1(
+            demand_table(), figures_dir=self.root / "figs", context=self.context, register=False
+        )
+        after = len(client.search_model_versions(f"name = '{train.REGISTERED_MODELS['P1']}'"))
+        self.assertEqual(before, after)
+
     def test_p1_test_metrics_only_with_final_test(self):
         results = train.run_p1(
             demand_table(),
@@ -188,6 +255,11 @@ class TestMlflowRuns(unittest.TestCase):
             self.assertIn("val_f1_macro", run.data.metrics)
             self.assertIn("val_recall_riesgo_sin_bicicletas", run.data.metrics)
             self.assertTrue(client.list_artifacts(run.info.run_id, "figuras"))
+            self.assertEqual(len(run.outputs.model_outputs), 1)
+        champion = client.get_model_version_by_alias(train.REGISTERED_MODELS["P2"], "champion")
+        latest = sorted(runs, key=lambda run: run.info.start_time)[-2:]
+        winner = max(latest, key=lambda run: run.data.metrics["val_f1_macro"])
+        self.assertEqual(champion.run_id, winner.info.run_id)
 
     def test_p3_logs_groups_map_and_table(self):
         tables = {"train": profile_table(seed=1), "val": profile_table(seed=2)}

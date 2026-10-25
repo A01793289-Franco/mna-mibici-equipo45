@@ -16,6 +16,15 @@ Cada run registra commit real, versiones de datos y variables, fechas, semilla, 
 
 Las funciones de `features.py` incluyen docstrings sobre su operación y su pertinencia para P1-P3. La documentación Markdown amplía los supuestos y las decisiones del proyecto.
 
+## Elección y registro del modelo
+
+Después de entrenar P1 y P2 se registra en MLflow Model Registry un modelo por pregunta y se le asigna el alias `champion`. La regla usa únicamente métricas de validación, nunca `test_`:
+
+- P1 (`mibici-p1-demanda`): el run con menor `val_mae`, entre el baseline y el candidato. Si gana el baseline estacional, que no es un estimador, no se registra modelo.
+- P2 (`mibici-p2-riesgo`): el run con mayor `val_f1_macro`; una métrica no definida descalifica al run.
+
+Cada ejecución del entrenamiento crea una versión nueva y mueve el alias al ganador. `python -m mibici.predict` usa siempre la versión con alias `champion`.
+
 ## Comandos
 
 ```bash
@@ -23,6 +32,7 @@ python -m mibici.dataset --verify
 python -m mibici.features --verify
 python -m unittest discover -s tests -v
 python -m mibici.train --question all --final-test
+python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
 python -m mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5000
 ```
 

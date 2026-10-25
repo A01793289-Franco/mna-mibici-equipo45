@@ -21,6 +21,7 @@ import json
 import math
 from pathlib import Path
 import subprocess
+import warnings
 
 import matplotlib
 import numpy as np
@@ -56,6 +57,16 @@ P1_TARGET = "target_departures"
 P2_TARGET = "target_risk"
 P2_CLASSES = (0, 1, 2)
 HORIZON_LABEL = f"h{cfg.HORIZON_HOURS}"
+
+# Registro de modelos: un nombre por pregunta y el alias de la versión elegida.
+REGISTERED_MODELS = {"P1": "mibici-p1-demanda", "P2": "mibici-p2-riesgo"}
+CHAMPION_ALIAS = "champion"
+# Regla de elección del campeón: solo métricas de validación. (métrica, True si mayor es mejor)
+CHAMPION_RULE = {"P1": ("val_mae", False), "P2": ("val_f1_macro", True)}
+MODEL_ARTIFACT = "model"
+# MLflow guarda con skops; HistGradientBoosting usa este tipo y hay que declararlo como confiable.
+TRUSTED_TYPES = ["sklearn.ensemble._hist_gradient_boosting.predictor.TreePredictor"]
+INPUT_EXAMPLE_ROWS = 5
 
 
 # ---------------------------------------------------------------------------
@@ -340,8 +351,24 @@ def _common_params(context, features, rows):
     }
 
 
-def log_run(run_name, question, kind, params, metrics, artifacts, context, undefined=()):
-    """Crea un run con etiquetas, parámetros, métricas finitas y artefactos. Regresa su id."""
+def log_run(
+    run_name,
+    question,
+    kind,
+    params,
+    metrics,
+    artifacts,
+    context,
+    undefined=(),
+    model=None,
+    input_example=None,
+):
+    """Crea un run con etiquetas, parámetros, métricas finitas y artefactos. Regresa su id.
+
+    Si se pasa ``model`` (estimador de scikit-learn ya entrenado) se guarda con su firma, que
+    registra columnas y tipos de entrada y el tipo de salida. ``input_example`` son unas filas de
+    entrenamiento con las columnas predictoras; de ahí se infiere la firma.
+    """
     import mlflow
 
     with mlflow.start_run(run_name=run_name) as run:
@@ -360,7 +387,85 @@ def log_run(run_name, question, kind, params, metrics, artifacts, context, undef
         for artifact in artifacts:
             folder = "figuras" if Path(artifact).suffix == ".png" else "tablas"
             mlflow.log_artifact(str(artifact), artifact_path=folder)
+        if model is not None:
+            log_model(model, input_example)
         return run.info.run_id
+
+
+def log_model(model, input_example):
+    """Guarda el modelo en el run activo con firma y ejemplo de entrada."""
+    import mlflow
+    from mlflow.models import infer_signature
+
+    if input_example is None or len(input_example) == 0:
+        raise ValueError("Guardar un modelo requiere filas de ejemplo para inferir la firma")
+    example = input_example.head(INPUT_EXAMPLE_ROWS)
+    with warnings.catch_warnings():
+        # Aviso informativo sobre enteros y valores faltantes; las variables enteras no los tienen.
+        warnings.filterwarnings("ignore", message="Hint: Inferred schema contains integer")
+        signature = infer_signature(example, model.predict(example))
+        return mlflow.sklearn.log_model(
+            model,
+            name=MODEL_ARTIFACT,
+            signature=signature,
+            input_example=example,
+            skops_trusted_types=TRUSTED_TYPES,
+        )
+
+
+def model_uri(run_id):
+    """URI ``models:/<id>`` del modelo que guardó el run; MLflow 3 no lo deja bajo el run."""
+    import mlflow
+
+    outputs = mlflow.tracking.MlflowClient().get_run(run_id).outputs.model_outputs
+    if not outputs:
+        raise ValueError(f"El run {run_id} no guardó ningún modelo")
+    return f"models:/{outputs[-1].model_id}"
+
+
+def pick_champion(question, candidates):
+    """Elige el run ganador usando solo la métrica de validación definida en CHAMPION_RULE.
+
+    ``candidates`` es ``{run_name: (run_id, metrics, tiene_modelo)}``. Gana el mejor run entre
+    todos, baseline incluido; si es un baseline sin modelo no hay nada que registrar y regresa
+    ``None``. Una métrica ausente o no finita descalifica al run.
+    """
+    metric, higher_is_better = CHAMPION_RULE[question]
+    valid = {
+        name: item
+        for name, item in candidates.items()
+        if metric in item[1] and math.isfinite(item[1][metric])
+    }
+    if not valid:
+        return None
+    sign = 1 if higher_is_better else -1
+    best = max(valid, key=lambda name: sign * valid[name][1][metric])
+    return best if valid[best][2] else None
+
+
+def register_champion(question, candidates):
+    """Registra el modelo ganador en el Model Registry y le asigna el alias ``champion``.
+
+    Cada ejecución crea una versión nueva del modelo registrado; el alias se mueve a la versión
+    del ganador actual. Regresa ``(nombre_del_run, version)`` o ``None`` si no hay modelo.
+    """
+    import mlflow
+    from mlflow.tracking import MlflowClient
+
+    best = pick_champion(question, candidates)
+    if best is None:
+        print(f"{question}: el mejor run en validación no es un modelo; no se registra nada.")
+        return None
+    run_id = candidates[best][0]
+    name = REGISTERED_MODELS[question]
+    version = mlflow.register_model(model_uri(run_id), name)
+    client = MlflowClient()
+    client.set_registered_model_alias(name, CHAMPION_ALIAS, version.version)
+    metric = CHAMPION_RULE[question][0]
+    client.set_model_version_tag(name, version.version, "run_name", best)
+    client.set_model_version_tag(name, version.version, "criterio", f"{metric} en validación")
+    print(f"{question}: {name} v{version.version} @{CHAMPION_ALIAS} <- {best}", flush=True)
+    return best, int(version.version)
 
 
 def _print_results(question, results):
@@ -382,7 +487,9 @@ def _split_frames(data, final_test):
     return frames, evaluated
 
 
-def run_p1(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None):
+def run_p1(
+    tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None, register=True
+):
     """P1: baseline estacional y gradiente boosting de Poisson. Regresa métricas por run."""
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p1"])
     context = context or run_context()
@@ -407,8 +514,9 @@ def run_p1(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
         **_common_params(context, features, rows),
         "modelo": "misma estación y hora, semana anterior",
     }
-    log_run(run_name, "P1", "baseline", params, metrics, [figure], context)
+    run_id = log_run(run_name, "P1", "baseline", params, metrics, [figure], context)
     results[run_name] = metrics
+    candidates = {run_name: (run_id, metrics, False)}
 
     model = make_demand_model().fit(train[features], train[P1_TARGET])
     predictions = {name: model.predict(frame[features]) for name, frame in evaluated.items()}
@@ -431,13 +539,28 @@ def run_p1(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
         "max_leaf_nodes": model.max_leaf_nodes,
     }
     params.update(model.get_params())
-    log_run(run_name, "P1", "candidato", params, metrics, [figure], context)
+    run_id = log_run(
+        run_name,
+        "P1",
+        "candidato",
+        params,
+        metrics,
+        [figure],
+        context,
+        model=model,
+        input_example=train[features],
+    )
     results[run_name] = metrics
+    candidates[run_name] = (run_id, metrics, True)
     _print_results("P1", results)
+    if register:
+        register_champion("P1", candidates)
     return results
 
 
-def run_p2(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None):
+def run_p2(
+    tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=None, register=True
+):
     """P2: regresión logística balanceada y gradiente boosting. Regresa métricas por run."""
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p2"])
     context = context or run_context()
@@ -450,6 +573,7 @@ def run_p2(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
         for label in P2_CLASSES
     }
     results = {}
+    registry_candidates = {}
     candidates = [
         ("logistica_proxy", "baseline", make_risk_baseline(), "LogisticRegression"),
         ("hgb_proxy", "candidato", make_risk_model(), "HistGradientBoostingClassifier"),
@@ -483,9 +607,23 @@ def run_p2(tables=None, final_test=False, figures_dir=cfg.FIGURES_DIR, context=N
         }
         estimator = model.steps[-1][1] if hasattr(model, "steps") else model
         params.update(estimator.get_params())
-        log_run(run_name, "P2", kind, params, metrics, [figure], context, undefined)
+        run_id = log_run(
+            run_name,
+            "P2",
+            kind,
+            params,
+            metrics,
+            [figure],
+            context,
+            undefined,
+            model=model,
+            input_example=train[features],
+        )
         results[run_name] = metrics
+        registry_candidates[run_name] = (run_id, metrics, True)
     _print_results("P2", results)
+    if register:
+        register_champion("P2", registry_candidates)
     return results
 
 
@@ -550,6 +688,11 @@ def main(argv=None):
         action="store_true",
         help="añade métricas test_ (septiembre); úsalo una sola vez, con decisiones ya fijas",
     )
+    parser.add_argument(
+        "--no-register",
+        action="store_true",
+        help="entrena y registra runs, pero no crea versiones ni alias en el Model Registry",
+    )
     args = parser.parse_args(argv)
     configure_mlflow()
     context = run_context()
@@ -561,6 +704,7 @@ def main(argv=None):
         kwargs = {"context": context}
         if question != "P3":
             kwargs["final_test"] = args.final_test
+            kwargs["register"] = not args.no_register
         RUNNERS[question](**kwargs)
     print("\nListo. Para ver los runs: mlflow ui --backend-store-uri", cfg.TRACKING_URI)
 

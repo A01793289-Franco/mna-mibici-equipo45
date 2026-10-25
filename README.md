@@ -44,6 +44,7 @@ mibici/
   features.py
   train.py
   train_p1.py
+  predict.py
 references/
   Machine Learning Canvas.pdf
   ml_canvas.md
@@ -68,6 +69,7 @@ reports/
 tests/
   test_data_features.py
   test_train.py
+  test_predict.py
 docs/
 requirements.txt
 pyproject.toml
@@ -141,6 +143,26 @@ Cada run registra:
 - **Artefactos:** figura de cada run (demanda por hora, matriz de confusión, o mapa y perfiles de los grupos) y, en P3, la tabla de grupos por estación. Las figuras también se guardan en `reports/figures/`.
 
 Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
+
+### Modelo guardado, registro y predicción
+
+Cada run candidato (`P1_hgb_poisson_h1`, `P2_logistica_proxy_h1`, `P2_hgb_proxy_h1`) guarda su estimador con `mlflow.sklearn.log_model`, con su firma (columnas y tipos de entrada, tipo de salida) y cinco filas de ejemplo. En MLflow 3 el modelo no es una carpeta dentro de *Artifacts*: se ve en el run (pestaña *Overview*, sección *Registered models*) y en *Model registry* (modo *Model training* de la barra lateral). El baseline estacional de P1 y los agrupamientos de P3 no son estimadores predictivos y no guardan modelo.
+
+Al terminar P1 y P2 se elige el ganador **solo con métricas de validación** y se registra en el Model Registry con el alias `champion`:
+
+| Pregunta | Modelo registrado | Criterio |
+|---|---|---|
+| P1 | `mibici-p1-demanda` | menor `val_mae` entre todos los runs de P1 (si gana el baseline, no se registra nada) |
+| P2 | `mibici-p2-riesgo` | mayor `val_f1_macro` entre los runs de P2 |
+
+Cada ejecución crea una versión nueva y mueve el alias `champion` a la del ganador. Con `--no-register` se entrena sin tocar el registro. Las métricas `test_` (septiembre) nunca participan en la elección.
+
+```bash
+python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
+python -m mibici.predict --question P2 --timestamp 2026-09-15T08:00 --output salida.csv
+```
+
+`predict.py` carga el modelo `champion`, toma de la tabla de variables que construye `features.py` las filas de esa hora (en hora local de Ciudad de México si no se indica zona) y escribe `reports/predicciones/p1_20260915T0800.csv`, con una fila por estación: `demanda_esperada` en P1, y `clase`, `riesgo` y las tres probabilidades en P2. Si la hora no está en la tabla, por ejemplo por falta de 168 h de historia, termina con un mensaje que indica el rango disponible. Solo predice horas cuyas variables ya existen en la tabla; no calcula rezagos de horas futuras. En P2 el riesgo es el del estado virtual, no inventario observado.
 
 El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md).
 
