@@ -32,7 +32,7 @@ La ingesta obtuvo **3,362,065 registros originales y 3,358,273 viajes válidos**
 
 Las salidas contienen 2,556,542 filas de P1 y 2,551,458 de P2; los perfiles P3 incluyen 397 estaciones de entrenamiento, 468 de validación y 468 de prueba. Ver versiones, conteos y hashes en los manifiestos. La propuesta documenta las limitaciones del catálogo posterior y del riesgo simulado.
 
-`mibici/config.py` centraliza rutas, fuentes, fechas, semilla, horizontes, umbrales y parámetros de clustering. Los próximos módulos deberán importar esos valores.
+`mibici/config.py` centraliza rutas, fuentes, fechas, semilla, horizontes, umbrales y parámetros de clustering. `dataset.py`, `features.py` y `train.py` importan esos valores en lugar de repetirlos.
 
 ## Estructura actual
 
@@ -61,8 +61,13 @@ reports/
   TC5061_Propuesta_Proyecto_Equipo45.pdf
   resultados_mlflow.json
   resultados_mlflow.md
+  ingesta_features_verificacion.json
+  ingesta_features_pruebas.txt
+  documentacion_features_verificacion.json
   figures/
 tests/
+  test_data_features.py
+  test_train.py
 docs/
 requirements.txt
 pyproject.toml
@@ -90,7 +95,7 @@ python -m pip install -r requirements.txt
 python -m mibici.config
 ```
 
-En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución se comprobó con Python 3.13 en Linux; los otros sistemas usan los comandos equivalentes indicados.
+En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución completa se comprobó con Python 3.13 en Linux. En Windows se comprobaron las pruebas, la regeneración de ingesta y variables y ambos `--verify`; macOS usa los comandos equivalentes indicados.
 
 ## Ingesta y variables
 
@@ -137,13 +142,13 @@ Cada run registra:
 
 Para que el commit registrado describa el código exacto, hay que correr el entrenamiento después de confirmar los cambios (`git_dirty` debe ser `false`). La prueba (septiembre) no se usa por defecto: `--final-test` añade las métricas `test_` y debe ejecutarse una sola vez, cuando las decisiones ya estén fijas. `mlflow.db` y `mlartifacts/` están en `.gitignore`: cada integrante reproduce los runs en su máquina.
 
-El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md). Para evaluar septiembre una sola vez con las configuraciones ya fijadas se añade `--final-test`.
+El protocolo fijado antes de la evaluación final está en [protocolo_experimento.md](references/protocolo_experimento.md).
 
 Notebook exploratorio: [1.0-lpa-exploracion-mibici.ipynb](notebooks/1.0-lpa-exploracion-mibici.ipynb). Las explicaciones están en Markdown y las celdas de código no contienen comentarios.
 
-Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
+Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
-Las seis corridas documentadas conservan el commit de ejecución y la versión de variables que registraron originalmente. La incorporación de docstrings actualizó el hash del módulo y la versión del manifiesto; la reconstrucción comprobó que los cinco Parquet siguen siendo idénticos. Esta [verificación](reports/documentacion_features_verificacion.json) permite distinguir una actualización documental de un cambio en las variables.
+Las seis corridas documentadas conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
 
 ## Flujo de trabajo
 
@@ -176,6 +181,6 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
-Verificaciones realizadas: 21 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux. No se afirma haber ejecutado en Windows o macOS.
+Verificaciones realizadas: 21 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).
