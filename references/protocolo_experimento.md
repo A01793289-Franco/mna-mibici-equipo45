@@ -16,6 +16,10 @@ Cada run registra commit real, versiones de datos y variables, fechas, semilla, 
 
 Las funciones de `features.py` incluyen docstrings sobre su operación y su pertinencia para P1-P3. La documentación Markdown amplía los supuestos y las decisiones del proyecto.
 
+## Barrido de k en P3
+
+k=3 se fijó antes del experimento. Para contrastarlo se agregó el run `P3_barrido_k_perfil48`, que entrena K-means y Ward con k de 2 a 8 y registra silhouette, Davies-Bouldin y ARI por k. Usa únicamente `p3_train` y `p3_val`; `p3_test.parquet` no se lee ni se usa para decidir. El rango de k vive en `mibici/train.py` (`P3_K_VALUES`). La decisión sobre k y su interpretación están en `reports/resultados_mlflow.md`.
+
 ## Elección y registro del modelo
 
 Después de entrenar P1 y P2 se registra en MLflow Model Registry un modelo por pregunta y se le asigna el alias `champion`. La regla usa únicamente métricas de validación, nunca `test_`:

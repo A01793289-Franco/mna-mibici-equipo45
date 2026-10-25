@@ -29,7 +29,7 @@ En validación, P1 reduce MAE de 0.8988 a 0.7614. En la evaluación única de se
 
 P2 mejora F1 macro de validación de 0.8223 a 0.8708 y de prueba de 0.8114 a 0.8574. En el candidato, la clase de riesgo sin anclajes tiene recall de prueba de 0.9363, pero precisión de 0.6987: aún genera falsas alarmas. Las etiquetas proceden de una simulación con ocupación inicial de 50%, sin inventarios observados ni rebalanceos. Las métricas muestran concordancia con ese proxy y no validan disponibilidad física ni decisiones automáticas. El escenario evaluado utiliza un estado inicial de 50%.
 
-P3 favorece K-means frente a Ward en las tres métricas. K-means produce grupos de 213, 33 y 151 estaciones, con 397 estaciones comunes al comparar periodos. El ARI de 0.5776 indica estabilidad parcial, no coincidencia perfecta; silhouette de 0.1407 advierte superposición. Tres grupos fue una decisión inicial fijada antes del experimento. No se evaluó P3 sobre septiembre.
+P3 favorece K-means frente a Ward en las tres métricas. K-means produce grupos de 213, 33 y 151 estaciones, con 397 estaciones comunes al comparar periodos. El ARI de 0.5776 indica estabilidad parcial, no coincidencia perfecta; silhouette de 0.1407 advierte superposición. Tres grupos fue una decisión inicial fijada antes del experimento y el barrido de k (sección siguiente) la respalda. No se evaluó P3 sobre septiembre.
 
 Los tres candidatos se comparan solo con su baseline dentro de cada pregunta. La semilla 42 y las seis configuraciones se fijaron antes de la prueba; la primera iteración no realizó búsqueda de hiperparámetros (la segunda se describe más abajo). Por tanto, no se atribuye causalmente la mejora a un único hiperparámetro.
 
@@ -93,6 +93,40 @@ La primera iteración usó los valores por defecto de scikit-learn y no buscó h
 **Interpretación.** El ajuste aporta poco. En P1 el MAE de validación baja de 0.7614 a 0.7552 (cerca de 0.8%), y en la cuadrícula los valores van de 0.7577 a 0.7758: las combinaciones con 100 iteraciones y pocas hojas son las peores, y a partir de 300 iteraciones las diferencias son de milésimas. En P2 todas las combinaciones quedan entre 0.8712 y 0.8739 de F1 macro, una diferencia que no se puede distinguir de la variación entre muestras; el modelo ajustado (0.8723) sigue por debajo de la regla de persistencia (0.8824), así que la conclusión de la sección anterior no cambia. Conclusión práctica: los valores por defecto ya estaban cerca de lo mejor que ofrece esta cuadrícula, y el límite de P2 viene del proxy y no de los hiperparámetros. La mejor combinación está en el borde de la cuadrícula (menor tasa de aprendizaje, más hojas y más iteraciones), por lo que una exploración más amplia podría mejorar P1 un poco más; no se hizo para no seguir optimizando sobre la validación.
 
 La cifra de septiembre (MAE 0.8719 en P1, F1 macro 0.8574 en P2) corresponde a la configuración por defecto y queda como valor histórico de la primera iteración. Los modelos ajustados se comparan en validación y no se evaluaron en septiembre.
+
+## Barrido del número de grupos en P3
+
+Hasta aquí k=3 era una decisión fijada antes del experimento. El run `P3_barrido_k_perfil48` la contrasta: entrena K-means y Ward con k de 2 a 8 sobre los perfiles de 397 estaciones y registra, para cada k, la silhouette y el índice de Davies-Bouldin en entrenamiento y el ARI entre la agrupación de entrenamiento y la de validación en las estaciones comunes. Usa solo `p3_train` y `p3_val`; no se abrió `p3_test.parquet`. La figura `reports/figures/p3_barrido_k_perfil48.png` muestra las tres métricas contra k, y la tabla completa se reproduce abajo y queda como artefacto del run (carpeta `tablas`).
+
+**K-means**
+
+| k | silhouette | Davies-Bouldin | ARI entre periodos | grupo más pequeño |
+|---|---|---|---|---|
+| 2 | 0.1325 | 2.4464 | 0.4578 | 167 |
+| 3 | 0.1407 | 1.9784 | 0.5776 | 33 |
+| 4 | 0.1131 | 2.0854 | 0.3726 | 27 |
+| 5 | 0.1165 | 2.1077 | 0.2923 | 27 |
+| 6 | 0.0963 | 2.1409 | 0.3728 | 20 |
+| 7 | 0.0744 | 2.1223 | 0.2734 | 7 |
+| 8 | 0.0717 | 2.0878 | 0.3384 | 5 |
+
+**Ward**
+
+| k | silhouette | Davies-Bouldin | ARI entre periodos | grupo más pequeño |
+|---|---|---|---|---|
+| 2 | 0.1040 | 2.5708 | 0.1390 | 149 |
+| 3 | 0.1232 | 2.1388 | 0.3116 | 31 |
+| 4 | 0.0688 | 2.4207 | 0.1760 | 31 |
+| 5 | 0.0755 | 2.3748 | 0.1530 | 31 |
+| 6 | 0.0788 | 2.1728 | 0.1518 | 4 |
+| 7 | 0.0838 | 2.0835 | 0.1526 | 4 |
+| 8 | 0.0671 | 2.1691 | 0.1831 | 4 |
+
+**Justificación de k=3.** Con K-means, k=3 tiene la mayor silhouette (0.1407), el menor Davies-Bouldin (1.9784) y, con mucha ventaja, el mayor ARI entre periodos (0.5776; el siguiente es 0.4578 con k=2). Con Ward también tiene la mayor silhouette (0.1232) y el mayor ARI (0.3116), y su Davies-Bouldin (2.1388) es algo mayor que el mejor (2.0835 con k=7). Para k mayores aparecen grupos de 4 a 7 estaciones (k=7 y 8 en K-means; k≥6 en Ward), que no son interpretables, y la estabilidad entre periodos baja. Los tres criterios coinciden, así que el barrido respalda k=3 y no se cambió.
+
+**Interpretación de los perfiles (K-means, perfil horario normalizado).** Con k=2 la separación es entre estaciones de pico matutino (picos a las 7 y 8 h en día laborable; 167 estaciones) y de pico vespertino (17 y 18 h; 230). Con k=3 el grupo vespertino se divide y aparece un grupo pequeño (33 estaciones) cuyo perfil pesa más en fin de semana (alrededor de 56% de su perfil, contra 39% en los otros dos), con un pico de fin de semana a las 11 y 12 h, y está algo más al sur que los demás. Con k=4 se divide el grupo vespertino en dos que difieren sobre todo en la intensidad de la punta de la tarde (42% contra 31% de sus salidas entre 16 y 19 h), lo que añade matiz pero baja silhouette y ARI. Por eso k=3 distingue tres usos con sentido: matutino, vespertino y fin de semana.
+
+**Límite.** La silhouette sigue siendo baja en todos los k (máximo 0.14): los perfiles forman un continuo y los grupos se superponen. k=3 es la opción mejor respaldada entre las probadas, no una separación nítida. El ARI de 0.58 indica estabilidad parcial entre periodos.
 
 ## Trazabilidad y evidencia
 

@@ -169,6 +169,25 @@ class TestChampion(unittest.TestCase):
         self.assertIsNone(train.pick_champion("P2", {"a": candidates["a"]}))
 
 
+class TestKSweep(unittest.TestCase):
+    def test_table_has_one_row_per_algorithm_and_k(self):
+        table = train.k_sweep_table(profile_table(seed=1), profile_table(seed=2))
+        self.assertEqual(len(table), len(train.CLUSTERERS) * len(train.P3_K_VALUES))
+        self.assertEqual(set(table["k"]), set(train.P3_K_VALUES))
+
+    def test_true_number_of_groups_has_best_silhouette_and_perfect_ari(self):
+        table = train.k_sweep_table(profile_table(seed=1), profile_table(seed=2))
+        for algorithm, group in table.groupby("algoritmo"):
+            self.assertEqual(group.loc[group["train_silhouette"].idxmax(), "k"], 3, algorithm)
+            self.assertAlmostEqual(
+                group.loc[group["k"] == 3, "val_ari"].iloc[0], 1.0, msg=algorithm
+            )
+
+    def test_k_changes_number_of_groups(self):
+        labels, _ = train.cluster_metrics(profile_table(seed=1), profile_table(seed=2), "ward", 5)
+        self.assertEqual(len(set(labels)), 5)
+
+
 class TestSearchGrid(unittest.TestCase):
     def test_default_grid_has_between_6_and_12_combinations(self):
         combos = train.search_combinations()
@@ -377,7 +396,15 @@ class TestMlflowRuns(unittest.TestCase):
         )
         self.assertEqual(set(results), {"P3_kmeans_perfil48", "P3_ward_perfil48"})
         client, runs = self.runs("P3")
+        sweep = [run for run in runs if run.info.run_name == "P3_barrido_k_perfil48"]
+        self.assertEqual(len(sweep), 1)
+        history = client.get_metric_history(sweep[0].info.run_id, "kmeans_train_silhouette")
+        self.assertEqual([item.step for item in history], list(train.P3_K_VALUES))
+        self.assertTrue(client.list_artifacts(sweep[0].info.run_id, "figuras"))
+        self.assertTrue(client.list_artifacts(sweep[0].info.run_id, "tablas"))
         for run in runs:
+            if run.info.run_name == "P3_barrido_k_perfil48":
+                continue
             self.assertIn("val_ari", run.data.metrics)
             self.assertTrue(client.list_artifacts(run.info.run_id, "tablas"))
             self.assertEqual(

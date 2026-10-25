@@ -212,14 +212,17 @@ def class_probabilities(model, features):
 # P3: agrupaciones
 # ---------------------------------------------------------------------------
 CLUSTERERS = {
-    "kmeans": lambda: KMeans(
-        n_clusters=cfg.N_CLUSTERS, n_init=cfg.KMEANS_N_INIT, random_state=cfg.SEED
+    "kmeans": lambda k=cfg.N_CLUSTERS: KMeans(
+        n_clusters=k, n_init=cfg.KMEANS_N_INIT, random_state=cfg.SEED
     ),
-    "ward": lambda: AgglomerativeClustering(n_clusters=cfg.N_CLUSTERS, linkage="ward"),
+    "ward": lambda k=cfg.N_CLUSTERS: AgglomerativeClustering(n_clusters=k, linkage="ward"),
 }
+# Barrido de k (justifica cuántos grupos usar). Vive aquí y no en config.py porque el hash de
+# config.py forma parte de los manifiestos de datos.
+P3_K_VALUES = tuple(range(2, 9))
 
 
-def cluster_metrics(train, val, algorithm):
+def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS):
     """Silhouette y Davies-Bouldin en entrenamiento; ARI entre entrenamiento y validación.
 
     El ARI compara las etiquetas del perfil de entrenamiento con las de una agrupación ajustada
@@ -227,24 +230,50 @@ def cluster_metrics(train, val, algorithm):
     ``(etiquetas_train, métricas)``.
     """
     columns = list(cfg.P3_FEATURE_COLUMNS)
-    labels = CLUSTERERS[algorithm]().fit_predict(train[columns].to_numpy())
+    labels = CLUSTERERS[algorithm](k).fit_predict(train[columns].to_numpy())
     metrics = {
         "train_silhouette": float(silhouette_score(train[columns], labels)),
         "train_davies_bouldin": float(davies_bouldin_score(train[columns], labels)),
         "train_stations": int(len(train)),
     }
-    for group, size in zip(*np.unique(labels, return_counts=True)):
+    sizes = np.unique(labels, return_counts=True)
+    for group, size in zip(*sizes):
         metrics[f"train_size_cluster_{group}"] = int(size)
-    val_labels = CLUSTERERS[algorithm]().fit_predict(val[columns].to_numpy())
+    metrics["train_min_cluster_size"] = int(sizes[1].min())
+    val_labels = CLUSTERERS[algorithm](k).fit_predict(val[columns].to_numpy())
     train_by_station = pd.Series(labels, index=train["station_id"].to_numpy())
     val_by_station = pd.Series(val_labels, index=val["station_id"].to_numpy())
     common = train_by_station.index.intersection(val_by_station.index)
     metrics["val_common_stations"] = int(len(common))
-    if len(common) > cfg.N_CLUSTERS:
+    if len(common) > k:
         metrics["val_ari"] = float(
             adjusted_rand_score(train_by_station.loc[common], val_by_station.loc[common])
         )
     return labels, metrics
+
+
+def k_sweep_table(train, val):
+    """Métricas de K-means y Ward para cada k de ``P3_K_VALUES``, solo con entrenamiento y validación."""
+    rows = []
+    for algorithm in CLUSTERERS:
+        for k in P3_K_VALUES:
+            _, metrics = cluster_metrics(train, val, algorithm, k)
+            rows.append(
+                {
+                    "algoritmo": algorithm,
+                    "k": k,
+                    **{
+                        name: metrics.get(name, math.nan)
+                        for name in (
+                            "train_silhouette",
+                            "train_davies_bouldin",
+                            "val_ari",
+                            "train_min_cluster_size",
+                        )
+                    },
+                }
+            )
+    return pd.DataFrame(rows)
 
 
 # ---------------------------------------------------------------------------
@@ -289,6 +318,24 @@ def plot_confusion(y_true, y_pred, title, path):
     )
     ax.set_title(title)
     ax.tick_params(axis="x", labelrotation=20)
+    return _save(fig, path)
+
+
+def plot_k_sweep(table, title, path):
+    """Silhouette, Davies-Bouldin y ARI contra k, una línea por algoritmo."""
+    panels = [
+        ("train_silhouette", "Silhouette (mayor es mejor)"),
+        ("train_davies_bouldin", "Davies-Bouldin (menor es mejor)"),
+        ("val_ari", "ARI entrenamiento vs validación (mayor es mejor)"),
+    ]
+    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+    for ax, (metric, label) in zip(axes, panels):
+        for algorithm, group in table.groupby("algoritmo"):
+            ax.plot(group["k"], group[metric], marker="o", label=algorithm)
+        ax.set(title=label, xlabel="Número de grupos k")
+        ax.set_xticks(list(P3_K_VALUES))
+        ax.legend(fontsize=8)
+    fig.suptitle(title)
     return _save(fig, path)
 
 
@@ -833,6 +880,43 @@ def run_p2(
     return results
 
 
+def run_k_sweep(train, val, figures_dir, context):
+    """Un run con las métricas de cada k (paso = k), tabla CSV y figura como artefactos."""
+    import mlflow
+
+    table = k_sweep_table(train, val)
+    figures_dir = Path(figures_dir)
+    figures_dir.mkdir(parents=True, exist_ok=True)
+    csv = figures_dir / "p3_barrido_k_perfil48.csv"
+    table.to_csv(csv, index=False)
+    figure = plot_k_sweep(
+        table,
+        "P3: métricas por número de grupos (perfil de 48 valores)",
+        figures_dir / "p3_barrido_k_perfil48.png",
+    )
+    with mlflow.start_run(run_name="P3_barrido_k_perfil48"):
+        mlflow.set_tags(run_tags("P3", "barrido", context))
+        mlflow.log_params(
+            {
+                "k_valores": ",".join(str(k) for k in P3_K_VALUES),
+                "algoritmos": ",".join(CLUSTERERS),
+                "k_fijado_antes": cfg.N_CLUSTERS,
+                "filas_entrenamiento": len(train),
+                "filas_validacion": len(val),
+                "seed": cfg.SEED,
+            }
+        )
+        for row in table.to_dict("records"):
+            for metric in ("train_silhouette", "train_davies_bouldin", "val_ari"):
+                if math.isfinite(row[metric]):
+                    mlflow.log_metric(f"{row['algoritmo']}_{metric}", row[metric], step=row["k"])
+        mlflow.log_artifact(str(figure), artifact_path="figuras")
+        mlflow.log_artifact(str(csv), artifact_path="tablas")
+    print("\n=== P3: barrido de k ===", flush=True)
+    print(table.round(4).to_string(index=False), flush=True)
+    return table
+
+
 def run_p3(tables=None, figures_dir=cfg.FIGURES_DIR, output_dir=cfg.PROCESSED_DIR, context=None):
     """P3: K-means (baseline) y Ward (candidato) sobre 48 medias horarias normalizadas."""
     if tables is None:
@@ -879,6 +963,7 @@ def run_p3(tables=None, figures_dir=cfg.FIGURES_DIR, output_dir=cfg.PROCESSED_DI
         log_run(run_name, "P3", kind, params, metrics, [figure, assignments], context, undefined)
         results[run_name] = metrics
     _print_results("P3", results)
+    run_k_sweep(train, val, figures_dir, context)
     return results
 
 

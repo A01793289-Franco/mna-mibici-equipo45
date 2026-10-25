@@ -144,6 +144,7 @@ La interfaz queda en <http://127.0.0.1:5000>, experimento `mibici-equipo45`. `py
 | `P1_hgb_poisson_ajustado_h1`, `P2_hgb_ajustado_proxy_h1` | P1, P2 | Con `--tune`: boosting con la mejor combinación de la búsqueda (solo validación) | `val_mae` / `val_f1_macro` |
 | `P3_kmeans_perfil48` | P3 | Baseline: K-means con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
 | `P3_ward_perfil48` | P3 | Agrupamiento jerárquico Ward con k=3 | `train_silhouette`, `train_davies_bouldin`, `val_ari` |
+| `P3_barrido_k_perfil48` | P3 | Barrido de k=2 a 8 para K-means y Ward (una métrica por paso k, tabla y figura) | `*_train_silhouette`, `*_train_davies_bouldin`, `*_val_ari` |
 
 Cada run registra:
 
