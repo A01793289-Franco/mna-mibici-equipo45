@@ -124,4 +124,9 @@ Los resultados históricos de MLflow siguen vinculados al commit `43bf339792fef5
 | `make create_environment` | Conserva el comando de virtualenvwrapper de la plantilla; el README explica la alternativa con venv. |
 | `make data` | Ejecuta la ingesta reproducible. |
 | `make features` | Construye las tablas para P1-P3. |
-| `make help` | Muestra las descripciones de comandos conservadas en la plantilla; ingesta y variables se consultan en este documento. |
+| `make verify` | Verifica hashes y versiones de datos y variables, sin ejecutar pruebas. |
+| `make test` | Ejecuta las pruebas unitarias con datos sintéticos. |
+| `make train` | Ejecuta `make verify` y, si pasa, entrena P1-P3 en validación y registra los runs en MLflow. |
+| `make help` | Muestra todos los objetivos anteriores con su descripción. |
+
+`make train` no usa `--final-test`. La evaluación de septiembre se ejecuta a mano y una sola vez, según el [protocolo](protocolo_experimento.md).
