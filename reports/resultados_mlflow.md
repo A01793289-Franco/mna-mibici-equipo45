@@ -1,6 +1,6 @@
 # Resultados reales | Equipo 45
 
-Commit de ejecución: `43bf339792fef5d01326aa0ca0227fdd781675ff`.
+Commit de ejecución de la primera iteración (tablas P1, P2 y P3 siguientes y evaluación de septiembre): `43bf339792fef5d01326aa0ca0227fdd781675ff`. Las secciones posteriores a "Interpretación" corresponden a la segunda iteración; su trazabilidad se describe al final.
 
 ## P1
 
@@ -31,7 +31,7 @@ P2 mejora F1 macro de validación de 0.8223 a 0.8708 y de prueba de 0.8114 a 0.8
 
 P3 favorece K-means frente a Ward en las tres métricas. K-means produce grupos de 213, 33 y 151 estaciones, con 397 estaciones comunes al comparar periodos. El ARI de 0.5776 indica estabilidad parcial, no coincidencia perfecta; silhouette de 0.1407 advierte superposición. Tres grupos fue una decisión inicial fijada antes del experimento y el barrido de k (sección siguiente) la respalda. No se evaluó P3 sobre septiembre.
 
-Los tres candidatos se comparan solo con su baseline dentro de cada pregunta. La semilla 42 y las seis configuraciones se fijaron antes de la prueba; la primera iteración no realizó búsqueda de hiperparámetros (la segunda se describe más abajo). Por tanto, no se atribuye causalmente la mejora a un único hiperparámetro.
+En la primera iteración, los tres candidatos se comparan solo con su baseline dentro de cada pregunta. La semilla 42 y las seis configuraciones se fijaron antes de la prueba; la primera iteración no realizó búsqueda de hiperparámetros (la segunda se describe más abajo). Por tanto, no se atribuye causalmente la mejora a un único hiperparámetro.
 
 ## Control de rigor en P2: baseline de persistencia
 
@@ -164,4 +164,19 @@ Una explicación probable (no medida aparte aquí) es que la ocupación se recor
 
 ## Trazabilidad y evidencia
 
-Los seis runs finalizaron y registran `git_dirty=false`, el mismo commit, las mismas versiones de datos y variables, parámetros del estimador, etiquetas y al menos una figura. Las capturas auténticas de la interfaz están en `reports/figures/mlflow_*.png`; las tablas provienen del registro local y el JSON conserva la precisión completa. Los nombres de las corridas, no sus IDs locales, se reproducen al ejecutar los comandos del README.
+**Primera iteración.** Los seis runs finalizaron y registran `git_dirty=false`, el mismo commit (`43bf339`), las mismas versiones de datos y variables, parámetros del estimador, etiquetas y al menos una figura. Las capturas auténticas de la interfaz están en `reports/figures/mlflow_*.png`; el JSON `resultados_mlflow.json` conserva sus métricas y parámetros con precisión completa.
+
+**Segunda iteración.** El código y las cifras de cada análisis entraron en estos commits:
+
+| Commit | Contenido |
+|---|---|
+| `13a97f9` | Modelos guardados con firma, Model Registry con `champion` y `predict.py` |
+| `233d608` | Baseline de persistencia en P2 y búsqueda de hiperparámetros (`--tune`) |
+| `e4d5e9d` | Barrido de k en P3 |
+| `a4d5ac2` | Estación como variable categórica en P1 |
+| `e0dc21a` | Análisis de errores de P1 |
+| `f0acc9b` | Sensibilidad de P2 a la ocupación inicial |
+
+El repositorio no registra el commit de ejecución ni el valor de `git_dirty` de estos runs, y el JSON no los incluye. Cada run guarda ambas etiquetas en MLflow, que es local y no se versiona. Para que la segunda iteración tenga la misma trazabilidad que la primera, se reejecutará desde un commit limpio y se actualizará esta sección.
+
+Los nombres de las corridas, no sus IDs locales, se reproducen al ejecutar los comandos del README.

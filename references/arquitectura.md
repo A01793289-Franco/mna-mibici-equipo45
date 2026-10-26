@@ -2,7 +2,7 @@
 
 ![Componentes y flujo](arquitectura.svg)
 
-El diagrama describe el sistema del proyecto. Configuración, ingesta, variables, entrenamiento y seis runs de MLflow están implementados y ejecutados. La evidencia de ejecución está en [ingesta_features.md](ingesta_features.md).
+El diagrama describe el flujo principal del sistema. Configuración, ingesta, variables, entrenamiento, seguimiento y registro de modelos en MLflow e inferencia están implementados y ejecutados, en dos iteraciones de experimentos. El diagrama no dibuja el Model Registry ni la inferencia; la tabla los incluye. La evidencia de ejecución está en [ingesta_features.md](ingesta_features.md) y [resultados_mlflow.md](../reports/resultados_mlflow.md).
 
 | Componente | Herramienta y función | Justificación |
 |---|---|---|
@@ -11,8 +11,9 @@ El diagrama describe el sistema del proyecto. Configuración, ingesta, variables
 | Almacenamiento | CSV crudo local y Parquet mensual con PyArrow. | Conservar origen y facilitar lecturas parciales; archivos grandes fuera de Git. |
 | Versionado | Manifiesto JSON con URL, SHA-256 y conteos, guardado en Git. | Ligar datos y código permite trazabilidad y reproducción del experimento (Treveil et al., 2020). |
 | Preparación | pandas, funciones de `features.py` y cortes de `config.py`. | Separar exploración y lógica reutilizable sigue Cookiecutter Data Science y facilita revisar la información disponible al predecir. |
-| Entrenamiento | scikit-learn para los tres baselines y candidatos. | Estimadores sencillos y métricas por tarea; selección en validación antes de prueba (Huyen, 2022). |
-| Seguimiento | MLflow, SQLite y artefactos locales. | Registrar configuración, métricas, versiones y salidas. El equipo reproducirá las corridas o acordará un servidor compartido. |
+| Entrenamiento | scikit-learn para baselines (incluida una regla de persistencia en P2) y candidatos; búsqueda de hiperparámetros solo en validación (`--tune`). | Estimadores sencillos y métricas por tarea; selección en validación antes de prueba (Huyen, 2022). |
+| Seguimiento | MLflow, SQLite y artefactos locales; modelos guardados con firma (`skops`) y Model Registry con alias `champion` elegido solo con métricas de validación. | Registrar configuración, métricas, versiones y salidas. El equipo reproducirá las corridas o acordará un servidor compartido. |
+| Inferencia | `predict.py` carga el `champion` y predice una hora con las variables de `features.py`. | Reutiliza las mismas variables del entrenamiento para no introducir diferencias entre entrenar y predecir. |
 | Evidencia | Matplotlib para gráficos/mapa y capturas reales de MLflow. | Interpretar errores/grupos y verificar runs, sin publicar atributos personales. |
 
 Referencias completas en [propuesta.md](propuesta.md). Un clon de Git no contendrá la base ni los artefactos de experimentos ya ejecutados.

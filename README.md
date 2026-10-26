@@ -10,10 +10,12 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 
 ## Estado actual
 
-Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. El notebook exploratorio quedó ejecutado y las seis corridas finalizaron desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`. P1-P2 incluyen la evaluación única de septiembre; P3 compara entrenamiento y validación. Las capturas y el PDF están incluidos.
+Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3, entrenamiento con registro en MLflow (`mibici/train.py`), modelos guardados con firma, Model Registry con alias `champion` e inferencia (`mibici/predict.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados.
+
+El experimento tiene dos iteraciones. La **primera** son seis corridas (baseline y candidato por pregunta) ejecutadas desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`; P1-P2 incluyen la evaluación única de septiembre. La **segunda**, posterior a septiembre y evaluada solo en validación, agrega el baseline de persistencia de P2, el ajuste de hiperparámetros, la estación como variable categórica en P1, el barrido de k en P3, el análisis de errores de P1 y la sensibilidad de P2 a la ocupación inicial. Las capturas de MLflow y el PDF incluidos corresponden a la primera iteración.
 
 - [PDF de la propuesta y evidencia](reports/TC5061_Propuesta_Proyecto_Equipo45.pdf).
-- [Resultados de las seis corridas](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros](reports/resultados_mlflow.json).
+- [Resultados e interpretación de ambas iteraciones](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros de la primera iteración](reports/resultados_mlflow.json).
 - [ML Canvas editable](references/ml_canvas.md).
 - [ML Canvas en PDF](references/Machine%20Learning%20Canvas.pdf).
 - [Propuesta: datos, partición, pipelines, modelos y métricas](references/propuesta.md).
@@ -173,7 +175,7 @@ Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia
 
 ### Modelo guardado, registro y predicción
 
-Cada run candidato (`P1_hgb_poisson_h1`, `P2_logistica_proxy_h1`, `P2_hgb_proxy_h1`) guarda su estimador con `mlflow.sklearn.log_model`, con su firma (columnas y tipos de entrada, tipo de salida) y cinco filas de ejemplo. En MLflow 3 el modelo no es una carpeta dentro de *Artifacts*: se ve en el run (pestaña *Overview*, sección *Registered models*) y en *Model registry* (modo *Model training* de la barra lateral). El baseline estacional de P1 y los agrupamientos de P3 no son estimadores predictivos y no guardan modelo.
+Cada run con estimador (`P1_hgb_poisson_h1`, `P1_hgb_poisson_estacion_h1`, `P2_logistica_proxy_h1`, `P2_hgb_proxy_h1` y, con `--tune`, `P1_hgb_poisson_ajustado_h1` y `P2_hgb_ajustado_proxy_h1`) guarda su estimador con `mlflow.sklearn.log_model`, con su firma (columnas y tipos de entrada, tipo de salida) y cinco filas de ejemplo. En MLflow 3 el modelo no es una carpeta dentro de *Artifacts*: se ve en el run (pestaña *Overview*, sección *Registered models*) y en *Model registry* (modo *Model training* de la barra lateral). El baseline estacional de P1 y los agrupamientos de P3 no son estimadores predictivos y no guardan modelo.
 
 Al terminar P1 y P2 se elige el ganador **solo con métricas de validación** y se registra en el Model Registry con el alias `champion`:
 
@@ -205,7 +207,7 @@ También se puede abrir en VS Code o Jupyter y usar *Run All*.
 
 Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
-Las seis corridas documentadas conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
+Las seis corridas de la primera iteración conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
 
 ## Flujo de trabajo
 
@@ -230,14 +232,24 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 ## Evidencia y resultados obtenidos
 
+**Primera iteración (evaluación única de septiembre)**
+
 | Pregunta | Baseline | Candidato | Interpretación |
 |---|---|---|---|
 | P1 | MAE de prueba: 1.0264 | MAE de prueba: 0.8719 | El candidato reduce el error absoluto alrededor de 15.1%; aún tiene WAPE de 60.39%. |
 | P2 | F1 macro de prueba: 0.8114 | F1 macro de prueba: 0.8574 | Mejora la concordancia con el proxy; no demuestra disponibilidad real. |
 | P3 | K-means: silhouette 0.1407, ARI 0.5776 | Ward: silhouette 0.1232, ARI 0.3116 | K-means resulta preferible, pero los perfiles se superponen. |
 
-Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
+**Segunda iteración (solo validación; no evaluada en septiembre)**
 
-Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+| Pregunta | Resultado | Interpretación |
+|---|---|---|
+| P1 | `P1_hgb_poisson_estacion_h1` (estación categórica) obtiene `val_mae` 0.7498, frente a 0.7614 del boosting por defecto, 0.7552 del ajustado y 0.8988 del estacional; es el `champion` de `mibici-p1-demanda`. | Mejora modesta, de cerca de 1.5%. El error relativo se concentra en estaciones-hora de poca demanda (WAPE 1.61 en el decil más bajo frente a 0.43 en el más alto). |
+| P2 | La regla de persistencia obtiene F1 macro 0.8824, por encima del boosting (0.8708; ajustado 0.8723) y de la logística (0.8223). | El boosting no supera a la regla en la métrica principal; detecta más riesgos (mayor recall) con más falsas alarmas. El límite viene del proxy. Con ocupación inicial de 25% a 75% el F1 cambia menos de 0.0011. |
+| P3 | El barrido de k=2 a 8 da la mayor silhouette (0.1407) y el mayor ARI (0.5776) con k=3. | Respalda k=3 (pico matutino, vespertino y fin de semana), aunque los grupos se superponen. |
+
+Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos. Estas capturas corresponden a la primera iteración y no muestran el Model Registry ni los runs de la segunda.
+
+Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook exploratorio sin errores y con seis figuras incrustadas; notebook de análisis de errores sin errores y con dos figuras. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

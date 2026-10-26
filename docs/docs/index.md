@@ -1,10 +1,11 @@
-# MiBici documentation!
+# MiBici | Equipo 45
 
-## Description
+Machine Learning para apoyar la operación de MiBici en Guadalajara con tres preguntas:
 
-propuesta y base reproducible | Colaborativo
+- **P1, demanda:** viajes iniciados por estación durante la siguiente hora.
+- **P2, riesgo:** riesgo virtual de falta de bicicletas o anclajes al cierre de la siguiente hora.
+- **P3, patrones:** grupos de estaciones por perfil horario de uso.
 
-## Commands
+La documentación completa vive en el repositorio: `README.md` (instalación, comandos y resultados), `references/` (propuesta, protocolo, arquitectura, ingesta y variables) y `reports/resultados_mlflow.md` (resultados e interpretación).
 
-The Makefile contains the central entry points for common tasks related to this project.
-
+Consulta [Primeros pasos](getting-started.md) para reproducir el flujo.

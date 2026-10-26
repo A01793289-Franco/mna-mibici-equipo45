@@ -1,10 +1,10 @@
 # Protocolo del experimento base | Equipo 45
 
-Las seis configuraciones y la semilla 42 quedan fijadas en Git antes de ejecutar el experimento. No se buscan hiperparámetros ni se modifica un modelo después de observar septiembre.
+Las seis configuraciones de la primera iteración y la semilla 42 quedaron fijadas en Git antes de ejecutar el experimento, y no se modificaron después de observar septiembre. Las adiciones posteriores (baseline de persistencia, barrido de k, estación categórica, ajuste de hiperparámetros y sensibilidad del proxy) forman una segunda iteración declarada en las secciones siguientes. Usan solo validación y no se evaluaron en septiembre.
 
 - Entrenamiento: enero-junio, excluyendo la historia inicial insuficiente.
 - Validación: julio-agosto; se comparan las configuraciones propuestas.
-- Prueba final: septiembre; se evalúa una vez por configuración de P1/P2 mediante `--final-test`, después de fijar este protocolo.
+- Prueba final: septiembre; se evaluó una vez por configuración de P1/P2 de la primera iteración mediante `--final-test`, después de fijar este protocolo.
 - P3 compara perfiles de entrenamiento y validación mediante ARI entre estaciones comunes. La versión actual no calcula métricas de prueba para P3; no se atribuyen resultados de septiembre a esta pregunta.
 - P1: estacional semanal y `HistGradientBoostingRegressor(loss="poisson")`.
 - P2: regresión logística balanceada con escalado aprendido en entrenamiento y `HistGradientBoostingClassifier(class_weight="balanced")`. Se agregó después un tercer baseline sin aprendizaje, `P2_persistencia_proxy_h1` (véase abajo).

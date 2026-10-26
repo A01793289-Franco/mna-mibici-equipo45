@@ -1,6 +1,6 @@
 # Machine Learning Canvas | Equipo 45
 
-Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los seis runs fueron ejecutados; se documenta el diseño de monitoreo operativo.
+Fuente editable del contenido. El PDF conserva la distribución y los iconos de la plantilla original. Los experimentos se ejecutaron en dos iteraciones (véase [resultados_mlflow.md](../reports/resultados_mlflow.md)); se documenta el diseño de monitoreo operativo.
 
 ## Decisión
 
@@ -52,7 +52,7 @@ Umbrales: 10% y 90%. Ocupación inicial utilizada: 50%.
 
 **P3:** análisis por lotes con actualización mensual propuesta.
 
-Seis runs reales en MLflow. P1-P2 evaluados una vez en septiembre.
+Runs reales en MLflow en dos iteraciones; modelos `champion` en Model Registry. P1-P2 evaluados una vez en septiembre (primera iteración).
 
 ## Evaluación Offline
 
