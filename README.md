@@ -1,5 +1,7 @@
 # MiBici | Equipo 45
 
+[![CI](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml/badge.svg)](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml)
+
 Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara.
 
 | Pregunta | Definición acordada |
@@ -65,6 +67,7 @@ mibici/
   tracking.py
   verify_registry.py
   project.py
+  api.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -227,6 +230,27 @@ También se puede abrir en VS Code o Jupyter y usar *Run All*.
 Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
 Las seis corridas documentadas conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
+
+## API local y documentación
+
+Con los datos y los modelos `champion` ya generados, y la misma `MLFLOW_TRACKING_URI` del entrenamiento:
+
+```text
+python -m uvicorn mibici.api:app --host 127.0.0.1 --port 8000
+```
+
+La documentación interactiva está en <http://127.0.0.1:8000/docs>. `POST /predict` recibe `question` (P1/P2), `station_id` y `timestamp`; devuelve la predicción de la estación. Reutiliza las variables existentes y el alias vigente. No calcula horas futuras ni consulta inventario real. La [guía de la API](docs/docs/api.md) contiene ejemplos y códigos de error. P3 se conserva en el módulo de consola.
+
+El sitio de documentación se construye desde la raíz:
+
+```text
+python -m mkdocs build --strict -f docs/mkdocs.yml
+python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
+```
+
+[Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
+
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows. La suite actual tiene 83 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Flujo de trabajo
 

@@ -1,4 +1,9 @@
-site_name: MiBici
-# 
-site_author: equipo45
-# 
+site_name: MiBici | Equipo 45
+site_author: Equipo 45
+repo_url: https://github.com/A01793289-Franco/mna-mibici-equipo45
+repo_name: MiBici Equipo 45
+nav:
+  - Inicio: index.md
+  - Reproducir el proyecto: getting-started.md
+  - API de predicción: api.md
+  - Pruebas y CI: verificacion.md

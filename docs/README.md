@@ -1,12 +1,12 @@
-Generating the docs
-----------
+# Documentación del proyecto
 
-Use [mkdocs](http://www.mkdocs.org/) structure to update the documentation. 
+Desde la raíz del repositorio y con las dependencias instaladas:
 
-Build locally with:
+```text
+python -m mkdocs build --strict -f docs/mkdocs.yml
+python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
+```
 
-    mkdocs build
+El primer comando construye el sitio en `docs/site`, que está excluido de Git. El segundo permite revisarlo en http://127.0.0.1:8001. Son los mismos comandos en Linux, macOS, PowerShell y CMD.
 
-Serve locally with:
-
-    mkdocs serve
+Los archivos editables están en `docs/docs/`. La documentación enlaza al README y las guías de `main`; no publica el sitio ni modifica GitHub Pages.
