@@ -10,6 +10,8 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 
 ## Segunda entrega: MLflow Project y Registry
 
+[Reporte de experimentos en PDF](reports/TC5061_Reporte_MLFlow_Equipo45.pdf) · [Resultados e interpretación](reports/resultados_mlflow_entrega2.md) · [Registro completo](reports/resultados_mlflow_entrega2.json).
+
 El Project definitivo está en `MLproject`, con entorno en `python_env.yaml`. Las entradas `ingest` y `train` permiten reconstruir los datos y elegir pregunta, modelo, hiperparámetros y semilla desde la terminal. El protocolo completo conserva las búsquedas anidadas y registra un modelo `champion` por pregunta.
 
 La [guía del MLflow Project](references/mlflow_project.md) incluye servidor SQLite, conexión en Linux/macOS/PowerShell/CMD, comandos desde un clon limpio, opciones y explicación de versiones. Después de instalar el entorno y definir `MLFLOW_TRACKING_URI`, se ejecuta:
@@ -257,6 +259,8 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
-Verificaciones realizadas: 74 pruebas de unidad e integración aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
+
+Las verificaciones de la primera entrega incluyen notebook sin errores y seis figuras incrustadas, hashes y reconstrucción de archivos idénticos. En Windows se comprobaron entonces pruebas, regeneración de ingesta y variables y hashes con Python 3.13.16. No se afirma haber ejecutado este nuevo Project en Windows o macOS.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).
