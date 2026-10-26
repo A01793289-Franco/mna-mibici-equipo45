@@ -103,7 +103,7 @@ python -m pip install -r requirements.txt
 python -m mibici.config
 ```
 
-En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución completa se comprobó con Python 3.13 en Linux. En Windows se comprobaron las pruebas, la regeneración de ingesta y variables y ambos `--verify`; macOS usa los comandos equivalentes indicados.
+En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución completa se comprobó con Python 3.13 en Linux (primera iteración) y en Windows (pruebas, regeneración de ingesta y variables, ambos `--verify`, predicción y reproducción de la segunda iteración); macOS usa los comandos equivalentes indicados.
 
 ## Ingesta y variables
 
@@ -250,6 +250,6 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos. Estas capturas corresponden a la primera iteración y no muestran el Model Registry ni los runs de la segunda.
 
-Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook exploratorio sin errores y con seis figuras incrustadas; notebook de análisis de errores sin errores y con dos figuras. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook exploratorio sin errores y con seis figuras incrustadas; notebook de análisis de errores sin errores y con dos figuras. Entorno comprobado: Python 3.13.15 en Linux para la primera iteración; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables, verificación de hashes, predicción y reproducción de la segunda iteración (`--tune` y sensibilidad). No se afirma haber ejecutado en macOS.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

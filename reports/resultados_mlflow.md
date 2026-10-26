@@ -177,6 +177,15 @@ Una explicación probable (no medida aparte aquí) es que la ocupación se recor
 | `e0dc21a` | Análisis de errores de P1 |
 | `f0acc9b` | Sensibilidad de P2 a la ocupación inicial |
 
-El repositorio no registra el commit de ejecución ni el valor de `git_dirty` de estos runs, y el JSON no los incluye. Cada run guarda ambas etiquetas en MLflow, que es local y no se versiona. Para que la segunda iteración tenga la misma trazabilidad que la primera, se reejecutará desde un commit limpio y se actualizará esta sección.
+**Reproducción de la segunda iteración.** El 25 de octubre de 2026, entre las 19:24 y las 19:29, se ejecutaron `python -m mibici.train --question all --tune` y `python -m mibici.sensitivity` en Windows con Python 3.13.16. Los runs registran `git_commit=f0acc9b` y **`git_dirty=true`**: el árbol de trabajo tenía cambios sin confirmar, que se confirmaron a las 19:32 en `b95118a`.
+
+Esos cambios eran solo documentales, más la fijación de `skops==0.16.0`, que es la versión ya instalada. Entre `f0acc9b` y `b95118a` no cambió ningún archivo `.py`, ninguna prueba ni ningún manifiesto; se puede comprobar con `git diff f0acc9b b95118a -- "*.py" tests/ references/*.json`, que no muestra diferencias. Por tanto, el código ejecutado es el de `f0acc9b`. Todos los runs registran `data_version` `6aeb2eeb…` y `feature_version` `7bf69341…`, las de los manifiestos actuales. Las métricas de validación coinciden con las publicadas en este documento, y las figuras de la segunda iteración en `reports/figures/` provienen de esta ejecución. Los seis runs de la primera iteración, reejecutados, reproducen sus métricas de validación y entrenamiento con diferencias menores a 1e-9. No se repitió con el árbol limpio porque la diferencia era solo documental. Septiembre no se usó.
+
+El Model Registry quedó con la versión 1 de cada modelo y el alias `champion`:
+
+- `mibici-p1-demanda` → `P1_hgb_poisson_estacion_h1`, con etiqueta `supera_baselines=si`.
+- `mibici-p2-riesgo` → `P2_hgb_ajustado_proxy_h1`, con etiqueta `supera_baselines=no: P2_persistencia_proxy_h1`, coherente con la sección del baseline de persistencia.
+
+MLflow es local y no se versiona. `resultados_mlflow.json` conserva la primera iteración sin cambios y, en el bloque `segunda_iteracion`, los 23 runs principales y los 24 runs hijo de las búsquedas de esta ejecución, el Model Registry y la comparación con la primera iteración. Se omitieron las etiquetas `mlflow.source.name` y `mlflow.user`, que contienen la ruta y el usuario locales.
 
 Los nombres de las corridas, no sus IDs locales, se reproducen al ejecutar los comandos del README.

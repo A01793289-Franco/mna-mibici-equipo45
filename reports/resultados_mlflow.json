@@ -422,5 +422,2702 @@
     }
   ],
   "protocol": "Seis configuraciones fijadas antes de prueba. Septiembre se evaluó una vez para P1/P2. P3 informa train/val.",
-  "synthetic_tests_passed": 21
+  "synthetic_tests_passed": 21,
+  "alcance": "Los campos de nivel superior y 'runs' describen la primera iteración (commit 43bf339, septiembre evaluado una vez). 'segunda_iteracion' contiene la reproducción posterior, solo con validación.",
+  "segunda_iteracion": {
+    "code_commit": "f0acc9b",
+    "git_dirty": "true",
+    "nota": "Ejecutada con cambios sin confirmar, solo documentales y la fijación skops==0.16.0, confirmados después en b95118a. Entre f0acc9b y b95118a no cambió ningún .py, prueba ni manifiesto. Sin métricas test_: septiembre no se usó. Las versiones de datos y variables difieren de la primera iteración por cambios documentales en el código (docstrings); los datos y Parquet son los mismos.",
+    "executed_at": [
+      "2026-10-25T19:23:59-05:00",
+      "2026-10-25T19:26:12-05:00"
+    ],
+    "entorno": "Windows, Python 3.13.16",
+    "comandos": [
+      "python -m mibici.train --question all --tune",
+      "python -m mibici.sensitivity"
+    ],
+    "data_version": [
+      "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7"
+    ],
+    "feature_version": [
+      "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e"
+    ],
+    "synthetic_tests_passed": 59,
+    "exported_at": "2026-10-26T00:58:08.091799+00:00",
+    "etiquetas_omitidas": [
+      "mlflow.source.name",
+      "mlflow.user"
+    ],
+    "reproduccion_primera_iteracion": [
+      {
+        "name": "P1_estacional_h1",
+        "metricas_comparadas": 4,
+        "max_diferencia_absoluta": 0.0
+      },
+      {
+        "name": "P1_hgb_poisson_h1",
+        "metricas_comparadas": 4,
+        "max_diferencia_absoluta": 0.0
+      },
+      {
+        "name": "P2_logistica_proxy_h1",
+        "metricas_comparadas": 12,
+        "max_diferencia_absoluta": 0.0
+      },
+      {
+        "name": "P2_hgb_proxy_h1",
+        "metricas_comparadas": 12,
+        "max_diferencia_absoluta": 0.0
+      },
+      {
+        "name": "P3_kmeans_perfil48",
+        "metricas_comparadas": 8,
+        "max_diferencia_absoluta": 0.0
+      },
+      {
+        "name": "P3_ward_perfil48",
+        "metricas_comparadas": 8,
+        "max_diferencia_absoluta": 0.0
+      }
+    ],
+    "model_registry": [
+      {
+        "name": "mibici-p1-demanda",
+        "version": 1,
+        "aliases": [
+          "champion"
+        ],
+        "run_id": "7e5e1f8f9ad549a087e9ee7ff0763a3d",
+        "run_name": "P1_hgb_poisson_estacion_h1",
+        "source": "models:/m-15f6ae60498b4d02a8d555e3dfd6c8c6",
+        "status": "READY",
+        "tags": {
+          "run_name": "P1_hgb_poisson_estacion_h1",
+          "criterio": "val_mae en validación",
+          "supera_baselines": "si"
+        }
+      },
+      {
+        "name": "mibici-p2-riesgo",
+        "version": 1,
+        "aliases": [
+          "champion"
+        ],
+        "run_id": "0fda6002255c4897844196fc9a70ede0",
+        "run_name": "P2_hgb_ajustado_proxy_h1",
+        "source": "models:/m-0694ca466ba6458cbac19c6417581a6f",
+        "status": "READY",
+        "tags": {
+          "run_name": "P2_hgb_ajustado_proxy_h1",
+          "criterio": "val_f1_macro en validación",
+          "supera_baselines": "no: P2_persistencia_proxy_h1"
+        }
+      }
+    ],
+    "runs": [
+      {
+        "name": "P1_estacional_h1",
+        "run_id": "ac09225bc5b34323bb87a455a09555d2",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:23:59-05:00",
+        "params": {
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168",
+          "horizon_hours": "1",
+          "modelo": "misma estación y hora, semana anterior",
+          "n_features": "9",
+          "rows_test": "338690",
+          "rows_train": "1552105",
+          "rows_val": "665747",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "val_mae": 0.898799393763697,
+          "val_r2": 0.4067346482692562,
+          "val_rmse": 1.8184950927106878,
+          "val_wape": 0.7675916494985543
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P1_estacional_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ]
+      },
+      {
+        "name": "P1_busqueda_hgb_h1",
+        "run_id": "bc223ba1c19e41e195a7705272767bf4",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:00-05:00",
+        "params": {
+          "combinaciones": "12",
+          "criterio": "val_mae en validación",
+          "cuadricula": "{\"learning_rate\": [0.05, 0.1], \"max_leaf_nodes\": [15, 31, 63], \"max_iter\": [100, 300]}",
+          "filas_entrenamiento": "1552105",
+          "filas_muestra_entrenamiento": "300000",
+          "filas_validacion": "665747",
+          "mejor_learning_rate": "0.05",
+          "mejor_max_iter": "300",
+          "mejor_max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting",
+          "seed": "42"
+        },
+        "metrics": {
+          "mejor_val_mae": 0.75767878902489
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P1_busqueda_hgb_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      },
+      {
+        "name": "P1_hgb_poisson_h1",
+        "run_id": "b2aac51e2a064c9cb94584a15a57badf",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:31-05:00",
+        "params": {
+          "categorical_features": "from_dtype",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168",
+          "horizon_hours": "1",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "poisson",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingRegressor",
+          "monotonic_cst": "None",
+          "n_features": "9",
+          "n_iter_no_change": "10",
+          "quantile": "None",
+          "random_state": "42",
+          "rows_test": "338690",
+          "rows_train": "1552105",
+          "rows_val": "665747",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_mae": 0.7614272185036536,
+          "val_r2": 0.6299092512663566,
+          "val_rmse": 1.4362887387278467,
+          "val_wape": 0.6502732185620244
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P1_hgb_poisson_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-c51ff4743ea14b69856eb3371a45b2ef"
+      },
+      {
+        "name": "P1_hgb_poisson_estacion_h1",
+        "run_id": "7e5e1f8f9ad549a087e9ee7ff0763a3d",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:40-05:00",
+        "params": {
+          "categorias_estacion": "255",
+          "categorical_features": "['station_group']",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "estaciones_en_otras": "159",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,station_id",
+          "horizon_hours": "1",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "poisson",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "StationGrouper + HistGradientBoostingRegressor",
+          "monotonic_cst": "None",
+          "n_features": "10",
+          "n_iter_no_change": "10",
+          "quantile": "None",
+          "random_state": "42",
+          "rows_test": "338690",
+          "rows_train": "1552105",
+          "rows_val": "665747",
+          "scoring": "loss",
+          "seed": "42",
+          "station_id": "categórica: estaciones frecuentes y 'otras'",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_mae": 0.7497917145254663,
+          "val_r2": 0.6255968112349437,
+          "val_rmse": 1.4446325976139336,
+          "val_wape": 0.6403362785136293
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P1_hgb_poisson_estacion_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-15f6ae60498b4d02a8d555e3dfd6c8c6"
+      },
+      {
+        "name": "P1_hgb_poisson_ajustado_h1",
+        "run_id": "051f08d62d5b4facada3e9f5d0f88370",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:57-05:00",
+        "params": {
+          "busqueda_run_id": "bc223ba1c19e41e195a7705272767bf4",
+          "categorical_features": "from_dtype",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168",
+          "horizon_hours": "1",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.05",
+          "loss": "poisson",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "mejor_learning_rate": "0.05",
+          "mejor_max_iter": "300",
+          "mejor_max_leaf_nodes": "63",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingRegressor",
+          "monotonic_cst": "None",
+          "n_features": "9",
+          "n_iter_no_change": "10",
+          "quantile": "None",
+          "random_state": "42",
+          "rows_test": "338690",
+          "rows_train": "1552105",
+          "rows_val": "665747",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_mae": 0.7551994827176867,
+          "val_r2": 0.6676033434152289,
+          "val_rmse": 1.3611812691470706,
+          "val_wape": 0.6449546146357646
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P1_hgb_poisson_ajustado_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-aab1ef4aaa7c43e6b4d9379c4dc5a24a"
+      },
+      {
+        "name": "P2_busqueda_hgb_h1",
+        "run_id": "e509794a6d5946018cf4ab3396f6ae87",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:01-05:00",
+        "params": {
+          "combinaciones": "12",
+          "criterio": "val_f1_macro en validación",
+          "cuadricula": "{\"learning_rate\": [0.05, 0.1], \"max_leaf_nodes\": [15, 31, 63], \"max_iter\": [100, 300]}",
+          "filas_entrenamiento": "1551437",
+          "filas_muestra_entrenamiento": "300000",
+          "filas_validacion": "662771",
+          "mejor_learning_rate": "0.05",
+          "mejor_max_iter": "300",
+          "mejor_max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting",
+          "seed": "42"
+        },
+        "metrics": {
+          "mejor_val_f1_macro": 0.8738631032306655
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_busqueda_hgb_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      },
+      {
+        "name": "P2_persistencia_proxy_h1",
+        "run_id": "bb26d300c8314d169c3957531ed3394d",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:13-05:00",
+        "params": {
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "low_occupancy": "0.1",
+          "modelo": "regla: clase de la ocupación virtual actual",
+          "n_features": "12",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "val_ap_macro": 0.8130294150011563,
+          "val_ap_normal": 0.8883269561371678,
+          "val_ap_riesgo_sin_anclajes": 0.7300731565598386,
+          "val_ap_riesgo_sin_bicicletas": 0.8206881323064624,
+          "val_balanced_accuracy": 0.8823618306392178,
+          "val_f1_macro": 0.882361022824495,
+          "val_precision_normal": 0.9153970095711962,
+          "val_precision_riesgo_sin_anclajes": 0.8439400721451329,
+          "val_precision_riesgo_sin_bicicletas": 0.8877435745261262,
+          "val_recall_normal": 0.9153529493723797,
+          "val_recall_riesgo_sin_anclajes": 0.8438734137222895,
+          "val_recall_riesgo_sin_bicicletas": 0.8878591288229842
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_persistencia_proxy_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ]
+      },
+      {
+        "name": "P2_logistica_proxy_h1",
+        "run_id": "e6ff346758a847d8a728aeb4ed25b027",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:17-05:00",
+        "params": {
+          "C": "1.0",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "dual": "False",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "fit_intercept": "True",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "intercept_scaling": "1",
+          "l1_ratio": "0.0",
+          "low_occupancy": "0.1",
+          "max_iter": "1000",
+          "modelo": "LogisticRegression",
+          "n_features": "12",
+          "n_jobs": "None",
+          "penalty": "deprecated",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "solver": "lbfgs",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "0.0001",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9033746236265907,
+          "val_ap_normal": 0.9574307019153838,
+          "val_ap_riesgo_sin_anclajes": 0.8428943055867796,
+          "val_ap_riesgo_sin_bicicletas": 0.9097988633776087,
+          "val_balanced_accuracy": 0.8855722080069613,
+          "val_f1_macro": 0.8223393803601394,
+          "val_precision_normal": 0.9515391648887535,
+          "val_precision_riesgo_sin_anclajes": 0.6435653274844416,
+          "val_precision_riesgo_sin_bicicletas": 0.7764550947683727,
+          "val_recall_normal": 0.7671636119520197,
+          "val_recall_riesgo_sin_anclajes": 0.9502000947817387,
+          "val_recall_riesgo_sin_bicicletas": 0.939352917287126
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_logistica_proxy_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-9cb46194c74541a0a1d39f2e7acfa7ab"
+      },
+      {
+        "name": "P2_hgb_proxy_h1",
+        "run_id": "5388e5d3c98a4917abddb2be41ace0cd",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:30-05:00",
+        "params": {
+          "categorical_features": "from_dtype",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "log_loss",
+          "low_occupancy": "0.1",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingClassifier",
+          "monotonic_cst": "None",
+          "n_features": "12",
+          "n_iter_no_change": "10",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9556673013928272,
+          "val_ap_normal": 0.976335549823566,
+          "val_ap_riesgo_sin_anclajes": 0.9327436837704234,
+          "val_ap_riesgo_sin_bicicletas": 0.9579226705844923,
+          "val_balanced_accuracy": 0.9084733195136545,
+          "val_f1_macro": 0.8708157736399956,
+          "val_precision_normal": 0.9455070542562257,
+          "val_precision_riesgo_sin_anclajes": 0.7264484696559252,
+          "val_precision_riesgo_sin_bicicletas": 0.8622323150929114,
+          "val_recall_normal": 0.860066625289744,
+          "val_recall_riesgo_sin_anclajes": 0.9460928861039439,
+          "val_recall_riesgo_sin_bicicletas": 0.9192604471472754
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_hgb_proxy_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-5c5ea0a87e024fe1a8a841bf84a69de4"
+      },
+      {
+        "name": "P2_hgb_ajustado_proxy_h1",
+        "run_id": "0fda6002255c4897844196fc9a70ede0",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:27:13-05:00",
+        "params": {
+          "busqueda_run_id": "e509794a6d5946018cf4ab3396f6ae87",
+          "categorical_features": "from_dtype",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.05",
+          "loss": "log_loss",
+          "low_occupancy": "0.1",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "mejor_learning_rate": "0.05",
+          "mejor_max_iter": "300",
+          "mejor_max_leaf_nodes": "63",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingClassifier (hiperparámetros ajustados)",
+          "monotonic_cst": "None",
+          "n_features": "12",
+          "n_iter_no_change": "10",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9572058756154774,
+          "val_ap_normal": 0.9769007178071832,
+          "val_ap_riesgo_sin_anclajes": 0.9358853070167604,
+          "val_ap_riesgo_sin_bicicletas": 0.9588316020224885,
+          "val_balanced_accuracy": 0.9090865752167808,
+          "val_f1_macro": 0.8723223905511296,
+          "val_precision_normal": 0.9465057140231012,
+          "val_precision_riesgo_sin_anclajes": 0.7329104355642723,
+          "val_precision_riesgo_sin_bicicletas": 0.8601478775395198,
+          "val_recall_normal": 0.8608671420790637,
+          "val_recall_riesgo_sin_anclajes": 0.9445131904586384,
+          "val_recall_riesgo_sin_bicicletas": 0.9218793931126407
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_hgb_ajustado_proxy_h1",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-0694ca466ba6458cbac19c6417581a6f"
+      },
+      {
+        "name": "P3_kmeans_perfil48",
+        "run_id": "921839b478ab418ab90548e3dd2f1a4f",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:27:17-05:00",
+        "params": {
+          "algorithm": "lloyd",
+          "coordenadas_en_agrupacion": "no (solo para el mapa)",
+          "copy_x": "True",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "weekday_00,weekday_01,weekday_02,weekday_03,weekday_04,weekday_05,weekday_06,weekday_07,weekday_08,weekday_09,weekday_10,weekday_11,weekday_12,weekday_13,weekday_14,weekday_15,weekday_16,weekday_17,weekday_18,weekday_19,weekday_20,weekday_21,weekday_22,weekday_23,weekend_00,weekend_01,weekend_02,weekend_03,weekend_04,weekend_05,weekend_06,weekend_07,weekend_08,weekend_09,weekend_10,weekend_11,weekend_12,weekend_13,weekend_14,weekend_15,weekend_16,weekend_17,weekend_18,weekend_19,weekend_20,weekend_21,weekend_22,weekend_23",
+          "horizon_hours": "1",
+          "init": "k-means++",
+          "max_iter": "300",
+          "min_profile_days": "14",
+          "modelo": "KMeans",
+          "n_clusters": "3",
+          "n_features": "48",
+          "n_init": "10",
+          "random_state": "42",
+          "rows_train": "397",
+          "rows_val": "468",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "0.0001",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "verbose": "0"
+        },
+        "metrics": {
+          "train_davies_bouldin": 1.9784298042889048,
+          "train_min_cluster_size": 33.0,
+          "train_silhouette": 0.14069510846721153,
+          "train_size_cluster_0": 213.0,
+          "train_size_cluster_1": 33.0,
+          "train_size_cluster_2": 151.0,
+          "train_stations": 397.0,
+          "val_ari": 0.5775636897389563,
+          "val_common_stations": 397.0
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P3_kmeans_perfil48",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P3",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      },
+      {
+        "name": "P3_ward_perfil48",
+        "run_id": "2761cfdd076244d2a9ff08454cee2191",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:27:18-05:00",
+        "params": {
+          "compute_distances": "False",
+          "compute_full_tree": "auto",
+          "connectivity": "None",
+          "coordenadas_en_agrupacion": "no (solo para el mapa)",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "distance_threshold": "None",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "weekday_00,weekday_01,weekday_02,weekday_03,weekday_04,weekday_05,weekday_06,weekday_07,weekday_08,weekday_09,weekday_10,weekday_11,weekday_12,weekday_13,weekday_14,weekday_15,weekday_16,weekday_17,weekday_18,weekday_19,weekday_20,weekday_21,weekday_22,weekday_23,weekend_00,weekend_01,weekend_02,weekend_03,weekend_04,weekend_05,weekend_06,weekend_07,weekend_08,weekend_09,weekend_10,weekend_11,weekend_12,weekend_13,weekend_14,weekend_15,weekend_16,weekend_17,weekend_18,weekend_19,weekend_20,weekend_21,weekend_22,weekend_23",
+          "horizon_hours": "1",
+          "linkage": "ward",
+          "memory": "None",
+          "metric": "euclidean",
+          "min_profile_days": "14",
+          "modelo": "AgglomerativeClustering(ward)",
+          "n_clusters": "3",
+          "n_features": "48",
+          "rows_train": "397",
+          "rows_val": "468",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "train_davies_bouldin": 2.1387944217491666,
+          "train_min_cluster_size": 31.0,
+          "train_silhouette": 0.12321632327890376,
+          "train_size_cluster_0": 217.0,
+          "train_size_cluster_1": 149.0,
+          "train_size_cluster_2": 31.0,
+          "train_stations": 397.0,
+          "val_ari": 0.31155646684663085,
+          "val_common_stations": 397.0
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P3_ward_perfil48",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P3",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      },
+      {
+        "name": "P3_barrido_k_perfil48",
+        "run_id": "39b36460f0e84bcb990af5f3a24ada03",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:27:19-05:00",
+        "params": {
+          "algoritmos": "kmeans,ward",
+          "filas_entrenamiento": "397",
+          "filas_validacion": "468",
+          "k_fijado_antes": "3",
+          "k_valores": "2,3,4,5,6,7,8",
+          "seed": "42"
+        },
+        "metrics": {
+          "kmeans_train_davies_bouldin": 2.0877551536833288,
+          "kmeans_train_silhouette": 0.07166097159991013,
+          "kmeans_val_ari": 0.33843723380960977,
+          "ward_train_davies_bouldin": 2.169140900778004,
+          "ward_train_silhouette": 0.06705751767555977,
+          "ward_val_ari": 0.1830943286132517
+        },
+        "metric_history": {
+          "kmeans_train_davies_bouldin": [
+            [
+              2,
+              2.446396827443
+            ],
+            [
+              3,
+              1.9784298042889048
+            ],
+            [
+              4,
+              2.085410389415313
+            ],
+            [
+              5,
+              2.1076659834817697
+            ],
+            [
+              6,
+              2.140887334255845
+            ],
+            [
+              7,
+              2.122335625370403
+            ],
+            [
+              8,
+              2.0877551536833288
+            ]
+          ],
+          "kmeans_train_silhouette": [
+            [
+              2,
+              0.13249325658741756
+            ],
+            [
+              3,
+              0.14069510846721153
+            ],
+            [
+              4,
+              0.11310221210430328
+            ],
+            [
+              5,
+              0.1164538147836946
+            ],
+            [
+              6,
+              0.09631287364485275
+            ],
+            [
+              7,
+              0.07436216572685227
+            ],
+            [
+              8,
+              0.07166097159991013
+            ]
+          ],
+          "kmeans_val_ari": [
+            [
+              2,
+              0.45777294538905705
+            ],
+            [
+              3,
+              0.5775636897389563
+            ],
+            [
+              4,
+              0.3726440208147714
+            ],
+            [
+              5,
+              0.2923477371003631
+            ],
+            [
+              6,
+              0.3727688503797626
+            ],
+            [
+              7,
+              0.27340236560652614
+            ],
+            [
+              8,
+              0.33843723380960977
+            ]
+          ],
+          "ward_train_davies_bouldin": [
+            [
+              2,
+              2.5708355819885975
+            ],
+            [
+              3,
+              2.1387944217491666
+            ],
+            [
+              4,
+              2.4207204062783343
+            ],
+            [
+              5,
+              2.374779349892266
+            ],
+            [
+              6,
+              2.172772253403202
+            ],
+            [
+              7,
+              2.0835148840950617
+            ],
+            [
+              8,
+              2.169140900778004
+            ]
+          ],
+          "ward_train_silhouette": [
+            [
+              2,
+              0.10397621709965386
+            ],
+            [
+              3,
+              0.12321632327890376
+            ],
+            [
+              4,
+              0.06884937816767576
+            ],
+            [
+              5,
+              0.07550769062298923
+            ],
+            [
+              6,
+              0.07875686137843602
+            ],
+            [
+              7,
+              0.08379715378218638
+            ],
+            [
+              8,
+              0.06705751767555977
+            ]
+          ],
+          "ward_val_ari": [
+            [
+              2,
+              0.13902657619417075
+            ],
+            [
+              3,
+              0.31155646684663085
+            ],
+            [
+              4,
+              0.1760224977528402
+            ],
+            [
+              5,
+              0.15297026968030558
+            ],
+            [
+              6,
+              0.1518086873855543
+            ],
+            [
+              7,
+              0.152562446851665
+            ],
+            [
+              8,
+              0.1830943286132517
+            ]
+          ]
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P3_barrido_k_perfil48",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P3",
+          "tipo": "barrido"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      },
+      {
+        "name": "P2_persistencia_proxy_h1_occ25",
+        "run_id": "9065dd802f9940a885bbf90a063166e1",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:28:49-05:00",
+        "params": {
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.25",
+          "low_occupancy": "0.1",
+          "modelo": "regla: clase de la ocupación virtual actual",
+          "n_features": "12",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_clase_normal": "829586",
+          "train_clase_riesgo_sin_anclajes": "199250",
+          "train_clase_riesgo_sin_bicicletas": "522601",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "val_ap_macro": 0.8126029879537972,
+          "val_ap_normal": 0.8874971249658618,
+          "val_ap_riesgo_sin_anclajes": 0.7284421163505681,
+          "val_ap_riesgo_sin_bicicletas": 0.8218697225449616,
+          "val_balanced_accuracy": 0.8820585020030443,
+          "val_f1_macro": 0.882064014568417,
+          "val_precision_normal": 0.9148740871829295,
+          "val_precision_riesgo_sin_anclajes": 0.8430768409960919,
+          "val_precision_riesgo_sin_bicicletas": 0.8882576731273456,
+          "val_recall_normal": 0.9148322171540734,
+          "val_recall_riesgo_sin_anclajes": 0.8429531633415128,
+          "val_recall_riesgo_sin_bicicletas": 0.8883901255135463
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_persistencia_proxy_h1_occ25",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ]
+      },
+      {
+        "name": "P2_logistica_proxy_h1_occ25",
+        "run_id": "a013ed1ae5794cb6be63aaa436a2e69b",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:28:52-05:00",
+        "params": {
+          "C": "1.0",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "dual": "False",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "fit_intercept": "True",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.25",
+          "intercept_scaling": "1",
+          "l1_ratio": "0.0",
+          "low_occupancy": "0.1",
+          "max_iter": "1000",
+          "modelo": "LogisticRegression",
+          "n_features": "12",
+          "n_jobs": "None",
+          "penalty": "deprecated",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "solver": "lbfgs",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "0.0001",
+          "train_clase_normal": "829586",
+          "train_clase_riesgo_sin_anclajes": "199250",
+          "train_clase_riesgo_sin_bicicletas": "522601",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9030781671716026,
+          "val_ap_normal": 0.9568323118679689,
+          "val_ap_riesgo_sin_anclajes": 0.842300759631495,
+          "val_ap_riesgo_sin_bicicletas": 0.9101014300153442,
+          "val_balanced_accuracy": 0.8854599872336798,
+          "val_f1_macro": 0.8226027957597614,
+          "val_precision_normal": 0.9510257606516449,
+          "val_precision_riesgo_sin_anclajes": 0.6443413208861389,
+          "val_precision_riesgo_sin_bicicletas": 0.777421743348823,
+          "val_recall_normal": 0.7670668639685131,
+          "val_recall_riesgo_sin_anclajes": 0.9499359863437533,
+          "val_recall_riesgo_sin_bicicletas": 0.9393771113887732
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_logistica_proxy_h1_occ25",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-d5c9d6754d284c7cb83b8a7b3cd6477d"
+      },
+      {
+        "name": "P2_hgb_proxy_h1_occ25",
+        "run_id": "8faf34fcc978499289751bc9a683fc48",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:05-05:00",
+        "params": {
+          "categorical_features": "from_dtype",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.25",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "log_loss",
+          "low_occupancy": "0.1",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingClassifier",
+          "monotonic_cst": "None",
+          "n_features": "12",
+          "n_iter_no_change": "10",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_clase_normal": "829586",
+          "train_clase_riesgo_sin_anclajes": "199250",
+          "train_clase_riesgo_sin_bicicletas": "522601",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9542397398458348,
+          "val_ap_normal": 0.976008855859147,
+          "val_ap_riesgo_sin_anclajes": 0.9321582231259833,
+          "val_ap_riesgo_sin_bicicletas": 0.9545521405523741,
+          "val_balanced_accuracy": 0.9083896101332144,
+          "val_f1_macro": 0.8702991873246458,
+          "val_precision_normal": 0.9455389413507059,
+          "val_precision_riesgo_sin_anclajes": 0.7247903237340253,
+          "val_precision_riesgo_sin_bicicletas": 0.8617320923872483,
+          "val_recall_normal": 0.8587156056607324,
+          "val_recall_riesgo_sin_anclajes": 0.9461885202176464,
+          "val_recall_riesgo_sin_bicicletas": 0.9202647045212643
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_hgb_proxy_h1_occ25",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-154bddaf6ccd49d49a5401d81f2c29a5"
+      },
+      {
+        "name": "P2_persistencia_proxy_h1_occ50",
+        "run_id": "d5db1ddde7d845509530cf0e9503de51",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:09-05:00",
+        "params": {
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "low_occupancy": "0.1",
+          "modelo": "regla: clase de la ocupación virtual actual",
+          "n_features": "12",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "val_ap_macro": 0.8130294150011563,
+          "val_ap_normal": 0.8883269561371678,
+          "val_ap_riesgo_sin_anclajes": 0.7300731565598386,
+          "val_ap_riesgo_sin_bicicletas": 0.8206881323064624,
+          "val_balanced_accuracy": 0.8823618306392178,
+          "val_f1_macro": 0.882361022824495,
+          "val_precision_normal": 0.9153970095711962,
+          "val_precision_riesgo_sin_anclajes": 0.8439400721451329,
+          "val_precision_riesgo_sin_bicicletas": 0.8877435745261262,
+          "val_recall_normal": 0.9153529493723797,
+          "val_recall_riesgo_sin_anclajes": 0.8438734137222895,
+          "val_recall_riesgo_sin_bicicletas": 0.8878591288229842
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_persistencia_proxy_h1_occ50",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ]
+      },
+      {
+        "name": "P2_logistica_proxy_h1_occ50",
+        "run_id": "2a1d9d14aff94f7b98789f93072be1af",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:13-05:00",
+        "params": {
+          "C": "1.0",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "dual": "False",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "fit_intercept": "True",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "intercept_scaling": "1",
+          "l1_ratio": "0.0",
+          "low_occupancy": "0.1",
+          "max_iter": "1000",
+          "modelo": "LogisticRegression",
+          "n_features": "12",
+          "n_jobs": "None",
+          "penalty": "deprecated",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "solver": "lbfgs",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "0.0001",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9033746236265907,
+          "val_ap_normal": 0.9574307019153838,
+          "val_ap_riesgo_sin_anclajes": 0.8428943055867796,
+          "val_ap_riesgo_sin_bicicletas": 0.9097988633776087,
+          "val_balanced_accuracy": 0.8855722080069613,
+          "val_f1_macro": 0.8223393803601394,
+          "val_precision_normal": 0.9515391648887535,
+          "val_precision_riesgo_sin_anclajes": 0.6435653274844416,
+          "val_precision_riesgo_sin_bicicletas": 0.7764550947683727,
+          "val_recall_normal": 0.7671636119520197,
+          "val_recall_riesgo_sin_anclajes": 0.9502000947817387,
+          "val_recall_riesgo_sin_bicicletas": 0.939352917287126
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_logistica_proxy_h1_occ50",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-28195e4405694166900298b320fff070"
+      },
+      {
+        "name": "P2_hgb_proxy_h1_occ50",
+        "run_id": "7d9a572f2f2f4fd9b69703967faeb256",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:25-05:00",
+        "params": {
+          "categorical_features": "from_dtype",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.5",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "log_loss",
+          "low_occupancy": "0.1",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingClassifier",
+          "monotonic_cst": "None",
+          "n_features": "12",
+          "n_iter_no_change": "10",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_clase_normal": "830469",
+          "train_clase_riesgo_sin_anclajes": "199645",
+          "train_clase_riesgo_sin_bicicletas": "521323",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9556673013928272,
+          "val_ap_normal": 0.976335549823566,
+          "val_ap_riesgo_sin_anclajes": 0.9327436837704234,
+          "val_ap_riesgo_sin_bicicletas": 0.9579226705844923,
+          "val_balanced_accuracy": 0.9084733195136545,
+          "val_f1_macro": 0.8708157736399956,
+          "val_precision_normal": 0.9455070542562257,
+          "val_precision_riesgo_sin_anclajes": 0.7264484696559252,
+          "val_precision_riesgo_sin_bicicletas": 0.8622323150929114,
+          "val_recall_normal": 0.860066625289744,
+          "val_recall_riesgo_sin_anclajes": 0.9460928861039439,
+          "val_recall_riesgo_sin_bicicletas": 0.9192604471472754
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_hgb_proxy_h1_occ50",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-9a8f5341bfc04ee294d68ab85ccca1c1"
+      },
+      {
+        "name": "P2_persistencia_proxy_h1_occ75",
+        "run_id": "91a222367c104298ab94561598ff989a",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:29-05:00",
+        "params": {
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.75",
+          "low_occupancy": "0.1",
+          "modelo": "regla: clase de la ocupación virtual actual",
+          "n_features": "12",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "train_clase_normal": "832642",
+          "train_clase_riesgo_sin_anclajes": "200207",
+          "train_clase_riesgo_sin_bicicletas": "518588",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01"
+        },
+        "metrics": {
+          "val_ap_macro": 0.8139266920053677,
+          "val_ap_normal": 0.8884197935908629,
+          "val_ap_riesgo_sin_anclajes": 0.7333529358698097,
+          "val_ap_riesgo_sin_bicicletas": 0.8200073465554307,
+          "val_balanced_accuracy": 0.8829132698162375,
+          "val_f1_macro": 0.8829116080295575,
+          "val_precision_normal": 0.9154678035916494,
+          "val_precision_riesgo_sin_anclajes": 0.8458000077526391,
+          "val_precision_riesgo_sin_bicicletas": 0.8874620335835576,
+          "val_recall_normal": 0.9154330182083472,
+          "val_recall_riesgo_sin_anclajes": 0.8457562954636485,
+          "val_recall_riesgo_sin_bicicletas": 0.8875504957767169
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_persistencia_proxy_h1_occ75",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ]
+      },
+      {
+        "name": "P2_logistica_proxy_h1_occ75",
+        "run_id": "8b131f826e704b88af11a124aa1ecd33",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:33-05:00",
+        "params": {
+          "C": "1.0",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "dual": "False",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "fit_intercept": "True",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.75",
+          "intercept_scaling": "1",
+          "l1_ratio": "0.0",
+          "low_occupancy": "0.1",
+          "max_iter": "1000",
+          "modelo": "LogisticRegression",
+          "n_features": "12",
+          "n_jobs": "None",
+          "penalty": "deprecated",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "seed": "42",
+          "solver": "lbfgs",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "0.0001",
+          "train_clase_normal": "832642",
+          "train_clase_riesgo_sin_anclajes": "200207",
+          "train_clase_riesgo_sin_bicicletas": "518588",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9036121524540386,
+          "val_ap_normal": 0.9572669446814989,
+          "val_ap_riesgo_sin_anclajes": 0.8441038821217612,
+          "val_ap_riesgo_sin_bicicletas": 0.9094656305588559,
+          "val_balanced_accuracy": 0.8851260179741421,
+          "val_f1_macro": 0.8215269190545232,
+          "val_precision_normal": 0.9516611363729466,
+          "val_precision_riesgo_sin_anclajes": 0.6420888256898342,
+          "val_precision_riesgo_sin_bicicletas": 0.7758135867139806,
+          "val_recall_normal": 0.765021633178304,
+          "val_recall_riesgo_sin_anclajes": 0.9509670917477422,
+          "val_recall_riesgo_sin_bicicletas": 0.9393893289963801
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_logistica_proxy_h1_occ75",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "baseline"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-38c1614e6984471d9a48becb5d8c20f8"
+      },
+      {
+        "name": "P2_hgb_proxy_h1_occ75",
+        "run_id": "65bf3025f4514489a8b5bbb2cf08c90a",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:49-05:00",
+        "params": {
+          "categorical_features": "from_dtype",
+          "class_weight": "balanced",
+          "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
+          "early_stopping": "auto",
+          "feature_version": "7bf693419c6167eb880e6ad05731a2cb7d2e29be77434ec63e7923c65b33513e",
+          "features": "hour,weekday,is_weekend,month,departures_lag_1,departures_lag_24,departures_lag_168,departures_mean_24,departures_mean_168,virtual_occupancy,net_flow_lag_1,net_flow_lag_24",
+          "high_occupancy": "0.9",
+          "horizon_hours": "1",
+          "initial_occupancy": "0.75",
+          "interaction_cst": "None",
+          "l2_regularization": "0.0",
+          "learning_rate": "0.1",
+          "loss": "log_loss",
+          "low_occupancy": "0.1",
+          "max_bins": "255",
+          "max_depth": "None",
+          "max_features": "1.0",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "min_samples_leaf": "20",
+          "modelo": "HistGradientBoostingClassifier",
+          "monotonic_cst": "None",
+          "n_features": "12",
+          "n_iter_no_change": "10",
+          "random_state": "42",
+          "rows_test": "337250",
+          "rows_train": "1551437",
+          "rows_val": "662771",
+          "scoring": "loss",
+          "seed": "42",
+          "test_end_exclusive": "2026-10-01",
+          "tol": "1e-07",
+          "train_clase_normal": "832642",
+          "train_clase_riesgo_sin_anclajes": "200207",
+          "train_clase_riesgo_sin_bicicletas": "518588",
+          "train_end_exclusive": "2026-07-01",
+          "train_start": "2026-01-01",
+          "validation_end_exclusive": "2026-09-01",
+          "validation_fraction": "0.1",
+          "verbose": "0",
+          "warm_start": "False"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9552506503090529,
+          "val_ap_normal": 0.97640374347711,
+          "val_ap_riesgo_sin_anclajes": 0.9334624272426073,
+          "val_ap_riesgo_sin_bicicletas": 0.9558857802074417,
+          "val_balanced_accuracy": 0.9084968844784407,
+          "val_f1_macro": 0.8708901439225768,
+          "val_precision_normal": 0.9461975668447705,
+          "val_precision_riesgo_sin_anclajes": 0.7282342883273356,
+          "val_precision_riesgo_sin_bicicletas": 0.860153266097598,
+          "val_recall_normal": 0.8586015948769391,
+          "val_recall_riesgo_sin_anclajes": 0.9464966342364691,
+          "val_recall_riesgo_sin_bicicletas": 0.9203924243219138
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_hgb_proxy_h1_occ75",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "candidato"
+        },
+        "artifacts": [
+          "figuras"
+        ],
+        "logged_model_id": "m-f7b304b206a04bc7bf10ee1affd60642"
+      },
+      {
+        "name": "P2_sensibilidad_ocupacion_inicial",
+        "run_id": "8b530716411640dfaa283c18bab4e238",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:29:53-05:00",
+        "params": {
+          "ocupaciones_iniciales": "0.25,0.5,0.75",
+          "por_defecto": "0.5",
+          "seed": "42"
+        },
+        "metrics": {
+          "eventos_recortados_occ25": 447988.0,
+          "eventos_recortados_occ50": 447278.0,
+          "eventos_recortados_occ75": 447283.0,
+          "proporcion_train_normal_occ25": 0.5347210360459368,
+          "proporcion_train_normal_occ50": 0.5352901858083828,
+          "proporcion_train_normal_occ75": 0.5366908227662484,
+          "proporcion_train_riesgo_sin_anclajes_occ25": 0.12842932068785262,
+          "proporcion_train_riesgo_sin_anclajes_occ50": 0.1286839233562175,
+          "proporcion_train_riesgo_sin_anclajes_occ75": 0.12904616816538475,
+          "proporcion_train_riesgo_sin_bicicletas_occ25": 0.33684964326621064,
+          "proporcion_train_riesgo_sin_bicicletas_occ50": 0.3360258908353997,
+          "proporcion_train_riesgo_sin_bicicletas_occ75": 0.3342630090683669,
+          "proporcion_val_normal_occ25": 0.593426688856332,
+          "proporcion_val_normal_occ50": 0.5955978761895134,
+          "proporcion_val_normal_occ75": 0.5956265437081586,
+          "proporcion_val_riesgo_sin_anclajes_occ25": 0.11313711674168,
+          "proporcion_val_riesgo_sin_anclajes_occ50": 0.11461575717706418,
+          "proporcion_val_riesgo_sin_anclajes_occ75": 0.11677789160962082,
+          "proporcion_val_riesgo_sin_bicicletas_occ25": 0.29343619440198804,
+          "proporcion_val_riesgo_sin_bicicletas_occ50": 0.2897863666334224,
+          "proporcion_val_riesgo_sin_bicicletas_occ75": 0.2875955646822206,
+          "val_balanced_accuracy_boosting_occ25": 0.9083896101332144,
+          "val_balanced_accuracy_boosting_occ50": 0.9084733195136545,
+          "val_balanced_accuracy_boosting_occ75": 0.9084968844784407,
+          "val_balanced_accuracy_logística_occ25": 0.8854599872336798,
+          "val_balanced_accuracy_logística_occ50": 0.8855722080069613,
+          "val_balanced_accuracy_logística_occ75": 0.8851260179741421,
+          "val_balanced_accuracy_persistencia_occ25": 0.8820585020030443,
+          "val_balanced_accuracy_persistencia_occ50": 0.8823618306392178,
+          "val_balanced_accuracy_persistencia_occ75": 0.8829132698162375,
+          "val_f1_macro_boosting_occ25": 0.8702991873246458,
+          "val_f1_macro_boosting_occ50": 0.8708157736399956,
+          "val_f1_macro_boosting_occ75": 0.8708901439225768,
+          "val_f1_macro_logística_occ25": 0.8226027957597614,
+          "val_f1_macro_logística_occ50": 0.8223393803601394,
+          "val_f1_macro_logística_occ75": 0.8215269190545232,
+          "val_f1_macro_persistencia_occ25": 0.882064014568417,
+          "val_f1_macro_persistencia_occ50": 0.882361022824495,
+          "val_f1_macro_persistencia_occ75": 0.8829116080295575
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.runName": "P2_sensibilidad_ocupacion_inicial",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "sensibilidad"
+        },
+        "artifacts": [
+          "figuras",
+          "tablas"
+        ]
+      }
+    ],
+    "busquedas": [
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c01",
+        "run_id": "6568913be02145ce8a3021ff0431ab29",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:01-05:00",
+        "params": {
+          "combinacion": "1",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7758074243000063,
+          "val_r2": 0.6299295853798138,
+          "val_rmse": 1.4362492807578118,
+          "val_wape": 0.6625541857766652
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c01",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c02",
+        "run_id": "0b0b75f0e82f47929289f4da6719b313",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:04-05:00",
+        "params": {
+          "combinacion": "2",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7613336928872556,
+          "val_r2": 0.641641014053206,
+          "val_rmse": 1.4133404553911268,
+          "val_wape": 0.6501933459200763
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c02",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c03",
+        "run_id": "97d0c2b83ac34703a2a512727c975d72",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:05-05:00",
+        "params": {
+          "combinacion": "3",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7664321859331921,
+          "val_r2": 0.6488033319204689,
+          "val_rmse": 1.3991453528738627,
+          "val_wape": 0.6545475552288957
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c03",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c04",
+        "run_id": "c681f4d67ed3412bb0db18a045723030",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:09-05:00",
+        "params": {
+          "combinacion": "4",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7586948520561284,
+          "val_r2": 0.6567389626281035,
+          "val_rmse": 1.3832475070527723,
+          "val_wape": 0.6479397260351684
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c04",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c05",
+        "run_id": "48884af69adf4f9cafe8aac61df6d004",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:11-05:00",
+        "params": {
+          "combinacion": "5",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7631823319192319,
+          "val_r2": 0.6547293993008775,
+          "val_rmse": 1.3872905918647862,
+          "val_wape": 0.6517721185513528
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c05",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c06",
+        "run_id": "fa0136a510604abe98d3abf223116ae2",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:15-05:00",
+        "params": {
+          "combinacion": "6",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.75767878902489,
+          "val_r2": 0.6606006038382941,
+          "val_rmse": 1.375444824566973,
+          "val_wape": 0.647071989025604
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c06",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c07",
+        "run_id": "39d420f0283348fcbbcd071fd359d7de",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:16-05:00",
+        "params": {
+          "combinacion": "7",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7689531210293092,
+          "val_r2": 0.5768285915200712,
+          "val_rmse": 1.5358393811969355,
+          "val_wape": 0.6567004813903214
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c07",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c08",
+        "run_id": "48410adcc5374cd7a627b0348c23863f",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:19-05:00",
+        "params": {
+          "combinacion": "8",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7609720993055378,
+          "val_r2": 0.578959838767933,
+          "val_rmse": 1.5319669726084315,
+          "val_wape": 0.6498845381752506
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c08",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c09",
+        "run_id": "1a45ace317744729ae4a169a750228e7",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:20-05:00",
+        "params": {
+          "combinacion": "9",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7651346105580203,
+          "val_r2": 0.6218250965361749,
+          "val_rmse": 1.451890933387908,
+          "val_wape": 0.6534394013633197
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c09",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c10",
+        "run_id": "17bb095674f94392a6ed088676b2ecf7",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:23-05:00",
+        "params": {
+          "combinacion": "10",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7617549609472657,
+          "val_r2": 0.6248665002056916,
+          "val_rmse": 1.4460408617073244,
+          "val_wape": 0.6505531167958777
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c10",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c11",
+        "run_id": "df896a19490b47768c00706045968fa0",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:25-05:00",
+        "params": {
+          "combinacion": "11",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7624162184221428,
+          "val_r2": 0.6345557377760702,
+          "val_rmse": 1.4272439627387583,
+          "val_wape": 0.6511178431624128
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c11",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P1_busqueda_hgb_h1",
+        "name": "P1_busqueda_hgb_h1_c12",
+        "run_id": "2266cb4cbb944e15be6e4db1504ab094",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:24:27-05:00",
+        "params": {
+          "combinacion": "12",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_mae": 0.7621343178416552,
+          "val_r2": 0.6355467007964495,
+          "val_rmse": 1.4253075441855885,
+          "val_wape": 0.6508770947450547
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "bc223ba1c19e41e195a7705272767bf4",
+          "mlflow.runName": "P1_busqueda_hgb_h1_c12",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P1",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c01",
+        "run_id": "976b17a25a274e768a86a48d001c3f85",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:06-05:00",
+        "params": {
+          "combinacion": "1",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9544682779743145,
+          "val_ap_normal": 0.9751493291440106,
+          "val_ap_riesgo_sin_anclajes": 0.9319870195440751,
+          "val_ap_riesgo_sin_bicicletas": 0.9562684852348577,
+          "val_balanced_accuracy": 0.9068820346334118,
+          "val_f1_macro": 0.8711646022183434,
+          "val_precision_normal": 0.9422895795872934,
+          "val_precision_riesgo_sin_anclajes": 0.7293016338670905,
+          "val_precision_riesgo_sin_bicicletas": 0.8665712169834608,
+          "val_recall_normal": 0.8642414723429049,
+          "val_recall_riesgo_sin_anclajes": 0.9425122426412511,
+          "val_recall_riesgo_sin_bicicletas": 0.9138923889160792
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c01",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c02",
+        "run_id": "50f0c505620b4d78be2414f4ae7517fa",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:16-05:00",
+        "params": {
+          "combinacion": "2",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9559556546969742,
+          "val_ap_normal": 0.9761837683408028,
+          "val_ap_riesgo_sin_anclajes": 0.9341693146843623,
+          "val_ap_riesgo_sin_bicicletas": 0.9575138810657575,
+          "val_balanced_accuracy": 0.907608426212203,
+          "val_f1_macro": 0.8734098602217699,
+          "val_precision_normal": 0.9435939337392966,
+          "val_precision_riesgo_sin_anclajes": 0.7387334223685437,
+          "val_precision_riesgo_sin_bicicletas": 0.864212364035819,
+          "val_recall_normal": 0.865956503565593,
+          "val_recall_riesgo_sin_anclajes": 0.9393265230898847,
+          "val_recall_riesgo_sin_bicicletas": 0.917542251981131
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c02",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c03",
+        "run_id": "0f1c2ac999dc457bb98b238fac10a091",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:21-05:00",
+        "params": {
+          "combinacion": "3",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9555314709737445,
+          "val_ap_normal": 0.9758784324449323,
+          "val_ap_riesgo_sin_anclajes": 0.9335653120425937,
+          "val_ap_riesgo_sin_bicicletas": 0.9571506684337071,
+          "val_balanced_accuracy": 0.907304167556583,
+          "val_f1_macro": 0.8717736871389276,
+          "val_precision_normal": 0.943247623103599,
+          "val_precision_riesgo_sin_anclajes": 0.7316838670744306,
+          "val_precision_riesgo_sin_bicicletas": 0.8650907589136463,
+          "val_recall_normal": 0.8640616093934058,
+          "val_recall_riesgo_sin_anclajes": 0.9417092306882208,
+          "val_recall_riesgo_sin_bicicletas": 0.9161416625881226
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c03",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c04",
+        "run_id": "55d47e7512474b74a01f553cd67c4768",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:30-05:00",
+        "params": {
+          "combinacion": "4",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9558334440473919,
+          "val_ap_normal": 0.9763083210485691,
+          "val_ap_riesgo_sin_anclajes": 0.9334951554526725,
+          "val_ap_riesgo_sin_bicicletas": 0.9576968556409338,
+          "val_balanced_accuracy": 0.9074606947386812,
+          "val_f1_macro": 0.8737942923848699,
+          "val_precision_normal": 0.9437875701723881,
+          "val_precision_riesgo_sin_anclajes": 0.7413055471702041,
+          "val_precision_riesgo_sin_bicicletas": 0.8632560597312875,
+          "val_recall_normal": 0.8662680971259927,
+          "val_recall_riesgo_sin_anclajes": 0.9374835448370281,
+          "val_recall_riesgo_sin_bicicletas": 0.9186304422530225
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c04",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c05",
+        "run_id": "3bfb07493dc7401887c371db5d4fcd57",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:36-05:00",
+        "params": {
+          "combinacion": "5",
+          "learning_rate": "0.05",
+          "max_iter": "100",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9558652815441145,
+          "val_ap_normal": 0.9762498022082143,
+          "val_ap_riesgo_sin_anclajes": 0.933724727753601,
+          "val_ap_riesgo_sin_bicicletas": 0.9576213146705282,
+          "val_balanced_accuracy": 0.9073676103200766,
+          "val_f1_macro": 0.8730229257956698,
+          "val_precision_normal": 0.943908311610048,
+          "val_precision_riesgo_sin_anclajes": 0.7383154340869313,
+          "val_precision_riesgo_sin_bicicletas": 0.8628909593328932,
+          "val_recall_normal": 0.8650039899175417,
+          "val_recall_riesgo_sin_anclajes": 0.9384840187457216,
+          "val_recall_riesgo_sin_bicicletas": 0.9186148222969666
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c05",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c06",
+        "run_id": "156a4461077c47c099ea21b615c09da1",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:45-05:00",
+        "params": {
+          "combinacion": "6",
+          "learning_rate": "0.05",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9558462607842985,
+          "val_ap_normal": 0.9763416987753774,
+          "val_ap_riesgo_sin_anclajes": 0.9334864992029336,
+          "val_ap_riesgo_sin_bicicletas": 0.9577105843745845,
+          "val_balanced_accuracy": 0.9071855080136708,
+          "val_f1_macro": 0.8738631032306655,
+          "val_precision_normal": 0.9437747679129274,
+          "val_precision_riesgo_sin_anclajes": 0.7426757047512612,
+          "val_precision_riesgo_sin_bicicletas": 0.8625552124457647,
+          "val_recall_normal": 0.8663567619602528,
+          "val_recall_riesgo_sin_anclajes": 0.9360486546258754,
+          "val_recall_riesgo_sin_bicicletas": 0.9191511074548844
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c06",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c07",
+        "run_id": "ce5c6104637a49cd9b723a7c4eb7c894",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:48-05:00",
+        "params": {
+          "combinacion": "7",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9552312738815711,
+          "val_ap_normal": 0.9758047999412073,
+          "val_ap_riesgo_sin_anclajes": 0.9336179155635903,
+          "val_ap_riesgo_sin_bicicletas": 0.9562711061399161,
+          "val_balanced_accuracy": 0.9073612314753513,
+          "val_f1_macro": 0.8727554277979311,
+          "val_precision_normal": 0.94304731890797,
+          "val_precision_riesgo_sin_anclajes": 0.7358185432782934,
+          "val_precision_riesgo_sin_bicicletas": 0.8652954224642065,
+          "val_recall_normal": 0.8657057087486859,
+          "val_recall_riesgo_sin_anclajes": 0.9403664893897109,
+          "val_recall_riesgo_sin_bicicletas": 0.9160114962876571
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c07",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c08",
+        "run_id": "aa07a939c7ff42ffb32a4500b9f0706f",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:25:56-05:00",
+        "params": {
+          "combinacion": "8",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "15",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9555946374214006,
+          "val_ap_normal": 0.9762326368797418,
+          "val_ap_riesgo_sin_anclajes": 0.9335711391435592,
+          "val_ap_riesgo_sin_bicicletas": 0.9569801362409011,
+          "val_balanced_accuracy": 0.9072264519748904,
+          "val_f1_macro": 0.8734790175787115,
+          "val_precision_normal": 0.9434552055973691,
+          "val_precision_riesgo_sin_anclajes": 0.7401375956102427,
+          "val_precision_riesgo_sin_bicicletas": 0.8637617533355219,
+          "val_recall_normal": 0.8662832968118659,
+          "val_recall_riesgo_sin_anclajes": 0.9375362013585382,
+          "val_recall_riesgo_sin_bicicletas": 0.9178598577542668
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c08",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c09",
+        "run_id": "e214cc54f5694079ac45345f1990b261",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:00-05:00",
+        "params": {
+          "combinacion": "9",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9548975798253996,
+          "val_ap_normal": 0.976123102356949,
+          "val_ap_riesgo_sin_anclajes": 0.9337646349785415,
+          "val_ap_riesgo_sin_bicicletas": 0.9548050021407083,
+          "val_balanced_accuracy": 0.9074689928838738,
+          "val_f1_macro": 0.8727004539350768,
+          "val_precision_normal": 0.9438479749538128,
+          "val_precision_riesgo_sin_anclajes": 0.7368491652392843,
+          "val_precision_riesgo_sin_bicicletas": 0.8628974227182612,
+          "val_recall_normal": 0.8645302663744949,
+          "val_recall_riesgo_sin_anclajes": 0.9400637143910273,
+          "val_recall_riesgo_sin_bicicletas": 0.9178129978860993
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c09",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c10",
+        "run_id": "f7fd8b26a69b43ec818d5af8451fea6e",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:03-05:00",
+        "params": {
+          "combinacion": "10",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "31",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9548975798253996,
+          "val_ap_normal": 0.976123102356949,
+          "val_ap_riesgo_sin_anclajes": 0.9337646349785415,
+          "val_ap_riesgo_sin_bicicletas": 0.9548050021407083,
+          "val_balanced_accuracy": 0.9074689928838738,
+          "val_f1_macro": 0.8727004539350768,
+          "val_precision_normal": 0.9438479749538128,
+          "val_precision_riesgo_sin_anclajes": 0.7368491652392843,
+          "val_precision_riesgo_sin_bicicletas": 0.8628974227182612,
+          "val_recall_normal": 0.8645302663744949,
+          "val_recall_riesgo_sin_anclajes": 0.9400637143910273,
+          "val_recall_riesgo_sin_bicicletas": 0.9178129978860993
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c10",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c11",
+        "run_id": "46cb7921d22b4292b2f9cbcc6a3af3d9",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:08-05:00",
+        "params": {
+          "combinacion": "11",
+          "learning_rate": "0.1",
+          "max_iter": "100",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9557719459403988,
+          "val_ap_normal": 0.9762767417834217,
+          "val_ap_riesgo_sin_anclajes": 0.9333930811246139,
+          "val_ap_riesgo_sin_bicicletas": 0.957646014913161,
+          "val_balanced_accuracy": 0.9072628298320436,
+          "val_f1_macro": 0.8736164632716589,
+          "val_precision_normal": 0.9438752119662179,
+          "val_precision_riesgo_sin_anclajes": 0.7417593296997613,
+          "val_precision_riesgo_sin_bicicletas": 0.8621634559024657,
+          "val_recall_normal": 0.8657842404590305,
+          "val_recall_riesgo_sin_anclajes": 0.9369833078826812,
+          "val_recall_riesgo_sin_bicicletas": 0.9190209411544189
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c11",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      },
+      {
+        "parent": "P2_busqueda_hgb_h1",
+        "name": "P2_busqueda_hgb_h1_c12",
+        "run_id": "366be77d21304343b9d9fc80f6b43935",
+        "status": "FINISHED",
+        "started_at": "2026-10-25T19:26:12-05:00",
+        "params": {
+          "combinacion": "12",
+          "learning_rate": "0.1",
+          "max_iter": "300",
+          "max_leaf_nodes": "63",
+          "modelo": "HistGradientBoosting"
+        },
+        "metrics": {
+          "val_ap_macro": 0.9557719459403988,
+          "val_ap_normal": 0.9762767417834217,
+          "val_ap_riesgo_sin_anclajes": 0.9333930811246139,
+          "val_ap_riesgo_sin_bicicletas": 0.957646014913161,
+          "val_balanced_accuracy": 0.9072628298320436,
+          "val_f1_macro": 0.8736164632716589,
+          "val_precision_normal": 0.9438752119662179,
+          "val_precision_riesgo_sin_anclajes": 0.7417593296997613,
+          "val_precision_riesgo_sin_bicicletas": 0.8621634559024657,
+          "val_recall_normal": 0.8657842404590305,
+          "val_recall_riesgo_sin_anclajes": 0.9369833078826812,
+          "val_recall_riesgo_sin_bicicletas": 0.9190209411544189
+        },
+        "tags": {
+          "equipo": "45",
+          "git_commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "git_dirty": "true",
+          "metricas_no_definidas": "ninguna",
+          "mlflow.parentRunId": "e509794a6d5946018cf4ab3396f6ae87",
+          "mlflow.runName": "P2_busqueda_hgb_h1_c12",
+          "mlflow.source.git.branch": "feature/mlops-improvements",
+          "mlflow.source.git.commit": "f0acc9b20806378b8a0890b9dd0f4c0ab20d513c",
+          "mlflow.source.git.repoURL": "git@github.com:A01793289-Franco/mna-mibici-equipo45.git",
+          "mlflow.source.type": "LOCAL",
+          "pregunta": "P2",
+          "tipo": "busqueda_hijo"
+        },
+        "artifacts": []
+      }
+    ]
+  }
 }
