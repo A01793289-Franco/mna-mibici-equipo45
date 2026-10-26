@@ -128,7 +128,7 @@ python -m pip install -r requirements.txt
 python -m mibici.config
 ```
 
-En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución completa se comprobó con Python 3.13 en Linux. En Windows se comprobaron las pruebas, la regeneración de ingesta y variables y ambos `--verify`; macOS usa los comandos equivalentes indicados.
+En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. Las mejoras iniciales se reprodujeron también en Windows (pruebas, regeneración de ingesta y variables, ambos `--verify`, predicción, ajuste y sensibilidad). El MLflow Project definitivo completo se comprobó en Linux. CI ejecuta pruebas y documentación en Ubuntu y Windows; macOS usa los comandos equivalentes indicados.
 
 ## Ingesta y variables
 
@@ -301,6 +301,6 @@ Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_paramet
 
 Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
 
-Las verificaciones de la primera entrega incluyen notebook sin errores y seis figuras incrustadas, hashes y reconstrucción de archivos idénticos. En Windows se comprobaron entonces pruebas, regeneración de ingesta y variables y hashes con Python 3.13.16. No se afirma haber ejecutado este nuevo Project en Windows o macOS.
+Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 83 pruebas y la documentación en Ubuntu y Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).
