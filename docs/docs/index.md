@@ -19,6 +19,9 @@ Los modelos se entrenan con enero-junio de 2026 y se seleccionan con julio-agost
 ## Código y decisiones
 
 - [README](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/README.md).
+- [Propuesta y preguntas](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/references/propuesta.md).
+- [Arquitectura](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/references/arquitectura.md).
+- [Resultados históricos y análisis](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/reports/resultados_mlflow.md).
 - [MLflow Project y parámetros](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/references/mlflow_project.md).
 - [Ingesta y variables](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/references/ingesta_features.md).
 - [Tracking y Registry](https://github.com/A01793289-Franco/mna-mibici-equipo45/blob/main/references/integracion_registry.md).

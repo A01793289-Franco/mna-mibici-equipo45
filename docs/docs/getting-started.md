@@ -79,3 +79,7 @@ python -m mibici.predict --question P3 --split val
 ```
 
 Los datos, modelos serializados y archivos de MLflow se generan localmente y se excluyen de Git. La ingesta completa necesita espacio y memoria para procesar millones de viajes.
+
+## Atajos con Make
+
+Con `make` disponible, `make data`, `make features`, `make verify` y `make test` ejecutan los módulos individuales y sus comprobaciones. `make train` conserva el entrenamiento directo del módulo, solo con validación. Para registrar las corridas de esta entrega se utilizan las entradas de `mlflow run` indicadas arriba, que conservan el padre del Project y su entorno declarado.

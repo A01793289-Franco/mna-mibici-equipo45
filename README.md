@@ -28,10 +28,12 @@ Para que MLflow cree el entorno declarado, se puede usar `--env-manager uv` con 
 
 ## Primera entrega: propuesta y evidencia
 
-Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. El notebook exploratorio quedó ejecutado y las seis corridas finalizaron desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`. P1-P2 incluyen la evaluación única de septiembre; P3 compara entrenamiento y validación. Las capturas y el PDF están incluidos.
+Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3, entrenamiento con registro en MLflow (`mibici/train.py`), modelos guardados con firma, Model Registry con alias `champion` e inferencia (`mibici/predict.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados.
+
+El experimento tiene dos iteraciones. La **primera** son seis corridas (baseline y candidato por pregunta) ejecutadas desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`; P1-P2 incluyen la evaluación original de septiembre. La **segunda** agrega el baseline de persistencia de P2, el ajuste de hiperparámetros, la estación como variable categórica en P1, el barrido de k en P3, el análisis de errores de P1 y la sensibilidad de P2 a la ocupación inicial. Esas mejoras se estudiaron inicialmente solo en validación. La ejecución definitiva del MLflow Project también evalúa los finalistas P1/P2 en septiembre como comparación retrospectiva, sin usarlo para seleccionar modelos. La propuesta y las capturas `mlflow_*.png` corresponden a la primera iteración; el nuevo reporte y `reports/figures/entrega2/` documentan la ejecución definitiva.
 
 - [PDF de la propuesta y evidencia](reports/TC5061_Propuesta_Proyecto_Equipo45.pdf).
-- [Resultados de las seis corridas](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros](reports/resultados_mlflow.json).
+- [Resultados e interpretación de ambas iteraciones](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros de la primera iteración](reports/resultados_mlflow.json).
 - [ML Canvas editable](references/ml_canvas.md).
 - [ML Canvas en PDF](references/Machine%20Learning%20Canvas.pdf).
 - [Propuesta: datos, partición, pipelines, modelos y métricas](references/propuesta.md).
@@ -229,7 +231,7 @@ También se puede abrir en VS Code o Jupyter y usar *Run All*.
 
 Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
-Las seis corridas documentadas conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
+Las seis corridas de la primera iteración conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
 
 ## API local y documentación
 
@@ -275,13 +277,27 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 ## Evidencia y resultados obtenidos
 
+**Primera iteración (evaluación original de septiembre)**
+
 | Pregunta | Baseline | Candidato | Interpretación |
 |---|---|---|---|
 | P1 | MAE de prueba: 1.0264 | MAE de prueba: 0.8719 | El candidato reduce el error absoluto alrededor de 15.1%; aún tiene WAPE de 60.39%. |
 | P2 | F1 macro de prueba: 0.8114 | F1 macro de prueba: 0.8574 | Mejora la concordancia con el proxy; no demuestra disponibilidad real. |
 | P3 | K-means: silhouette 0.1407, ARI 0.5776 | Ward: silhouette 0.1232, ARI 0.3116 | K-means resulta preferible, pero los perfiles se superponen. |
 
-Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
+**Mejoras iniciales de la segunda iteración (solo validación)**
+
+| Pregunta | Resultado | Interpretación |
+|---|---|---|
+| P1 | La estación categórica obtiene `val_mae` 0.7498 frente a 0.7614 del boosting por defecto y 0.8988 del estacional. | Mejora de cerca de 1.5% frente al boosting por defecto. El análisis de errores distingue estaciones-hora de poca y alta demanda. |
+| P2 | Persistencia obtiene F1 macro 0.8824 frente a 0.8708 del boosting y 0.8223 de la logística. | El resultado mide concordancia con el proxy. La sensibilidad de ocupación inicial entre 25% y 75% cambia el F1 menos de 0.0011. |
+| P3 | El barrido de k=2 a 8 favorece k=3, con silhouette 0.1407 y ARI 0.5776. | Los perfiles permiten interpretar usos matutinos, vespertinos y de fin de semana, con superposición entre grupos. |
+
+**Ejecución definitiva de la segunda entrega**
+
+El commit `92e305f3de71dada5853035ba0081401aad197be` reproduce esas comparaciones mediante MLflow Project y conserva 52 runs y 48 modelos guardados. Los finalistas P1/P2 incluyen septiembre como evaluación retrospectiva: HGB con estación obtiene MAE 0.8620 y persistencia F1 macro 0.8695. P3 sigue usando entrenamiento y validación. Las tablas completas, los IDs y las capturas del Registry están en [resultados_mlflow_entrega2.md](reports/resultados_mlflow_entrega2.md), su JSON y el reporte PDF.
+
+Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` documentan la primera iteración. `reports/figures/entrega2/` contiene las búsquedas, artefactos y los tres modelos con su linaje de la ejecución definitiva. La interfaz es local; el profesor consulta el PDF o reproduce los comandos.
 
 Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
 
