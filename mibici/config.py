@@ -60,6 +60,16 @@ P2_INITIAL_OCCUPANCY_CHECKS = (0.25, 0.5, 0.75)
 
 N_CLUSTERS = 3
 KMEANS_N_INIT = 10
+HGB_DEFAULTS = {
+    "learning_rate": 0.1,
+    "max_iter": 100,
+    "max_leaf_nodes": 31,
+    "l2_regularization": 0.0,
+}
+LOGISTIC_DEFAULTS = {"C": 1.0, "max_iter": 1000}
+PROJECT_TUNE = False
+PROJECT_FINAL_TEST = False
+PROJECT_REGISTER = True
 PROFILE_HOURS = 24
 MIN_PROFILE_DAYS = 14
 P3_FEATURE_COLUMNS = tuple(

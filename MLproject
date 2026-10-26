@@ -1,0 +1,29 @@
+name: mibici-equipo45
+python_env: python_env.yaml
+entry_points:
+  ingest:
+    parameters:
+      refresh: {type: string, default: 'false'}
+    command: 'python -m mibici.project ingest --refresh {refresh}'
+  train:
+    parameters:
+      question: {type: string, default: all}
+      model: {type: string, default: all}
+      seed: {type: string, default: config}
+      learning_rate: {type: string, default: config}
+      max_iter: {type: string, default: config}
+      max_leaf_nodes: {type: string, default: config}
+      l2_regularization: {type: string, default: config}
+      c: {type: string, default: config}
+      n_clusters: {type: string, default: config}
+      tune: {type: string, default: config}
+      final_test: {type: string, default: config}
+      register: {type: string, default: config}
+    command: >-
+      python -m mibici.project train --question {question} --model {model}
+      --seed {seed} --learning-rate {learning_rate} --max-iter {max_iter}
+      --max-leaf-nodes {max_leaf_nodes} --l2-regularization {l2_regularization}
+      --c {c} --n-clusters {n_clusters} --tune {tune}
+      --final-test {final_test} --register {register}
+  verify:
+    command: 'python -m mibici.verify_registry --question all'

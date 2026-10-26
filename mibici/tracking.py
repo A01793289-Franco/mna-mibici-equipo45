@@ -42,6 +42,7 @@ def log_bundle(context, params, training=None, target=None):
     for path in (
         Path(cfg.__file__),
         cfg.ROOT_DIR / "mibici/train.py",
+        cfg.ROOT_DIR / "mibici/project.py",
         cfg.ROOT_DIR / "requirements.txt",
         cfg.ROOT_DIR / "MLproject",
         cfg.ROOT_DIR / "python_env.yaml",

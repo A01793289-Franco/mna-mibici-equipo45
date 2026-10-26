@@ -186,7 +186,9 @@ def weekly_baseline(train, frame):
 
 def make_demand_model(**params):
     """Candidato de P1: gradiente boosting con pérdida de Poisson para conteos."""
-    return HistGradientBoostingRegressor(loss="poisson", random_state=cfg.SEED, **params)
+    return HistGradientBoostingRegressor(
+        loss="poisson", **{**cfg.HGB_DEFAULTS, "random_state": cfg.SEED, **params}
+    )
 
 
 def make_demand_station_model(**params):
@@ -200,8 +202,7 @@ def make_demand_station_model(**params):
         HistGradientBoostingRegressor(
             loss="poisson",
             categorical_features=[GROUP_COLUMN],
-            random_state=cfg.SEED,
-            **params,
+            **{**cfg.HGB_DEFAULTS, "random_state": cfg.SEED, **params},
         ),
     )
 
@@ -209,17 +210,22 @@ def make_demand_station_model(**params):
 # ---------------------------------------------------------------------------
 # P2: baseline logístico y modelo candidato
 # ---------------------------------------------------------------------------
-def make_risk_baseline():
+def make_risk_baseline(**params):
     """Baseline de P2: regresión logística de tres clases con pesos balanceados."""
     return make_pipeline(
         StandardScaler(),
-        LogisticRegression(max_iter=1000, class_weight="balanced", random_state=cfg.SEED),
+        LogisticRegression(
+            class_weight="balanced",
+            **{**cfg.LOGISTIC_DEFAULTS, "random_state": cfg.SEED, **params},
+        ),
     )
 
 
 def make_risk_model(**params):
     """Candidato de P2: gradiente boosting con pesos calculados en entrenamiento."""
-    return HistGradientBoostingClassifier(class_weight="balanced", random_state=cfg.SEED, **params)
+    return HistGradientBoostingClassifier(
+        class_weight="balanced", **{**cfg.HGB_DEFAULTS, "random_state": cfg.SEED, **params}
+    )
 
 
 def persistence_classes(frame):
@@ -261,7 +267,7 @@ CLUSTERERS = {
 P3_K_VALUES = tuple(range(2, 9))
 
 
-def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS, model=None):
+def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS, model=None, seed=cfg.SEED):
     """Silhouette y Davies-Bouldin en entrenamiento; ARI entre entrenamiento y validación.
 
     El ARI compara las etiquetas del perfil de entrenamiento con las de una agrupación ajustada
@@ -283,7 +289,10 @@ def cluster_metrics(train, val, algorithm, k=cfg.N_CLUSTERS, model=None):
     for group, size in zip(*sizes):
         metrics[f"train_size_cluster_{group}"] = int(size)
     metrics["train_min_cluster_size"] = int(sizes[1].min())
-    val_labels = CLUSTERERS[algorithm](k).fit_predict(val[columns].to_numpy())
+    validation_model = CLUSTERERS[algorithm](k)
+    if algorithm == "kmeans":
+        validation_model.set_params(random_state=seed)
+    val_labels = validation_model.fit_predict(val[columns].to_numpy())
     train_by_station = pd.Series(labels, index=train["station_id"].to_numpy())
     val_by_station = pd.Series(val_labels, index=val["station_id"].to_numpy())
     common = train_by_station.index.intersection(val_by_station.index)
@@ -485,9 +494,9 @@ def configure_mlflow(
     return mlflow
 
 
-def _common_params(context, features, rows):
+def _common_params(context, features, rows, seed=cfg.SEED):
     return {
-        "seed": cfg.SEED,
+        "seed": seed,
         "train_start": cfg.START_DATE.isoformat(),
         "train_end_exclusive": cfg.TRAIN_END.isoformat(),
         "validation_end_exclusive": cfg.VALIDATION_END.isoformat(),
@@ -736,7 +745,9 @@ def plot_search(table, metric, higher_is_better, title, path):
     return _save(fig, path)
 
 
-def run_search(question, train, validation, features, figures_dir, context):
+def run_search(
+    question, train, validation, features, figures_dir, context, seed=cfg.SEED, model_params=None
+):
     """Búsqueda en cuadrícula con un run padre y un run hijo por combinación.
 
     Cada hijo entrena en una muestra de entrenamiento y mide únicamente en validación completa:
@@ -748,7 +759,7 @@ def run_search(question, train, validation, features, figures_dir, context):
     metric, higher_is_better = CHAMPION_RULE[question]
     target = P1_TARGET if question == "P1" else P2_TARGET
     make = make_demand_model if question == "P1" else make_risk_model
-    sample = train.sample(n=min(SEARCH_SAMPLE_ROWS, len(train)), random_state=cfg.SEED)
+    sample = train.sample(n=min(SEARCH_SAMPLE_ROWS, len(train)), random_state=seed)
     parent_name = f"{question}_busqueda_hgb_{HORIZON_LABEL}"
     rows = []
     with mlflow.start_run(run_name=parent_name, nested=mlflow.active_run() is not None) as parent:
@@ -763,12 +774,14 @@ def run_search(question, train, validation, features, figures_dir, context):
                 "filas_muestra_entrenamiento": len(sample),
                 "filas_entrenamiento": len(train),
                 "filas_validacion": len(validation),
-                "seed": cfg.SEED,
+                "seed": seed,
             }
         )
         for index, combo in enumerate(search_combinations(), start=1):
             start = time.perf_counter()
-            model = make(**combo).fit(sample[features], sample[target])
+            model = make(**{**(model_params or {}), **combo, "random_state": seed}).fit(
+                sample[features], sample[target]
+            )
             fit_seconds = time.perf_counter() - start
             if question == "P1":
                 values = regression_metrics(
@@ -810,7 +823,7 @@ def run_search(question, train, validation, features, figures_dir, context):
                 "busqueda_hijo",
                 {
                     **_common_params(
-                        context, features, {"train": len(sample), "val": len(validation)}
+                        context, features, {"train": len(sample), "val": len(validation)}, seed
                     ),
                     "modelo": "HistGradientBoosting",
                     "combinacion": index,
@@ -875,11 +888,15 @@ def run_p1(
     context=None,
     register=True,
     tune=False,
+    model_name="all",
+    model_params=None,
+    seed=cfg.SEED,
 ):
     """P1: baseline estacional y gradiente boosting de Poisson. Regresa métricas por run."""
     data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p1"])
     context = context or run_context()
     features = list(cfg.P1_FEATURE_COLUMNS)
+    model_params = {**(model_params or {}), "random_state": seed}
     frames, evaluated = _split_frames(data, final_test)
     train = frames["train"]
     rows = {name: len(frame) for name, frame in frames.items()}
@@ -901,7 +918,7 @@ def run_p1(
     )
     run_name = f"P1_estacional_{HORIZON_LABEL}"
     params = {
-        **_common_params(context, baseline_features, rows),
+        **_common_params(context, baseline_features, rows, seed),
         "modelo": "misma estación y hora, semana anterior",
     }
     metrics["inference_seconds_per_1000"] = inference_cost(
@@ -923,11 +940,19 @@ def run_p1(
     results[run_name] = metrics
     candidates = {run_name: (run_id, metrics, True)}
 
-    variants = [("hgb_poisson", make_demand_model, {}, features, "HistGradientBoostingRegressor")]
+    variants = [
+        (
+            "hgb_poisson",
+            lambda: make_demand_model(**model_params),
+            {},
+            features,
+            "HistGradientBoostingRegressor",
+        )
+    ]
     variants.append(
         (
             "hgb_poisson_estacion",
-            make_demand_station_model,
+            lambda: make_demand_station_model(**model_params),
             {},
             list(P1_FEATURE_COLUMNS_V2),
             "StationGrouper + HistGradientBoostingRegressor",
@@ -935,17 +960,20 @@ def run_p1(
     )
     if tune:
         best, _, search_id = run_search(
-            "P1", train, evaluated["val"], features, figures_dir, context
+            "P1", train, evaluated["val"], features, figures_dir, context, seed, model_params
         )
         variants.append(
             (
                 "hgb_poisson_ajustado",
-                lambda: make_demand_model(**best),
+                lambda: make_demand_model(**{**model_params, **best}),
                 {"busqueda_run_id": search_id, **{f"mejor_{k}": v for k, v in best.items()}},
                 features,
                 "HistGradientBoostingRegressor",
             )
         )
+    if model_name != "all":
+        selected = {"seasonal": None, "hgb": "hgb_poisson", "hgb_station": "hgb_poisson_estacion"}
+        variants = [variant for variant in variants if variant[0] == selected[model_name]]
     for key, factory, extra, columns, description in variants:
         start = time.perf_counter()
         model = factory().fit(train[columns], train[P1_TARGET])
@@ -964,7 +992,7 @@ def run_p1(
         )
         run_name = f"P1_{key}_{HORIZON_LABEL}"
         params = {
-            **_common_params(context, columns, rows),
+            **_common_params(context, columns, rows, seed),
             "modelo": description,
             "loss": "poisson",
             **extra,
@@ -1010,6 +1038,9 @@ def run_p2(
     tune=False,
     initial_occupancy=cfg.INITIAL_OCCUPANCY,
     suffix="",
+    model_name="all",
+    model_params=None,
+    seed=cfg.SEED,
 ):
     """P2: regla de persistencia, regresión logística balanceada y boosting. Regresa métricas.
 
@@ -1029,6 +1060,9 @@ def run_p2(
     }
     results = {}
     registry_candidates = {}
+    model_params = model_params or {}
+    logistic_params = model_params if model_name == "logistic" else {}
+    boosting_params = model_params if model_name in ("all", "hgb") else {}
     candidates = [
         (
             "persistencia_proxy",
@@ -1036,19 +1070,29 @@ def run_p2(
             PersistenceRisk(),
             "regla: clase de la ocupación virtual actual",
         ),
-        ("logistica_proxy", "baseline", make_risk_baseline(), "LogisticRegression"),
-        ("hgb_proxy", "candidato", make_risk_model(), "HistGradientBoostingClassifier"),
+        (
+            "logistica_proxy",
+            "baseline",
+            make_risk_baseline(**{**logistic_params, "random_state": seed}),
+            "LogisticRegression",
+        ),
+        (
+            "hgb_proxy",
+            "candidato",
+            make_risk_model(**{**boosting_params, "random_state": seed}),
+            "HistGradientBoostingClassifier",
+        ),
     ]
     extras = {}
     if tune:
         best, _, search_id = run_search(
-            "P2", train, evaluated["val"], features, figures_dir, context
+            "P2", train, evaluated["val"], features, figures_dir, context, seed, boosting_params
         )
         candidates.append(
             (
                 "hgb_ajustado_proxy",
                 "candidato",
-                make_risk_model(**best),
+                make_risk_model(**{**boosting_params, **best, "random_state": seed}),
                 "HistGradientBoostingClassifier (hiperparámetros ajustados)",
             )
         )
@@ -1056,6 +1100,15 @@ def run_p2(
             "busqueda_run_id": search_id,
             **{f"mejor_{k}": v for k, v in best.items()},
         }
+    if model_name != "all":
+        selected = {
+            "persistence": "persistencia_proxy",
+            "logistic": "logistica_proxy",
+            "hgb": "hgb_proxy",
+        }
+        candidates = [
+            item for item in candidates if item[0] in ("persistencia_proxy", selected[model_name])
+        ]
     for key, kind, model, description in candidates:
         start = time.perf_counter()
         if model is not None:
@@ -1090,7 +1143,7 @@ def run_p2(
             Path(figures_dir) / f"p2_{key}_{HORIZON_LABEL}{suffix}_pr.png",
         )
         params = {
-            **_common_params(context, features, rows),
+            **_common_params(context, features, rows, seed),
             **class_counts,
             "modelo": description,
             "initial_occupancy": initial_occupancy,
@@ -1124,13 +1177,15 @@ def run_p2(
 
 
 def log_cluster_candidate(
-    train, val, algorithm, k, run_name, kind, figures_dir, output_dir, context
+    train, val, algorithm, k, run_name, kind, figures_dir, output_dir, context, seed=cfg.SEED
 ):
     features = list(cfg.P3_FEATURE_COLUMNS)
     start = time.perf_counter()
-    model = StationGroups(algorithm=algorithm, n_clusters=k).fit(train[features])
+    model = StationGroups(algorithm=algorithm, n_clusters=k, random_state=seed).fit(
+        train[features]
+    )
     fit_seconds = time.perf_counter() - start
-    labels, metrics = cluster_metrics(train, val, algorithm, k, model=model)
+    labels, metrics = cluster_metrics(train, val, algorithm, k, model=model, seed=seed)
     metrics["fit_seconds"] = fit_seconds
     metrics["inference_seconds_per_1000"] = inference_cost(model, val[features])
     figure = plot_clusters(
@@ -1145,7 +1200,7 @@ def log_cluster_candidate(
         assignments, index=False
     )
     params = {
-        **_common_params(context, features, {"train": len(train), "val": len(val)}),
+        **_common_params(context, features, {"train": len(train), "val": len(val)}, seed),
         **model.get_params(),
         "modelo": algorithm,
         "assignment_rule": model.assignment_rule_,
@@ -1168,7 +1223,7 @@ def log_cluster_candidate(
     return run_id, metrics
 
 
-def run_k_sweep(train, val, figures_dir, context, output_dir=None):
+def run_k_sweep(train, val, figures_dir, context, output_dir=None, seed=cfg.SEED):
     import mlflow
 
     figures_dir = Path(figures_dir)
@@ -1182,7 +1237,7 @@ def run_k_sweep(train, val, figures_dir, context, output_dir=None):
         mlflow.set_tag("model_family", "clustering")
         params = {
             **_common_params(
-                context, cfg.P3_FEATURE_COLUMNS, {"train": len(train), "val": len(val)}
+                context, cfg.P3_FEATURE_COLUMNS, {"train": len(train), "val": len(val)}, seed
             ),
             "k_valores": ",".join(str(k) for k in P3_K_VALUES),
             "algoritmos": ",".join(CLUSTERERS),
@@ -1195,7 +1250,7 @@ def run_k_sweep(train, val, figures_dir, context, output_dir=None):
                 name = f"P3_{algorithm}_k{k}_perfil48"
                 kind = "baseline" if algorithm == "kmeans" and k == cfg.N_CLUSTERS else "candidato"
                 run_id, metrics = log_cluster_candidate(
-                    train, val, algorithm, k, name, kind, figures_dir, output_dir, context
+                    train, val, algorithm, k, name, kind, figures_dir, output_dir, context, seed
                 )
                 candidates[name] = (run_id, metrics, True)
                 rows.append({"algoritmo": algorithm, "k": k, **metrics})
@@ -1222,6 +1277,9 @@ def run_p3(
     output_dir=cfg.PROCESSED_DIR,
     context=None,
     register=True,
+    model_name="all",
+    n_clusters=cfg.N_CLUSTERS,
+    seed=cfg.SEED,
 ):
     if tables is None:
         tables = {
@@ -1230,15 +1288,25 @@ def run_p3(
     train, val = tables["train"], tables["val"]
     context = context or run_context()
     results, candidates = {}, {}
-    for key, kind in [("kmeans", "baseline"), ("ward", "candidato")]:
-        name = f"P3_{key}_perfil48"
+    algorithms = [("kmeans", "baseline"), ("ward", "candidato")]
+    if model_name != "all":
+        algorithms = [item for item in algorithms if item[0] == model_name]
+    for key, kind in algorithms:
+        if n_clusters != cfg.N_CLUSTERS:
+            kind = "candidato"
+        name = (
+            f"P3_{key}_perfil48"
+            if n_clusters == cfg.N_CLUSTERS
+            else f"P3_{key}_k{n_clusters}_perfil48"
+        )
         run_id, metrics = log_cluster_candidate(
-            train, val, key, cfg.N_CLUSTERS, name, kind, figures_dir, output_dir, context
+            train, val, key, n_clusters, name, kind, figures_dir, output_dir, context, seed
         )
         results[name] = metrics
         candidates[name] = (run_id, metrics, True)
-    sweep = run_k_sweep(train, val, figures_dir, context, output_dir)
-    candidates.update(sweep.attrs["registry_candidates"])
+    if model_name == "all":
+        sweep = run_k_sweep(train, val, figures_dir, context, output_dir, seed)
+        candidates.update(sweep.attrs["registry_candidates"])
     if register:
         register_champion("P3", candidates)
     _print_results("P3", results)
@@ -1251,7 +1319,24 @@ RUNNERS = {"P1": run_p1, "P2": run_p2, "P3": run_p3}
 def main(argv=None):
     """Entrena y registra en MLflow las preguntas pedidas."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--question", choices=["P1", "P2", "P3", "all"], default="all")
+    parser.add_argument(
+        "--question",
+        type=lambda value: value.upper() if value.lower() != "all" else "all",
+        choices=["P1", "P2", "P3", "all"],
+        default="all",
+    )
+    parser.add_argument(
+        "--model",
+        default="all",
+        help="all, seasonal, persistence, logistic, hgb, hgb_station, kmeans o ward",
+    )
+    parser.add_argument("--seed", type=int, default=cfg.SEED, help="Semilla reproducible")
+    parser.add_argument("--learning-rate", type=float, help="Tasa de aprendizaje de HGB")
+    parser.add_argument("--max-iter", type=int, help="Iteraciones de HGB o regresión logística")
+    parser.add_argument("--max-leaf-nodes", type=int, help="Hojas por árbol de HGB")
+    parser.add_argument("--l2-regularization", type=float, help="Regularización L2 de HGB")
+    parser.add_argument("--c", type=float, help="Inverso de regularización logística")
+    parser.add_argument("--n-clusters", type=int, default=cfg.N_CLUSTERS, help="Grupos para P3")
     parser.add_argument(
         "--final-test",
         action="store_true",
@@ -1274,8 +1359,43 @@ def main(argv=None):
         help="Carpeta para figuras y tablas de esta ejecución",
     )
     args = parser.parse_args(argv)
+    model_params = {
+        key: getattr(args, key)
+        for key in ("learning_rate", "max_iter", "max_leaf_nodes", "l2_regularization", "c")
+        if getattr(args, key) is not None
+    }
+    allowed = {
+        "P1": {"all", "seasonal", "hgb", "hgb_station"},
+        "P2": {"all", "persistence", "logistic", "hgb"},
+        "P3": {"all", "kmeans", "ward"},
+        "all": {"all"},
+    }
+    if args.model not in allowed[args.question]:
+        parser.error(f"Modelo {args.model} incompatible con {args.question}")
+    if args.tune and args.model != "all":
+        parser.error(
+            "La búsqueda usa model=all; un modelo concreto recibe sus hiperparámetros sin --tune"
+        )
+    if model_params and (args.question == "P3" or args.model in ("seasonal", "persistence")):
+        parser.error("Ese modelo no utiliza hiperparámetros de HGB o regresión logística")
+    if "c" in model_params and not (args.question == "P2" and args.model == "logistic"):
+        parser.error("C solo aplica a P2 con model=logistic")
+    if args.model == "logistic" and set(model_params) - {"c", "max_iter"}:
+        parser.error("Regresión logística recibe C y max_iter")
+    if args.seed < 0 or args.seed >= 2**32 or args.n_clusters < 2:
+        parser.error("La semilla debe estar entre 0 y 2**32-1; n_clusters debe ser al menos 2")
+    for key, value in model_params.items():
+        minimum = 0 if key == "l2_regularization" else 2 if key == "max_leaf_nodes" else 0
+        if (
+            not math.isfinite(value)
+            or value < minimum
+            or (value == 0 and key != "l2_regularization")
+        ):
+            parser.error(f"Valor inválido de {key}: {value}")
+    if "c" in model_params:
+        model_params["C"] = model_params.pop("c")
     verify_inputs()
-    configure_mlflow()
+    mlflow = configure_mlflow()
     context = run_context()
     print(f"Experimento: {cfg.EXPERIMENT_NAME} | commit: {context['git_commit'][:8]}", flush=True)
     if context["git_dirty"] == "true":
@@ -1287,14 +1407,18 @@ def main(argv=None):
                 "context": context,
                 "register": not args.no_register,
                 "figures_dir": args.figures_dir,
+                "model_name": args.model,
+                "seed": args.seed,
             }
             if question != "P3":
                 kwargs["final_test"] = args.final_test
                 kwargs["tune"] = args.tune
+                kwargs["model_params"] = model_params
             else:
                 kwargs["output_dir"] = args.figures_dir / "assignments"
+                kwargs["n_clusters"] = args.n_clusters
             RUNNERS[question](**kwargs)
-    print("\nListo. Para ver los runs: mlflow ui --backend-store-uri", cfg.TRACKING_URI)
+    print("\nListo. Tracking:", mlflow.get_tracking_uri())
 
 
 if __name__ == "__main__":

@@ -59,13 +59,13 @@ El agrupador de producción se ajusta únicamente en entrenamiento:
 
 `val_assignment_silhouette` y `val_assignment_davies_bouldin` evalúan la asignación del modelo congelado en validación. `val_assignment_ari` compara esas asignaciones con el agrupamiento independiente de validación. Estas métricas adicionales se distinguen de las métricas históricas.
 
-## Interfaz para el MLflow Project de Franco
+## Integración con el MLflow Project
 
 El entrenamiento respeta `MLFLOW_TRACKING_URI`; si no se define, conserva el backend SQLite de `config.py`. Con servidor HTTP, los experimentos nuevos usan el almacén de artefactos administrado por el servidor, en lugar de imponer una ruta local del cliente.
 
 Cuando MLflow Projects establece `MLFLOW_RUN_ID`, `train.main` reabre esa corrida como padre. Cada modelo y búsqueda se registra como hijo; las combinaciones de una búsqueda quedan un nivel más abajo. Así no se cierra ni se reutiliza accidentalmente el padre para varios modelos.
 
-El punto de entrada del Project puede invocar `python -m mibici.train --question P1 --tune` y sus equivalentes de P2/P3. Esta integración no crea el archivo raíz `MLproject` ni sustituye la tarea de parametrizarlo por modelo e hiperparámetros. El responsable de ese archivo debe conectar sus argumentos con las fábricas de modelos y conservar los valores centrales de fechas y semilla.
+El archivo raíz `MLproject` declara `python_env.yaml` y las entradas de ingesta y entrenamiento. `mibici/project.py` resuelve los valores de `config.py` y entrega los parámetros efectivos a las fábricas. La [guía del Project](mlflow_project.md) contiene los comandos de reproducción y el catálogo de parámetros.
 
 Ejemplo de servidor para el trabajo local:
 
@@ -96,7 +96,7 @@ python -m mibici.predict --question P3 --split val --output reports/predicciones
 
 La comprobación rápida usa los cinco ejemplos guardados. La completa vuelve a calcular las métricas del modelo recuperado sobre validación; no entrena ni lee septiembre. Comprueba además que las versiones locales coincidan con las del modelo.
 
-`--figures-dir` permite separar las figuras de una ejecución de las evidencias históricas. Los datos, la base de MLflow y los modelos siguen fuera de Git. Las corridas definitivas de esta entrega se deben ejecutar mediante el MLflow Project cuando esté integrado, conservando las corridas anteriores como evidencia histórica.
+`--figures-dir` permite separar las figuras de una ejecución de las evidencias históricas. Los datos, la base de MLflow y los modelos siguen fuera de Git. Las corridas de esta entrega se ejecutan mediante el MLflow Project, conservando las anteriores como evidencia histórica.
 
 ## Referencias técnicas
 

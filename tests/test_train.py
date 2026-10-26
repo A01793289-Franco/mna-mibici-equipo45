@@ -261,6 +261,53 @@ class TestMlflowRuns(unittest.TestCase):
             [experiment.experiment_id], filter_string=f"tags.pregunta = '{question}'"
         )
 
+    def test_selected_p1_model_uses_cli_parameters_and_seed(self):
+        results = train.run_p1(
+            demand_table(),
+            figures_dir=self.root / "figs",
+            context=self.context,
+            register=False,
+            model_name="hgb_station",
+            model_params={"max_iter": 7, "learning_rate": 0.05, "max_leaf_nodes": 5},
+            seed=123,
+        )
+        self.assertEqual(set(results), {"P1_estacional_h1", "P1_hgb_poisson_estacion_h1"})
+        client, runs = self.runs("P1")
+        run = max(
+            (r for r in runs if r.info.run_name == "P1_hgb_poisson_estacion_h1"),
+            key=lambda r: r.info.start_time,
+        )
+        self.assertEqual(run.data.params["seed"], "123")
+        self.assertEqual(run.data.params["random_state"], "123")
+        model = self.mlflow.sklearn.load_model(f"runs:/{run.info.run_id}/model")
+        self.assertEqual(model.steps[-1][1].max_iter, 7)
+        self.assertEqual(model.steps[-1][1].max_leaf_nodes, 5)
+
+    def test_selected_p3_model_keeps_requested_k_and_seed(self):
+        tables = {"train": profile_table(seed=1), "val": profile_table(seed=2)}
+        results = train.run_p3(
+            tables,
+            figures_dir=self.root / "figs",
+            output_dir=self.root / "groups",
+            context=self.context,
+            register=False,
+            model_name="kmeans",
+            n_clusters=4,
+            seed=123,
+        )
+        self.assertEqual(set(results), {"P3_kmeans_k4_perfil48"})
+        client, runs = self.runs("P3")
+        run = max(
+            (r for r in runs if r.info.run_name == "P3_kmeans_k4_perfil48"),
+            key=lambda r: r.info.start_time,
+        )
+        self.assertEqual(run.data.params["n_clusters"], "4")
+        self.assertEqual(run.data.params["seed"], "123")
+        self.assertEqual(run.data.tags["stage_of_work"], "candidate")
+        model = self.mlflow.sklearn.load_model(f"runs:/{run.info.run_id}/model")
+        self.assertEqual(model.random_state, 123)
+        self.assertEqual(len(np.unique(model.labels_)), 4)
+
     def test_p1_logs_baseline_and_candidate(self):
         results = train.run_p1(
             demand_table(), figures_dir=self.root / "figs", context=self.context

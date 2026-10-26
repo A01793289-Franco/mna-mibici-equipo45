@@ -8,7 +8,21 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 | P2: riesgo | Riesgo virtual de falta de bicicletas o anclajes al cierre de la siguiente hora. |
 | P3: patrones | Tres grupos iniciales por perfil horario de uso, ubicados en un mapa. |
 
-## Estado actual
+## Segunda entrega: MLflow Project y Registry
+
+El Project definitivo está en `MLproject`, con entorno en `python_env.yaml`. Las entradas `ingest` y `train` permiten reconstruir los datos y elegir pregunta, modelo, hiperparámetros y semilla desde la terminal. El protocolo completo conserva las búsquedas anidadas y registra un modelo `champion` por pregunta.
+
+La [guía del MLflow Project](references/mlflow_project.md) incluye servidor SQLite, conexión en Linux/macOS/PowerShell/CMD, comandos desde un clon limpio, opciones y explicación de versiones. Después de instalar el entorno y definir `MLFLOW_TRACKING_URI`, se ejecuta:
+
+```text
+python -m mlflow run . -e ingest --env-manager local --experiment-name mibici-equipo45
+python -m mlflow run . -e train --env-manager local --experiment-name mibici-equipo45 -P question=all -P tune=true
+python -m mlflow run . -e verify --env-manager local --experiment-name mibici-equipo45
+```
+
+Para que MLflow cree el entorno declarado, se puede usar `--env-manager uv` con uv instalado. `local` reutiliza el entorno activo con las versiones de `requirements.txt`.
+
+## Primera entrega: propuesta y evidencia
 
 Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3 y el entrenamiento de los baselines y candidatos con registro en MLflow (`mibici/train.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados. El notebook exploratorio quedó ejecutado y las seis corridas finalizaron desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`. P1-P2 incluyen la evaluación única de septiembre; P3 compara entrenamiento y validación. Las capturas y el PDF están incluidos.
 
@@ -48,6 +62,7 @@ mibici/
   deployable.py
   tracking.py
   verify_registry.py
+  project.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -80,6 +95,8 @@ tests/
 docs/
 requirements.txt
 pyproject.toml
+MLproject
+python_env.yaml
 ```
 
 `python -m mibici.config` crea `data/raw`, `data/interim` y `data/processed` localmente, sin versionar datos. `notebooks` se reserva para exploración; `models` para salidas locales y `reports/figures` para evidencia sin datos personales.
@@ -182,7 +199,7 @@ Se conserva `val_mae` como criterio de P1 y `val_f1_macro` en P2; P3 usa el ARI 
 
 K-means asigna perfiles nuevos por centroide; Ward utiliza una regla explícita de vecino de entrenamiento más cercano. No se vuelve a ajustar el agrupador para predecir. Las métricas `val_assignment_*` distinguen ese uso de la estabilidad histórica `val_ari`.
 
-El cliente respeta `MLFLOW_TRACKING_URI` y el run padre de MLflow Projects. Los detalles de conexión y la interfaz para el `MLproject` están en la guía de integración. Las búsquedas de esta rama no sustituyen la ejecución final desde el Project.
+El cliente respeta `MLFLOW_TRACKING_URI` y el run padre de MLflow Projects. Los detalles y las ejecuciones parametrizadas están en la guía del MLflow Project. Las corridas de la segunda entrega se lanzan mediante sus entradas.
 
 ```bash
 python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
@@ -240,6 +257,6 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos.
 
-Verificaciones realizadas: 66 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
+Verificaciones realizadas: 74 pruebas de unidad e integración aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook sin errores y con seis figuras incrustadas. Entorno comprobado: Python 3.13.15 en Linux para todo el flujo; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables y verificación de hashes. No se afirma haber ejecutado en macOS ni haber entrenado en Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).
