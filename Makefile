@@ -57,13 +57,31 @@ create_environment:
 # PROJECT RULES                                                                 #
 #################################################################################
 
+## Descarga, limpia y versiona los datos de MiBici
 .PHONY: data
 data:
 	$(PYTHON_INTERPRETER) -m mibici.dataset
 
+## Construye las variables de P1-P3
 .PHONY: features
 features:
 	$(PYTHON_INTERPRETER) -m mibici.features
+
+## Verifica hashes y versiones de datos y variables
+.PHONY: verify
+verify:
+	$(PYTHON_INTERPRETER) -m mibici.dataset --verify
+	$(PYTHON_INTERPRETER) -m mibici.features --verify
+
+## Ejecuta las pruebas unitarias
+.PHONY: test
+test:
+	$(PYTHON_INTERPRETER) -m unittest discover -s tests -v
+
+## Entrena P1-P3 y registra en MLflow, solo validación (requiere verify)
+.PHONY: train
+train: verify
+	$(PYTHON_INTERPRETER) -m mibici.train --question all
 
 
 

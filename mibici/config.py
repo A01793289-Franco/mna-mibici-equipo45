@@ -1,3 +1,10 @@
+"""Configuración acordada para la propuesta del equipo 45.
+
+Centraliza rutas, fuentes, fechas de partición, semilla, horizonte, umbrales del proxy P2 y
+columnas predictoras de P1-P3. Los módulos importan estos valores en lugar de repetirlos; el
+hash de este archivo queda registrado en los manifiestos de datos y variables.
+"""
+
 from datetime import date
 from pathlib import Path
 
@@ -73,10 +80,20 @@ P2_FEATURE_COLUMNS = (
 
 
 def data_path(path, data_dir=DATA_DIR):
+    """Resuelve una ruta de datos centralizada para un directorio local alternativo.
+
+    Conserva la parte relativa a ``DATA_DIR`` y la coloca bajo ``data_dir``, para que
+    ``--data-dir`` reutilice la misma estructura sin modificar la configuración.
+    """
     return Path(data_dir) / Path(path).relative_to(DATA_DIR)
 
 
 def create_directories():
+    """Crea las carpetas locales de la plantilla sin descargar datos.
+
+    Prepara ``data/raw``, ``data/interim``, ``data/processed``, ``models``, ``reports/figures`` y
+    ``references``; si ya existen, no hace nada.
+    """
     for directory in (
         RAW_DIR,
         INTERIM_DIR,

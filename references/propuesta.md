@@ -1,6 +1,6 @@
 # Propuesta de solución | Equipo 45
 
-Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo quedó confirmado en Git antes de ejecutar una sola vez la prueba final de P1-P2. Las seis corridas finalizaron correctamente; P3 se evaluó con entrenamiento y validación. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
+Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo quedó confirmado en Git antes de ejecutar una sola vez la prueba final de P1-P2. Las seis corridas de la primera iteración finalizaron correctamente; P3 se evaluó con entrenamiento y validación. Una segunda iteración, solo en validación, se resume en la sección 7. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
 
 ## 1. Problemas y decisiones
 
@@ -87,7 +87,7 @@ Normalizar evita que el volumen total domine la forma del patrón. Las coordenad
 
 El [diagrama](arquitectura.svg) y su [justificación](arquitectura.md) separan fuentes, ingesta, almacenamiento, variables, entrenamiento y seguimiento. Se propone Parquet mensual, manifiesto SHA-256 y MLflow local con SQLite.
 
-Los seis runs registran equipo, P1/P2/P3 y commit; rango/cortes, versiones de datos y variables, semilla e hiperparámetros; métricas con prefijo y artefactos. Se ejecutaron baseline y candidato para cada pregunta. La comparación se hace dentro de cada tarea. Las capturas muestran lista, detalle, artefacto y comparación.
+Los runs registran equipo, P1/P2/P3 y commit; rango/cortes, versiones de datos y variables, semilla e hiperparámetros; métricas con prefijo y artefactos. Se ejecutaron baseline y candidato para cada pregunta. La comparación se hace dentro de cada tarea. Las capturas muestran lista, detalle, artefacto y comparación.
 
 ## 7. Resultados y alcance de la entrega
 
@@ -98,6 +98,8 @@ El registro completo está en [resultados_mlflow.json](../reports/resultados_mlf
 - **P3:** K-means supera a Ward en silhouette (0.1407 vs. 0.1232), Davies-Bouldin (1.9784 vs. 2.1388) y ARI entre entrenamiento/validación (0.5776 vs. 0.3116). La separación es baja y no demuestra tres tipos naturales bien definidos. No se calculó una evaluación de P3 sobre septiembre.
 
 El notebook exploratorio está ejecutado y contiene figuras incrustadas. El reporte final integra el Canvas original, arquitectura, resultados y capturas reales. Las funciones se explican en la documentación Markdown del proyecto.
+
+**Segunda iteración (solo validación).** El `champion` de P1 es el boosting con la estación como variable categórica (`val_mae` 0.7498). En P2, la regla de persistencia supera al boosting en F1 macro (0.8824 contra 0.8708), lo que confirma que la métrica mide sobre todo concordancia con el proxy. El barrido de k respalda k=3. La sensibilidad a la ocupación inicial no cambia las conclusiones. Detalle en [resultados_mlflow.md](../reports/resultados_mlflow.md).
 
 ## Referencias
 

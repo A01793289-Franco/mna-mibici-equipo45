@@ -66,7 +66,7 @@ Para sensibilidad, `python -m mibici.features --initial-occupancy 0.25` reconstr
 
 [feature_manifest.json](feature_manifest.json) liga la versión de origen, el código, columnas predictoras, filas por conjunto, clases, exclusiones y hashes de las tablas. [La verificación de reproducción](../reports/ingesta_features_verificacion.json) documenta dos ejecuciones y las comprobaciones automáticas.
 
-Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. El entrenamiento y la evaluación ya se ejecutaron con seis runs reales en MLflow. El notebook exploratorio está ejecutado, las capturas están en reports/figures/ y los resultados en reports/resultados_mlflow.md. Las condiciones publicadas del portal se documentan en references/condiciones_datos.md.
+Los datos y Parquet están excluidos de Git; solo se publican código, manifiestos, conteos y pruebas sintéticas. El entrenamiento y la evaluación ya se ejecutaron en MLflow en dos iteraciones; la primera incluye la evaluación única de septiembre. El notebook exploratorio está ejecutado, las capturas están en reports/figures/ y los resultados en reports/resultados_mlflow.md. Las condiciones publicadas del portal se documentan en references/condiciones_datos.md.
 
 ### Trazabilidad de la documentación
 
@@ -124,4 +124,9 @@ Los resultados históricos de MLflow siguen vinculados al commit `43bf339792fef5
 | `make create_environment` | Conserva el comando de virtualenvwrapper de la plantilla; el README explica la alternativa con venv. |
 | `make data` | Ejecuta la ingesta reproducible. |
 | `make features` | Construye las tablas para P1-P3. |
-| `make help` | Muestra las descripciones de comandos conservadas en la plantilla; ingesta y variables se consultan en este documento. |
+| `make verify` | Verifica hashes y versiones de datos y variables, sin ejecutar pruebas. |
+| `make test` | Ejecuta las pruebas unitarias con datos sintéticos. |
+| `make train` | Ejecuta `make verify` y, si pasa, entrena P1-P3 en validación y registra los runs en MLflow. |
+| `make help` | Muestra todos los objetivos anteriores con su descripción. |
+
+`make train` no usa `--final-test`. La evaluación de septiembre se ejecuta a mano y una sola vez, según el [protocolo](protocolo_experimento.md).
