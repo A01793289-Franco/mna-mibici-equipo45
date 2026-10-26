@@ -52,7 +52,7 @@ Umbrales: 10% y 90%. Ocupación inicial utilizada: 50%.
 
 **P3:** análisis por lotes con actualización mensual propuesta.
 
-Runs reales en MLflow en dos iteraciones; modelos `champion` en Model Registry. P1-P2 evaluados una vez en septiembre (primera iteración).
+Runs reales en MLflow en dos iteraciones; modelos `champion` en Model Registry. P1-P2 tienen una evaluación original de septiembre en la primera iteración y una comparación retrospectiva de sus finalistas en la ejecución definitiva de la segunda. La elección sigue usando validación y P3 no usa septiembre.
 
 ## Evaluación Offline
 

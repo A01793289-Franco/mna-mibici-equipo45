@@ -5,6 +5,10 @@ scikit-learn==1.9.1
 matplotlib==3.11.2
 mlflow==3.16.1
 skops==0.16.0
+fastapi==0.146.0
+uvicorn==0.54.0
+httpx==0.28.1
+pydantic==2.14.1
 python-dotenv==1.2.4
 requests==2.34.2
 black==26.10.1

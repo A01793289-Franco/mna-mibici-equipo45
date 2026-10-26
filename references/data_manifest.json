@@ -4,7 +4,7 @@
   "end_exclusive": "2026-10-01",
   "timezone": "America/Mexico_City",
   "normalizer_sha256": "53363c75d667bf66da47035f3255e770c0c4f58957e20aa58b305b5d139087e3",
-  "config_sha256": "dd186e85c4e91538f324edd2ae32b0bb43cf93345cabd84a3787ba947a16a4fa",
+  "config_sha256": "fa3f0017c206a33eb7cc7c9710bbc2b25962b0d16b1bdd55bbce9c76373bda47",
   "packages": {
     "pandas": "3.0.6",
     "pyarrow": "25.0.0"
@@ -168,6 +168,6 @@
       407
     ]
   },
-  "data_version": "6aeb2eeb00891ec1676ac23d7467cba2e0300fdfa53f77008b0e0fe32d5f50b7",
-  "created_at": "2026-10-24T23:31:07.450752+00:00"
+  "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+  "created_at": "2026-10-26T00:05:16.556117+00:00"
 }

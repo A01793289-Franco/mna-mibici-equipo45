@@ -261,6 +261,53 @@ class TestMlflowRuns(unittest.TestCase):
             [experiment.experiment_id], filter_string=f"tags.pregunta = '{question}'"
         )
 
+    def test_selected_p1_model_uses_cli_parameters_and_seed(self):
+        results = train.run_p1(
+            demand_table(),
+            figures_dir=self.root / "figs",
+            context=self.context,
+            register=False,
+            model_name="hgb_station",
+            model_params={"max_iter": 7, "learning_rate": 0.05, "max_leaf_nodes": 5},
+            seed=123,
+        )
+        self.assertEqual(set(results), {"P1_estacional_h1", "P1_hgb_poisson_estacion_h1"})
+        client, runs = self.runs("P1")
+        run = max(
+            (r for r in runs if r.info.run_name == "P1_hgb_poisson_estacion_h1"),
+            key=lambda r: r.info.start_time,
+        )
+        self.assertEqual(run.data.params["seed"], "123")
+        self.assertEqual(run.data.params["random_state"], "123")
+        model = self.mlflow.sklearn.load_model(f"runs:/{run.info.run_id}/model")
+        self.assertEqual(model.steps[-1][1].max_iter, 7)
+        self.assertEqual(model.steps[-1][1].max_leaf_nodes, 5)
+
+    def test_selected_p3_model_keeps_requested_k_and_seed(self):
+        tables = {"train": profile_table(seed=1), "val": profile_table(seed=2)}
+        results = train.run_p3(
+            tables,
+            figures_dir=self.root / "figs",
+            output_dir=self.root / "groups",
+            context=self.context,
+            register=False,
+            model_name="kmeans",
+            n_clusters=4,
+            seed=123,
+        )
+        self.assertEqual(set(results), {"P3_kmeans_k4_perfil48"})
+        client, runs = self.runs("P3")
+        run = max(
+            (r for r in runs if r.info.run_name == "P3_kmeans_k4_perfil48"),
+            key=lambda r: r.info.start_time,
+        )
+        self.assertEqual(run.data.params["n_clusters"], "4")
+        self.assertEqual(run.data.params["seed"], "123")
+        self.assertEqual(run.data.tags["stage_of_work"], "candidate")
+        model = self.mlflow.sklearn.load_model(f"runs:/{run.info.run_id}/model")
+        self.assertEqual(model.random_state, 123)
+        self.assertEqual(len(np.unique(model.labels_)), 4)
+
     def test_p1_logs_baseline_and_candidate(self):
         results = train.run_p1(
             demand_table(), figures_dir=self.root / "figs", context=self.context
@@ -287,7 +334,7 @@ class TestMlflowRuns(unittest.TestCase):
         client, runs = self.runs("P1")
         for run in runs:
             if run.info.run_name == "P1_estacional_h1":
-                self.assertEqual(run.outputs.model_outputs, [])
+                self.assertEqual(len(run.outputs.model_outputs), 1)
         candidates = [run for run in runs if run.info.run_name == "P1_hgb_poisson_h1"]
         candidate = max(candidates, key=lambda run: run.info.start_time)
         self.assertEqual(len(candidate.outputs.model_outputs), 1)
@@ -401,11 +448,10 @@ class TestMlflowRuns(unittest.TestCase):
             self.assertIn("val_f1_macro", run.data.metrics)
             self.assertIn("val_recall_riesgo_sin_bicicletas", run.data.metrics)
             self.assertTrue(client.list_artifacts(run.info.run_id, "figuras"))
-            expected = 0 if run.info.run_name == "P2_persistencia_proxy_h1" else 1
-            self.assertEqual(len(run.outputs.model_outputs), expected)
+            self.assertEqual(len(run.outputs.model_outputs), 1)
         champion = client.get_model_version_by_alias(train.REGISTERED_MODELS["P2"], "champion")
         latest = sorted(runs, key=lambda run: run.info.start_time)[-3:]
-        models = [run for run in latest if run.info.run_name != "P2_persistencia_proxy_h1"]
+        models = latest
         winner = max(models, key=lambda run: run.data.metrics["val_f1_macro"])
         self.assertEqual(champion.run_id, winner.info.run_id)
 

@@ -1,6 +1,6 @@
 # Propuesta de solución | Equipo 45
 
-Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo quedó confirmado en Git antes de ejecutar una sola vez la prueba final de P1-P2. Las seis corridas de la primera iteración finalizaron correctamente; P3 se evaluó con entrenamiento y validación. Una segunda iteración, solo en validación, se resume en la sección 7. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
+Este documento precisa el diseño del Canvas inicial. La ingesta y el módulo de variables ya están implementados; el entrenamiento P1-P3 y el registro en MLflow están implementados. El protocolo quedó confirmado en Git antes de ejecutar una sola vez la prueba final de P1-P2. Las seis corridas de la primera iteración finalizaron correctamente; P3 se evaluó con entrenamiento y validación. Una segunda iteración comenzó con comparaciones solo en validación; su ejecución definitiva mediante MLflow Project también registra septiembre como evaluación retrospectiva de los finalistas P1/P2, sin usarlo para seleccionar. Se resume en la sección 7. Resultados de datos y comprobaciones: [ingesta_features.md](ingesta_features.md).
 
 ## 1. Problemas y decisiones
 
@@ -99,7 +99,7 @@ El registro completo está en [resultados_mlflow.json](../reports/resultados_mlf
 
 El notebook exploratorio está ejecutado y contiene figuras incrustadas. El reporte final integra el Canvas original, arquitectura, resultados y capturas reales. Las funciones se explican en la documentación Markdown del proyecto.
 
-**Segunda iteración (solo validación).** El `champion` de P1 es el boosting con la estación como variable categórica (`val_mae` 0.7498). En P2, la regla de persistencia supera al boosting en F1 macro (0.8824 contra 0.8708), lo que confirma que la métrica mide sobre todo concordancia con el proxy. El barrido de k respalda k=3. La sensibilidad a la ocupación inicial no cambia las conclusiones. Detalle en [resultados_mlflow.md](../reports/resultados_mlflow.md).
+**Segunda iteración (selección en validación).** El `champion` de P1 es el boosting con la estación como variable categórica (`val_mae` 0.7498). En P2, la regla de persistencia supera al boosting en F1 macro (0.8824 contra 0.8708), lo que confirma que la métrica mide sobre todo concordancia con el proxy. El barrido de k respalda k=3. La sensibilidad a la ocupación inicial no cambia las conclusiones. Los análisis iniciales están en [resultados_mlflow.md](../reports/resultados_mlflow.md). La [ejecución definitiva](../reports/resultados_mlflow_entrega2.md) conserva 52 runs, 48 modelos, los tres aliases `champion` y el linaje completo; incluye las cifras retrospectivas de septiembre de P1/P2. P3 no usa septiembre.
 
 ## Referencias
 

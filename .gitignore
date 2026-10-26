@@ -203,6 +203,7 @@ mlflow.db-*
 *.pkl
 *.pickle
 *.joblib
+*.skops
 *.onnx
 *.h5
 *.keras

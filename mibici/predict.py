@@ -63,7 +63,7 @@ def load_champion(question, alias=CHAMPION_ALIAS):
 
 def features_table(question):
     """Ruta de la tabla de variables de la pregunta."""
-    return cfg.FEATURE_FILES["p1" if question == "P1" else "p2"]
+    return cfg.FEATURE_FILES[question.lower()]
 
 
 def select_hour(table, timestamp):
@@ -109,20 +109,44 @@ def default_output(question, timestamp):
     return PREDICTIONS_DIR / f"{question.lower()}_{stamp}.csv"
 
 
+def predict_profiles(split="val", table=None, alias=CHAMPION_ALIAS):
+    model, columns = load_champion("P3", alias)
+    if table is None:
+        table = pd.read_parquet(cfg.FEATURE_FILES[f"p3_{split}"])
+    result = table[["station_id"]].copy()
+    result["cluster"] = model.predict(table[columns])
+    return result
+
+
 def main(argv=None):
     """Predice una hora y escribe el CSV."""
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--question", choices=QUESTIONS, required=True)
-    parser.add_argument("--timestamp", required=True, help="hora local, p. ej. 2026-09-15T08:00")
+    parser.add_argument("--timestamp", help="hora local para P1/P2, p. ej. 2026-09-15T08:00")
+    parser.add_argument(
+        "--split",
+        choices=["train", "val", "test"],
+        default="val",
+        help="Periodo de perfiles para P3; por defecto val",
+    )
     parser.add_argument("--output", type=Path, help="CSV de salida (por defecto en reports/)")
     parser.add_argument("--alias", default=CHAMPION_ALIAS, help="alias del modelo registrado")
     args = parser.parse_args(argv)
+    if args.question != "P3" and not args.timestamp:
+        parser.error("P1 y P2 requieren --timestamp")
     configure_mlflow()
     try:
-        result = predict_hour(args.question, args.timestamp, alias=args.alias)
+        if args.question == "P3":
+            result = predict_profiles(args.split, alias=args.alias)
+        else:
+            result = predict_hour(args.question, args.timestamp, alias=args.alias)
     except (PredictionError, ValueError) as error:
         sys.exit(f"Error: {error}")
-    output = args.output or default_output(args.question, args.timestamp)
+    output = args.output or (
+        PREDICTIONS_DIR / f"p3_{args.split}.csv"
+        if args.question == "P3"
+        else default_output(args.question, args.timestamp)
+    )
     output.parent.mkdir(parents=True, exist_ok=True)
     result.to_csv(output, index=False)
     print(f"{len(result)} estaciones -> {output}", flush=True)

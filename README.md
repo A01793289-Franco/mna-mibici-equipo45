@@ -1,5 +1,7 @@
 # MiBici | Equipo 45
 
+[![CI](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml/badge.svg)](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml)
+
 Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara.
 
 | Pregunta | Definición acordada |
@@ -8,11 +10,27 @@ Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara
 | P2: riesgo | Riesgo virtual de falta de bicicletas o anclajes al cierre de la siguiente hora. |
 | P3: patrones | Tres grupos iniciales por perfil horario de uso, ubicados en un mapa. |
 
-## Estado actual
+## Segunda entrega: MLflow Project y Registry
+
+[Reporte de experimentos en PDF](reports/TC5061_Reporte_MLFlow_Equipo45.pdf) · [Resultados e interpretación](reports/resultados_mlflow_entrega2.md) · [Registro completo](reports/resultados_mlflow_entrega2.json).
+
+El Project definitivo está en `MLproject`, con entorno en `python_env.yaml`. Las entradas `ingest` y `train` permiten reconstruir los datos y elegir pregunta, modelo, hiperparámetros y semilla desde la terminal. El protocolo completo conserva las búsquedas anidadas y registra un modelo `champion` por pregunta.
+
+La [guía del MLflow Project](references/mlflow_project.md) incluye servidor SQLite, conexión en Linux/macOS/PowerShell/CMD, comandos desde un clon limpio, opciones y explicación de versiones. Después de instalar el entorno y definir `MLFLOW_TRACKING_URI`, se ejecuta:
+
+```text
+python -m mlflow run . -e ingest --env-manager local --experiment-name mibici-equipo45
+python -m mlflow run . -e train --env-manager local --experiment-name mibici-equipo45 -P question=all -P tune=true
+python -m mlflow run . -e verify --env-manager local --experiment-name mibici-equipo45
+```
+
+Para que MLflow cree el entorno declarado, se puede usar `--env-manager uv` con uv instalado. `local` reutiliza el entorno activo con las versiones de `requirements.txt`.
+
+## Primera entrega: propuesta y evidencia
 
 Existen la estructura Cookiecutter, configuración, propuesta, ingesta reproducible, funciones de variables para P1-P3, entrenamiento con registro en MLflow (`mibici/train.py`), modelos guardados con firma, Model Registry con alias `champion` e inferencia (`mibici/predict.py`). La ingesta y las variables se ejecutaron con los nueve meses seleccionados.
 
-El experimento tiene dos iteraciones. La **primera** son seis corridas (baseline y candidato por pregunta) ejecutadas desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`; P1-P2 incluyen la evaluación única de septiembre. La **segunda**, posterior a septiembre y evaluada solo en validación, agrega el baseline de persistencia de P2, el ajuste de hiperparámetros, la estación como variable categórica en P1, el barrido de k en P3, el análisis de errores de P1 y la sensibilidad de P2 a la ocupación inicial. Las capturas de MLflow y el PDF incluidos corresponden a la primera iteración.
+El experimento tiene dos iteraciones. La **primera** son seis corridas (baseline y candidato por pregunta) ejecutadas desde el commit `43bf339792fef5d01326aa0ca0227fdd781675ff`, con `git_dirty=false`; P1-P2 incluyen la evaluación original de septiembre. La **segunda** agrega el baseline de persistencia de P2, el ajuste de hiperparámetros, la estación como variable categórica en P1, el barrido de k en P3, el análisis de errores de P1 y la sensibilidad de P2 a la ocupación inicial. Esas mejoras se estudiaron inicialmente solo en validación. La ejecución definitiva del MLflow Project también evalúa los finalistas P1/P2 en septiembre como comparación retrospectiva, sin usarlo para seleccionar modelos. La propuesta y las capturas `mlflow_*.png` corresponden a la primera iteración; el nuevo reporte y `reports/figures/entrega2/` documentan la ejecución definitiva.
 
 - [PDF de la propuesta y evidencia](reports/TC5061_Propuesta_Proyecto_Equipo45.pdf).
 - [Resultados e interpretación de ambas iteraciones](reports/resultados_mlflow.md) y [registro completo de métricas y parámetros de la primera iteración](reports/resultados_mlflow.json).
@@ -47,6 +65,11 @@ mibici/
   train.py
   train_p1.py
   predict.py
+  deployable.py
+  tracking.py
+  verify_registry.py
+  project.py
+  api.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -79,6 +102,8 @@ tests/
 docs/
 requirements.txt
 pyproject.toml
+MLproject
+python_env.yaml
 ```
 
 `python -m mibici.config` crea `data/raw`, `data/interim` y `data/processed` localmente, sin versionar datos. `notebooks` se reserva para exploración; `models` para salidas locales y `reports/figures` para evidencia sin datos personales.
@@ -103,7 +128,7 @@ python -m pip install -r requirements.txt
 python -m mibici.config
 ```
 
-En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. La ejecución completa se comprobó con Python 3.13 en Linux (primera iteración) y en Windows (pruebas, regeneración de ingesta y variables, ambos `--verify`, predicción y reproducción de la segunda iteración); macOS usa los comandos equivalentes indicados.
+En Windows con CMD, activar el mismo entorno con `.venv\Scripts\activate.bat`. Las dependencias directas tienen versiones fijas. No se necesita WSL ni `make`. Las mejoras iniciales se reprodujeron también en Windows (pruebas, regeneración de ingesta y variables, ambos `--verify`, predicción, ajuste y sensibilidad). El MLflow Project definitivo completo se comprobó en Linux. CI ejecuta pruebas y documentación en Ubuntu y Windows; macOS usa los comandos equivalentes indicados.
 
 ## Ingesta y variables
 
@@ -171,24 +196,23 @@ La etiqueta de P2 parte de una ocupación virtual inicial arbitraria (50%). Para
 python -m mibici.sensitivity
 ```
 
-Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia, regresión logística y boosting con cada una, y registra un run por modelo y escenario (sufijo `_occ25`, `_occ50`, `_occ75`, parámetro `initial_occupancy`) más un run resumen. Tarda unos 3 minutos. No escribe tablas ni manifiestos (por eso no usa `features --initial-occupancy`, que sobrescribiría `data/processed/` y `feature_manifest.json`), no registra modelos y solo usa validación. Comprueba además que la tabla en memoria con 50% es idéntica a la guardada. Resultados en [reports/resultados_mlflow.md](reports/resultados_mlflow.md) y figura en `reports/figures/sensibilidad/`.
+Recalcula la tabla de P2 **en memoria** con 25%, 50% y 75%, entrena persistencia, regresión logística y boosting con cada una, y registra un run por modelo y escenario (sufijo `_occ25`, `_occ50`, `_occ75`, parámetro `initial_occupancy`) más un run resumen. Tarda unos 3 minutos. No escribe tablas ni manifiestos (por eso no usa `features --initial-occupancy`, que sobrescribiría `data/processed/` y `feature_manifest.json`), no promueve modelos en el Registry y solo usa validación. Comprueba además que la tabla en memoria con 50% es idéntica a la guardada. Resultados en [reports/resultados_mlflow.md](reports/resultados_mlflow.md) y figura en `reports/figures/sensibilidad/`.
 
 ### Modelo guardado, registro y predicción
 
-Cada run con estimador (`P1_hgb_poisson_h1`, `P1_hgb_poisson_estacion_h1`, `P2_logistica_proxy_h1`, `P2_hgb_proxy_h1` y, con `--tune`, `P1_hgb_poisson_ajustado_h1` y `P2_hgb_ajustado_proxy_h1`) guarda su estimador con `mlflow.sklearn.log_model`, con su firma (columnas y tipos de entrada, tipo de salida) y cinco filas de ejemplo. En MLflow 3 el modelo no es una carpeta dentro de *Artifacts*: se ve en el run (pestaña *Overview*, sección *Registered models*) y en *Model registry* (modo *Model training* de la barra lateral). El baseline estacional de P1 y los agrupamientos de P3 no son estimadores predictivos y no guardan modelo.
+La integración de Tracking y Registry se documenta en [integracion_registry.md](references/integracion_registry.md). Los modelos de P1, P2 y P3, incluidas las reglas simples y cada combinación hija de búsqueda, se guardan con firma y ejemplo de entrada. Cada corrida añade los manifiestos en `data/`, la configuración efectiva en `config/` y una entrada de entrenamiento mediante `mlflow.log_input`. Las figuras y tablas permanecen organizadas en `figuras/` y `tablas/`.
 
-Al terminar P1 y P2 se elige el ganador **solo con métricas de validación** y se registra en el Model Registry con el alias `champion`:
+Se conserva `val_mae` como criterio de P1 y `val_f1_macro` en P2; P3 usa el ARI entre periodos y considera las métricas geométricas para desempatar. Las reglas simples también pueden ganar. Los modelos registrados se llaman `mibici-p1-demanda`, `mibici-p2-riesgo` y `mibici-p3-grupos`. Cada versión tiene descripción, linaje y alias `champion`, que solo se mueve después de comprobar una carga y predicción desde el Registry. `--no-register` conserva las corridas sin modificar los aliases.
 
-| Pregunta | Modelo registrado | Criterio |
-|---|---|---|
-| P1 | `mibici-p1-demanda` | menor `val_mae` entre los runs que guardan un modelo |
-| P2 | `mibici-p2-riesgo` | mayor `val_f1_macro` entre los runs que guardan un modelo |
+K-means asigna perfiles nuevos por centroide; Ward utiliza una regla explícita de vecino de entrenamiento más cercano. No se vuelve a ajustar el agrupador para predecir. Las métricas `val_assignment_*` distinguen ese uso de la estabilidad histórica `val_ari`.
 
-Los baselines sin modelo (estacional, persistencia) no se registran, pero se comparan: si uno supera al ganador, la versión queda con la etiqueta `supera_baselines=no: <run>` y el entrenamiento lo avisa. Cada ejecución crea una versión nueva y mueve el alias `champion` a la del ganador. Con `--no-register` se entrena sin tocar el registro. Las métricas `test_` (septiembre) nunca participan en la elección.
+El cliente respeta `MLFLOW_TRACKING_URI` y el run padre de MLflow Projects. Los detalles y las ejecuciones parametrizadas están en la guía del MLflow Project. Las corridas de la segunda entrega se lanzan mediante sus entradas.
 
 ```bash
 python -m mibici.predict --question P1 --timestamp 2026-09-15T08:00
 python -m mibici.predict --question P2 --timestamp 2026-09-15T08:00 --output salida.csv
+python -m mibici.predict --question P3 --split val
+python -m mibici.verify_registry --question all
 ```
 
 `predict.py` carga el modelo `champion`, toma de la tabla de variables que construye `features.py` las filas de esa hora (en hora local de Ciudad de México si no se indica zona) y escribe `reports/predicciones/p1_20260915T0800.csv`, con una fila por estación: `demanda_esperada` en P1, y `clase`, `riesgo` y las tres probabilidades en P2. Si la hora no está en la tabla, por ejemplo por falta de 168 h de historia, termina con un mensaje que indica el rango disponible. Solo predice horas cuyas variables ya existen en la tabla; no calcula rezagos de horas futuras. En P2 el riesgo es el del estado virtual, no inventario observado.
@@ -208,6 +232,27 @@ También se puede abrir en VS Code o Jupyter y usar *Run All*.
 Las funciones de `mibici/features.py` incluyen docstrings que describen qué hacen, para qué pregunta son pertinentes y cómo respetan la disponibilidad temporal de la información. `config.py`, `dataset.py` y `train.py` también documentan sus módulos y funciones principales. La [guía de ingesta y variables](references/ingesta_features.md) contiene las explicaciones ampliadas.
 
 Las seis corridas de la primera iteración conservan el commit de ejecución y las versiones que registraron originalmente: `data_version` `4bd1e3ec…` y `feature_version` `b588c619…`. Después, dos cambios solo de documentación actualizaron los hashes de código y, con ellos, las versiones de los manifiestos. Los docstrings de `features.py` cambiaron `feature_version`; los de `config.py` y `dataset.py` cambiaron también `data_version`. En ambos casos la reconstrucción conservó los hashes de los CSV y de los Parquet. Esta [verificación](reports/documentacion_features_verificacion.json) documenta el primer cambio; el segundo se comprueba en el historial de Git de los manifiestos, donde solo cambian hashes de código, versiones y `created_at`.
+
+## API local y documentación
+
+Con los datos y los modelos `champion` ya generados, y la misma `MLFLOW_TRACKING_URI` del entrenamiento:
+
+```text
+python -m uvicorn mibici.api:app --host 127.0.0.1 --port 8000
+```
+
+La documentación interactiva está en <http://127.0.0.1:8000/docs>. `POST /predict` recibe `question` (P1/P2), `station_id` y `timestamp`; devuelve la predicción de la estación. Reutiliza las variables existentes y el alias vigente. No calcula horas futuras ni consulta inventario real. La [guía de la API](docs/docs/api.md) contiene ejemplos y códigos de error. P3 se conserva en el módulo de consola.
+
+El sitio de documentación se construye desde la raíz:
+
+```text
+python -m mkdocs build --strict -f docs/mkdocs.yml
+python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
+```
+
+[Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
+
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows. La suite actual tiene 83 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Flujo de trabajo
 
@@ -232,7 +277,7 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 
 ## Evidencia y resultados obtenidos
 
-**Primera iteración (evaluación única de septiembre)**
+**Primera iteración (evaluación original de septiembre)**
 
 | Pregunta | Baseline | Candidato | Interpretación |
 |---|---|---|---|
@@ -240,16 +285,22 @@ Los manifiestos versionan URL, SHA-256, código y conteos sin publicar archivos 
 | P2 | F1 macro de prueba: 0.8114 | F1 macro de prueba: 0.8574 | Mejora la concordancia con el proxy; no demuestra disponibilidad real. |
 | P3 | K-means: silhouette 0.1407, ARI 0.5776 | Ward: silhouette 0.1232, ARI 0.3116 | K-means resulta preferible, pero los perfiles se superponen. |
 
-**Segunda iteración (solo validación; no evaluada en septiembre)**
+**Mejoras iniciales de la segunda iteración (solo validación)**
 
 | Pregunta | Resultado | Interpretación |
 |---|---|---|
-| P1 | `P1_hgb_poisson_estacion_h1` (estación categórica) obtiene `val_mae` 0.7498, frente a 0.7614 del boosting por defecto, 0.7552 del ajustado y 0.8988 del estacional; es el `champion` de `mibici-p1-demanda`. | Mejora modesta, de cerca de 1.5%. El error relativo se concentra en estaciones-hora de poca demanda (WAPE 1.61 en el decil más bajo frente a 0.43 en el más alto). |
-| P2 | La regla de persistencia obtiene F1 macro 0.8824, por encima del boosting (0.8708; ajustado 0.8723) y de la logística (0.8223). | El boosting no supera a la regla en la métrica principal; detecta más riesgos (mayor recall) con más falsas alarmas. El límite viene del proxy. Con ocupación inicial de 25% a 75% el F1 cambia menos de 0.0011. |
-| P3 | El barrido de k=2 a 8 da la mayor silhouette (0.1407) y el mayor ARI (0.5776) con k=3. | Respalda k=3 (pico matutino, vespertino y fin de semana), aunque los grupos se superponen. |
+| P1 | La estación categórica obtiene `val_mae` 0.7498 frente a 0.7614 del boosting por defecto y 0.8988 del estacional. | Mejora de cerca de 1.5% frente al boosting por defecto. El análisis de errores distingue estaciones-hora de poca y alta demanda. |
+| P2 | Persistencia obtiene F1 macro 0.8824 frente a 0.8708 del boosting y 0.8223 de la logística. | El resultado mide concordancia con el proxy. La sensibilidad de ocupación inicial entre 25% y 75% cambia el F1 menos de 0.0011. |
+| P3 | El barrido de k=2 a 8 favorece k=3, con silhouette 0.1407 y ARI 0.5776. | Los perfiles permiten interpretar usos matutinos, vespertinos y de fin de semana, con superposición entre grupos. |
 
-Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` están en `reports/figures/`. El detalle de un run se presenta en dos vistas para que se lean métricas, parámetros y etiquetas. La interfaz local no es un enlace remoto: el profesor consulta el PDF o reproduce los comandos. Estas capturas corresponden a la primera iteración y no muestran el Model Registry ni los runs de la segunda.
+**Ejecución definitiva de la segunda entrega**
 
-Verificaciones realizadas: 59 pruebas de unidad aprobadas; verificación de hashes de ingesta y variables; reconstrucción previa con archivos idénticos; notebook exploratorio sin errores y con seis figuras incrustadas; notebook de análisis de errores sin errores y con dos figuras. Entorno comprobado: Python 3.13.15 en Linux para la primera iteración; Python 3.13.16 en Windows para pruebas, regeneración de ingesta y variables, verificación de hashes, predicción y reproducción de la segunda iteración (`--tune` y sensibilidad). No se afirma haber ejecutado en macOS.
+El commit `92e305f3de71dada5853035ba0081401aad197be` reproduce esas comparaciones mediante MLflow Project y conserva 52 runs y 48 modelos guardados. Los finalistas P1/P2 incluyen septiembre como evaluación retrospectiva: HGB con estación obtiene MAE 0.8620 y persistencia F1 macro 0.8695. P3 sigue usando entrenamiento y validación. Las tablas completas, los IDs y las capturas del Registry están en [resultados_mlflow_entrega2.md](reports/resultados_mlflow_entrega2.md), su JSON y el reporte PDF.
+
+Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_parametros`, `mlflow_03_artefacto` y `mlflow_04_comparacion` documentan la primera iteración. `reports/figures/entrega2/` contiene las búsquedas, artefactos y los tres modelos con su linaje de la ejecución definitiva. La interfaz es local; el profesor consulta el PDF o reproduce los comandos.
+
+Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
+
+Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 83 pruebas y la documentación en Ubuntu y Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

@@ -1,12 +1,12 @@
 # Anexo: segunda iteración del experimento | Equipo 45
 
-> **Portada (pendiente):** copiar nombres y matrículas de los integrantes desde `TC5061_Propuesta_Proyecto_Equipo45.pdf`.
+> Anexo histórico de la reproducción de mejoras en Windows. El entregable de la segunda entrega es [TC5061_Reporte_MLFlow_Equipo45.pdf](TC5061_Reporte_MLFlow_Equipo45.pdf), que documenta el MLflow Project definitivo y sus tres modelos en el Registry.
 
 ## 1. Propósito y alcance
 
 Este anexo complementa el documento principal (`TC5061_Propuesta_Proyecto_Equipo45.pdf`), que describe la primera iteración: seis corridas ejecutadas desde el commit `43bf339`, con `git_dirty=false`, y la evaluación única de septiembre para P1 y P2.
 
-La segunda iteración se agregó **después** de esa evaluación. Todo lo que aquí se reporta usa solo validación (julio-agosto); septiembre no se volvió a usar. El protocolo declara cada adición en `references/protocolo_experimento.md`, y el detalle completo está en `reports/resultados_mlflow.md` y `reports/resultados_mlflow.json`.
+La segunda iteración se agregó **después** de esa evaluación. Los resultados históricos de Windows que aquí se reportan usan solo validación (julio-agosto). La ejecución definitiva posterior del Project también registra septiembre para los finalistas P1/P2 como evaluación retrospectiva; se documenta por separado en [resultados_mlflow_entrega2.md](resultados_mlflow_entrega2.md). El protocolo declara cada adición en `references/protocolo_experimento.md`, y el detalle completo está en `reports/resultados_mlflow.md` y `reports/resultados_mlflow.json`.
 
 ## 2. Cambios incorporados
 
@@ -91,13 +91,13 @@ Los seis runs de la primera iteración, reejecutados en otra máquina y otro sis
 
 ## 7. Evidencia de MLflow
 
-> **Pendiente:** insertar las capturas al generarlas.
+La evidencia numérica y el Registry de la reproducción histórica de Windows se conservan en el bloque `segunda_iteracion` de [resultados_mlflow.json](resultados_mlflow.json).
 
-![Model Registry con los dos modelos champion](figures/mlflow_05_registry.png)
+Las siguientes capturas corresponden a la ejecución definitiva posterior del MLflow Project en Linux, con tres modelos y persistencia como `champion` de P2. El reporte final identifica sus runs y commit.
 
-![Versión champion de P2 con la etiqueta supera_baselines](figures/mlflow_06_champion_p2.png)
+![Tres modelos champion del Project definitivo](figures/entrega2/registry_tres_champion.jpg)
 
-![Modelo guardado de P1 con su firma](figures/mlflow_07_modelo_firma.png)
+![Modelo de P1 con firma del Project definitivo](figures/entrega2/firma_modelo.jpg)
 
 ## 8. Conclusiones y límites
 
@@ -105,4 +105,4 @@ Los seis runs de la primera iteración, reejecutados en otra máquina y otro sis
 - **P2:** el aprendizaje no supera a la persistencia en la métrica principal. Con este proxy, el valor del boosting está en el recall de riesgo, no en el F1; validar P2 requiere inventarios observados.
 - **P3:** k=3 queda respaldado, con grupos superpuestos.
 - **MLOps:** los modelos quedan guardados con firma, versionados en el Model Registry y consumibles con `predict.py`; la elección del `champion` usa solo validación y avisa cuando un baseline lo supera.
-- **Límite:** los modelos de la segunda iteración no se evaluaron en septiembre. Hacerlo exigiría una única evaluación declarada en el protocolo.
+- **Límite de esta reproducción histórica:** los modelos de Windows aquí descritos no se evaluaron en septiembre. La comparación retrospectiva de los finalistas del Project definitivo se documenta en el reporte principal y no interviene en la selección.
