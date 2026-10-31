@@ -9,11 +9,13 @@ fastapi==0.146.0
 uvicorn==0.54.0
 httpx==0.28.1
 pydantic==2.14.1
-python-dotenv==1.2.4
 requests==2.34.2
 black==26.10.1
 flake8==7.4.1
 isort==9.0.2
+pytest==9.2.0
+pip-audit==2.10.1
+bandit==1.9.4
 mkdocs==1.6.1
 nbformat==5.11.1
 nbclient==0.11.0

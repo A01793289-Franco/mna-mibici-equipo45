@@ -203,6 +203,8 @@ mlflow.db-*
 *.pkl
 *.pickle
 *.joblib
+# Reportes HTML de DeepChecks (pesados); se versionan resumen.json y resumen.md
+reports/deepchecks/html/
 *.skops
 *.onnx
 *.h5

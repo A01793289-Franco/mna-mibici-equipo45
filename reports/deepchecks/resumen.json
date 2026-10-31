@@ -1,0 +1,984 @@
+{
+  "generado": "2026-10-31T21:13:26+00:00",
+  "deepchecks": "0.19.1",
+  "semilla": 42,
+  "muestra_drift": 100000,
+  "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+  "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd",
+  "nota": "Las suites de integridad y partición son bloqueantes. El drift es informativo: enero-junio, julio-agosto y septiembre tienen estacionalidad esperada, y month se excluye porque cada partición cubre meses distintos. Comparar distribuciones de septiembre no evalúa modelos ni consume el uso único del conjunto de prueba. MultivariateDrift no se usa: es incompatible con scikit-learn 1.9.",
+  "aprobado": true,
+  "conjuntos": {
+    "p1": {
+      "filas": {
+        "train": 1552105,
+        "val": 665747,
+        "test": 338690
+      },
+      "aprobado": true,
+      "suites": [
+        {
+          "suite": "integridad",
+          "comparacion": "completo",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "ExpectedDtypes",
+              "titulo": "Tipos de datos esperados",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Columnas y tipos coinciden con el esquema",
+                  "resultado": "PASS",
+                  "detalle": "Columnas y tipos coinciden"
+                }
+              ]
+            },
+            {
+              "check": "MixedDataTypes",
+              "titulo": "Mixed Data Types",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Rare data types in column are either more than 10% or less than 1% of the data",
+                  "resultado": "PASS",
+                  "detalle": "13 columns passed: found 0 columns with negligible types mix, and 13 columns without any types mix"
+                }
+              ]
+            },
+            {
+              "check": "PercentOfNulls",
+              "titulo": "PercentOfNulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Percent of null values in each column is not greater than 0%",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 9 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "MixedNulls",
+              "titulo": "Mixed Nulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of different null types is less or equal to 1",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 13 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "IsSingleValue",
+              "titulo": "Single Value in Column",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Does not contain only a single value",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 12 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "ValueRules",
+              "titulo": "Rangos y coherencia del dominio",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Ninguna fila viola las reglas",
+                  "resultado": "PASS",
+                  "detalle": "8 reglas sin filas inválidas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "particion",
+          "comparacion": "train-val",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "DateTrainTestLeakageOverlap",
+              "titulo": "Date Train-Test Leakage (overlap)",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Date leakage ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "No leaked dates found"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-val",
+          "bloqueante": false,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 8 columns out of 8 columns.\nFound column \"weekday\" has the highest categorical drift score: 0.02\nFound column \"departures_mean_168\" has the highest numerical drift score: 0.09"
+                }
+              ],
+              "drift_por_variable": {
+                "hour": 0.0,
+                "weekday": 0.0243,
+                "is_weekend": 0.0052,
+                "departures_lag_1": 0.0304,
+                "departures_lag_24": 0.0321,
+                "departures_lag_168": 0.0345,
+                "departures_mean_24": 0.0729,
+                "departures_mean_168": 0.0863
+              }
+            },
+            {
+              "check": "LabelDrift",
+              "titulo": "Label Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Label drift score < 0.15",
+                  "resultado": "PASS",
+                  "detalle": "Label's drift score Kolmogorov-Smirnov is 0.03"
+                }
+              ],
+              "drift_objetivo": 0.0343
+            }
+          ]
+        },
+        {
+          "suite": "particion",
+          "comparacion": "train-test",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "DateTrainTestLeakageOverlap",
+              "titulo": "Date Train-Test Leakage (overlap)",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Date leakage ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "No leaked dates found"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-test",
+          "bloqueante": false,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 8 columns out of 8 columns.\nFound column \"weekday\" has the highest categorical drift score: 0.05\nFound column \"departures_mean_24\" has the highest numerical drift score: 0.04"
+                }
+              ],
+              "drift_por_variable": {
+                "hour": 0.0008,
+                "weekday": 0.0524,
+                "is_weekend": 0.0206,
+                "departures_lag_1": 0.0171,
+                "departures_lag_24": 0.0149,
+                "departures_lag_168": 0.0113,
+                "departures_mean_24": 0.0408,
+                "departures_mean_168": 0.0371
+              }
+            },
+            {
+              "check": "LabelDrift",
+              "titulo": "Label Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Label drift score < 0.15",
+                  "resultado": "PASS",
+                  "detalle": "Label's drift score Kolmogorov-Smirnov is 0.02"
+                }
+              ],
+              "drift_objetivo": 0.018
+            }
+          ]
+        }
+      ]
+    },
+    "p2": {
+      "filas": {
+        "train": 1551437,
+        "val": 662771,
+        "test": 337250
+      },
+      "aprobado": true,
+      "suites": [
+        {
+          "suite": "integridad",
+          "comparacion": "completo",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "ExpectedDtypes",
+              "titulo": "Tipos de datos esperados",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Columnas y tipos coinciden con el esquema",
+                  "resultado": "PASS",
+                  "detalle": "Columnas y tipos coinciden"
+                }
+              ]
+            },
+            {
+              "check": "MixedDataTypes",
+              "titulo": "Mixed Data Types",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Rare data types in column are either more than 10% or less than 1% of the data",
+                  "resultado": "PASS",
+                  "detalle": "16 columns passed: found 0 columns with negligible types mix, and 16 columns without any types mix"
+                }
+              ]
+            },
+            {
+              "check": "PercentOfNulls",
+              "titulo": "PercentOfNulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Percent of null values in each column is not greater than 0%",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 12 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "MixedNulls",
+              "titulo": "Mixed Nulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of different null types is less or equal to 1",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 16 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "IsSingleValue",
+              "titulo": "Single Value in Column",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Does not contain only a single value",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 15 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "ValueRules",
+              "titulo": "Rangos y coherencia del dominio",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Ninguna fila viola las reglas",
+                  "resultado": "PASS",
+                  "detalle": "11 reglas sin filas inválidas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "particion",
+          "comparacion": "train-val",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "DateTrainTestLeakageOverlap",
+              "titulo": "Date Train-Test Leakage (overlap)",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Date leakage ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "No leaked dates found"
+                }
+              ]
+            },
+            {
+              "check": "NewLabelTrainTest",
+              "titulo": "New Label Train Test",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of new label values is less or equal to 0",
+                  "resultado": "PASS",
+                  "detalle": "Found 0 new labels in test data: []"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-val",
+          "bloqueante": false,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 11 columns out of 11 columns.\nFound column \"weekday\" has the highest categorical drift score: 0.02\nFound column \"departures_mean_168\" has the highest numerical drift score: 0.08"
+                }
+              ],
+              "drift_por_variable": {
+                "hour": 0.0,
+                "weekday": 0.0218,
+                "is_weekend": 0.0,
+                "departures_lag_1": 0.0282,
+                "departures_lag_24": 0.03,
+                "departures_lag_168": 0.0306,
+                "departures_mean_24": 0.0689,
+                "departures_mean_168": 0.084,
+                "virtual_occupancy": 0.0456,
+                "net_flow_lag_1": 0.0143,
+                "net_flow_lag_24": 0.0154
+              }
+            },
+            {
+              "check": "LabelDrift",
+              "titulo": "Label Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Label drift score < 0.15",
+                  "resultado": "PASS",
+                  "detalle": "Label's drift score Cramer's V is 0.06"
+                }
+              ],
+              "drift_objetivo": 0.0605
+            }
+          ]
+        },
+        {
+          "suite": "particion",
+          "comparacion": "train-test",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "DateTrainTestLeakageOverlap",
+              "titulo": "Date Train-Test Leakage (overlap)",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Date leakage ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "No leaked dates found"
+                }
+              ]
+            },
+            {
+              "check": "NewLabelTrainTest",
+              "titulo": "New Label Train Test",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of new label values is less or equal to 0",
+                  "resultado": "PASS",
+                  "detalle": "Found 0 new labels in test data: []"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-test",
+          "bloqueante": false,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 11 columns out of 11 columns.\nFound column \"weekday\" has the highest categorical drift score: 0.06\nFound column \"virtual_occupancy\" has the highest numerical drift score: 0.08"
+                }
+              ],
+              "drift_por_variable": {
+                "hour": 0.0,
+                "weekday": 0.0587,
+                "is_weekend": 0.0256,
+                "departures_lag_1": 0.0181,
+                "departures_lag_24": 0.0152,
+                "departures_lag_168": 0.0082,
+                "departures_mean_24": 0.044,
+                "departures_mean_168": 0.0389,
+                "virtual_occupancy": 0.0754,
+                "net_flow_lag_1": 0.0023,
+                "net_flow_lag_24": 0.005
+              }
+            },
+            {
+              "check": "LabelDrift",
+              "titulo": "Label Drift",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Label drift score < 0.15",
+                  "resultado": "PASS",
+                  "detalle": "Label's drift score Cramer's V is 0.1"
+                }
+              ],
+              "drift_objetivo": 0.0963
+            }
+          ]
+        }
+      ]
+    },
+    "p3": {
+      "filas": {
+        "train": 397,
+        "val": 468,
+        "test": 468
+      },
+      "aprobado": true,
+      "suites": [
+        {
+          "suite": "integridad",
+          "comparacion": "p3_train",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "ExpectedDtypes",
+              "titulo": "Tipos de datos esperados",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Columnas y tipos coinciden con el esquema",
+                  "resultado": "PASS",
+                  "detalle": "Columnas y tipos coinciden"
+                }
+              ]
+            },
+            {
+              "check": "MixedDataTypes",
+              "titulo": "Mixed Data Types",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Rare data types in column are either more than 10% or less than 1% of the data",
+                  "resultado": "PASS",
+                  "detalle": "53 columns passed: found 0 columns with negligible types mix, and 53 columns without any types mix"
+                }
+              ]
+            },
+            {
+              "check": "PercentOfNulls",
+              "titulo": "PercentOfNulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Percent of null values in each column is not greater than 0%",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 48 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "MixedNulls",
+              "titulo": "Mixed Nulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of different null types is less or equal to 1",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 53 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "IsSingleValue",
+              "titulo": "Single Value in Column",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Does not contain only a single value",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 5 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "ValueRules",
+              "titulo": "Rangos y coherencia del dominio",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Ninguna fila viola las reglas",
+                  "resultado": "PASS",
+                  "detalle": "5 reglas sin filas inválidas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "integridad",
+          "comparacion": "p3_val",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "ExpectedDtypes",
+              "titulo": "Tipos de datos esperados",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Columnas y tipos coinciden con el esquema",
+                  "resultado": "PASS",
+                  "detalle": "Columnas y tipos coinciden"
+                }
+              ]
+            },
+            {
+              "check": "MixedDataTypes",
+              "titulo": "Mixed Data Types",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Rare data types in column are either more than 10% or less than 1% of the data",
+                  "resultado": "PASS",
+                  "detalle": "53 columns passed: found 0 columns with negligible types mix, and 53 columns without any types mix"
+                }
+              ]
+            },
+            {
+              "check": "PercentOfNulls",
+              "titulo": "PercentOfNulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Percent of null values in each column is not greater than 0%",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 48 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "MixedNulls",
+              "titulo": "Mixed Nulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of different null types is less or equal to 1",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 53 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "IsSingleValue",
+              "titulo": "Single Value in Column",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Does not contain only a single value",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 5 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "ValueRules",
+              "titulo": "Rangos y coherencia del dominio",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Ninguna fila viola las reglas",
+                  "resultado": "PASS",
+                  "detalle": "5 reglas sin filas inválidas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "integridad",
+          "comparacion": "p3_test",
+          "bloqueante": true,
+          "aprobada": true,
+          "checks": [
+            {
+              "check": "ExpectedDtypes",
+              "titulo": "Tipos de datos esperados",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Columnas y tipos coinciden con el esquema",
+                  "resultado": "PASS",
+                  "detalle": "Columnas y tipos coinciden"
+                }
+              ]
+            },
+            {
+              "check": "MixedDataTypes",
+              "titulo": "Mixed Data Types",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Rare data types in column are either more than 10% or less than 1% of the data",
+                  "resultado": "PASS",
+                  "detalle": "53 columns passed: found 0 columns with negligible types mix, and 53 columns without any types mix"
+                }
+              ]
+            },
+            {
+              "check": "PercentOfNulls",
+              "titulo": "PercentOfNulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Percent of null values in each column is not greater than 0%",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 48 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "MixedNulls",
+              "titulo": "Mixed Nulls",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Number of different null types is less or equal to 1",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 53 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "DataDuplicates",
+              "titulo": "Data Duplicates",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Duplicate data ratio is less or equal to 0%",
+                  "resultado": "PASS",
+                  "detalle": "Found 0% duplicate data"
+                }
+              ]
+            },
+            {
+              "check": "IsSingleValue",
+              "titulo": "Single Value in Column",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Does not contain only a single value",
+                  "resultado": "PASS",
+                  "detalle": "Passed for 5 relevant columns"
+                }
+              ]
+            },
+            {
+              "check": "ValueRules",
+              "titulo": "Rangos y coherencia del dominio",
+              "estado": "aprobado",
+              "condiciones": [
+                {
+                  "condicion": "Ninguna fila viola las reglas",
+                  "resultado": "PASS",
+                  "detalle": "5 reglas sin filas inválidas"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-val",
+          "bloqueante": false,
+          "aprobada": false,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "fallido",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "FAIL",
+                  "detalle": "Failed for 1 out of 48 columns.\nFound 1 numeric columns with Kolmogorov-Smirnov above threshold: {'weekend_05': '0.24'}"
+                }
+              ],
+              "drift_por_variable": {
+                "weekday_00": 0.1508,
+                "weekday_01": 0.0245,
+                "weekday_02": 0.0043,
+                "weekday_03": 0.0,
+                "weekday_04": 0.0043,
+                "weekday_05": 0.0869,
+                "weekday_06": 0.114,
+                "weekday_07": 0.0524,
+                "weekday_08": 0.0875,
+                "weekday_09": 0.067,
+                "weekday_10": 0.0766,
+                "weekday_11": 0.0846,
+                "weekday_12": 0.1074,
+                "weekday_13": 0.1079,
+                "weekday_14": 0.0822,
+                "weekday_15": 0.0906,
+                "weekday_16": 0.0994,
+                "weekday_17": 0.1031,
+                "weekday_18": 0.0883,
+                "weekday_19": 0.0868,
+                "weekday_20": 0.0584,
+                "weekday_21": 0.0729,
+                "weekday_22": 0.051,
+                "weekday_23": 0.0827,
+                "weekend_00": 0.1763,
+                "weekend_01": 0.0167,
+                "weekend_02": 0.0043,
+                "weekend_03": 0.0021,
+                "weekend_04": 0.0029,
+                "weekend_05": 0.242,
+                "weekend_06": 0.1489,
+                "weekend_07": 0.0636,
+                "weekend_08": 0.0789,
+                "weekend_09": 0.1162,
+                "weekend_10": 0.0851,
+                "weekend_11": 0.1033,
+                "weekend_12": 0.1034,
+                "weekend_13": 0.1149,
+                "weekend_14": 0.1349,
+                "weekend_15": 0.0967,
+                "weekend_16": 0.1057,
+                "weekend_17": 0.1384,
+                "weekend_18": 0.1625,
+                "weekend_19": 0.0855,
+                "weekend_20": 0.0718,
+                "weekend_21": 0.0695,
+                "weekend_22": 0.0774,
+                "weekend_23": 0.1344
+              }
+            }
+          ]
+        },
+        {
+          "suite": "drift",
+          "comparacion": "train-test",
+          "bloqueante": false,
+          "aprobada": false,
+          "checks": [
+            {
+              "check": "FeatureDrift",
+              "titulo": "Feature Drift",
+              "estado": "fallido",
+              "condiciones": [
+                {
+                  "condicion": "categorical drift score < 0.2 and numerical drift score < 0.2",
+                  "resultado": "FAIL",
+                  "detalle": "Failed for 6 out of 48 columns.\nFound 6 numeric columns with Kolmogorov-Smirnov above threshold: {'weekday_00': '0.2', 'weekday_20': '0.2', 'weekday_21': '0.2', 'weekend_00': '0.3', 'weekend_05': '0.32', 'weekend_23': '0.21'}"
+                }
+              ],
+              "drift_por_variable": {
+                "weekday_00": 0.2042,
+                "weekday_01": 0.0595,
+                "weekday_02": 0.0025,
+                "weekday_03": 0.0,
+                "weekday_04": 0.0,
+                "weekday_05": 0.166,
+                "weekday_06": 0.0454,
+                "weekday_07": 0.0369,
+                "weekday_08": 0.0512,
+                "weekday_09": 0.0678,
+                "weekday_10": 0.0761,
+                "weekday_11": 0.0516,
+                "weekday_12": 0.0642,
+                "weekday_13": 0.068,
+                "weekday_14": 0.0602,
+                "weekday_15": 0.0653,
+                "weekday_16": 0.0454,
+                "weekday_17": 0.0705,
+                "weekday_18": 0.086,
+                "weekday_19": 0.1577,
+                "weekday_20": 0.2032,
+                "weekday_21": 0.2021,
+                "weekday_22": 0.1285,
+                "weekday_23": 0.1289,
+                "weekend_00": 0.2981,
+                "weekend_01": 0.0203,
+                "weekend_02": 0.005,
+                "weekend_03": 0.0,
+                "weekend_04": 0.005,
+                "weekend_05": 0.3189,
+                "weekend_06": 0.1618,
+                "weekend_07": 0.0794,
+                "weekend_08": 0.0763,
+                "weekend_09": 0.0976,
+                "weekend_10": 0.106,
+                "weekend_11": 0.1202,
+                "weekend_12": 0.1461,
+                "weekend_13": 0.1268,
+                "weekend_14": 0.1527,
+                "weekend_15": 0.1694,
+                "weekend_16": 0.1549,
+                "weekend_17": 0.1701,
+                "weekend_18": 0.1369,
+                "weekend_19": 0.1502,
+                "weekend_20": 0.0976,
+                "weekend_21": 0.1159,
+                "weekend_22": 0.1456,
+                "weekend_23": 0.2092
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

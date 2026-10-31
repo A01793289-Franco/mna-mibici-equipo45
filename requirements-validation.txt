@@ -1,0 +1,6 @@
+# Validación de datos con DeepChecks (python -m mibici.validation).
+# Separado de requirements.txt para no alterar el entorno de entrenamiento.
+# deepchecks 0.19.1 importa pkg_resources, que setuptools eliminó a partir de la versión 81.
+-r requirements.txt
+deepchecks==0.19.1
+setuptools==80.10.2
