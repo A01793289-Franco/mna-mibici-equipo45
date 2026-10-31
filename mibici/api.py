@@ -13,12 +13,14 @@ from mibici.predict import PredictionError, features_table, load_champion, predi
 from mibici.train import REGISTERED_MODELS, configure_mlflow
 
 app = FastAPI(title="MiBici Equipo 45", version="0.1.0")
+# station_id es int32 en las tablas de variables; un valor mayor desborda el filtro de Parquet.
+MAX_STATION_ID = 2**31 - 1
 
 
 class PredictionRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     question: Literal["P1", "P2"]
-    station_id: int = Field(gt=0, strict=True)
+    station_id: int = Field(gt=0, le=MAX_STATION_ID, strict=True)
     timestamp: datetime
 
 

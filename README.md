@@ -139,7 +139,7 @@ python -m mibici.dataset
 python -m mibici.features
 python -m mibici.dataset --verify
 python -m mibici.features --verify
-python -m unittest discover -s tests -v
+python -m pytest -v
 ```
 
 La primera ejecución descarga los CSV; las posteriores reutilizan los archivos y verifican sus hashes. `--refresh` permite aceptar una actualización de la fuente. `--help` muestra fechas, carpeta alternativa y escenarios del proxy. La ingesta usa bloques; las agregaciones de variables reúnen los eventos del rango en memoria. Se requiere espacio local y memoria suficientes para millones de viajes.
@@ -252,7 +252,22 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows. La suite actual tiene 83 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 172 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+
+## Calidad, validación de datos y seguridad
+
+```text
+python -m pip install -r requirements-validation.txt
+python -m pytest -v
+python -m mibici.validation
+```
+
+- **Pruebas (PyTest):** `tests/` reúne las pruebas `unittest` existentes y las nuevas de PyTest con fixtures en `tests/conftest.py`: utilidades de ingesta (`column_mapping`, `csv_format`, `canonical_hash`, `data_path`), la cuadrícula horaria `hourly_counts`, reproducibilidad del entrenamiento y controles de seguridad.
+- **Reproducibilidad:** `tests/test_reproducibility.py` entrena dos veces con la misma semilla y exige predicciones, métricas registradas en MLflow, modelos guardados y CSV de grupos idénticos. Una prueba de control confirma que otra semilla cambia el boosting.
+- **Validación de datos (DeepChecks):** `mibici/validation.py` revisa tipos, nulos, duplicados, rangos y coherencia del calendario y la partición (bloqueantes), y el drift entre entrenamiento, validación y prueba (informativo). La evidencia se guarda en [reports/deepchecks/resumen.md](reports/deepchecks/resumen.md) y su JSON; `--html` escribe además reportes interactivos, fuera de Git por tamaño. Requiere `requirements-validation.txt` porque deepchecks 0.19.1 necesita adaptaciones para numpy 2, pandas 3 y scikit-learn 1.9.
+- **Seguridad:** `.env.example` documenta la única variable de entorno; `.env`, `mlflow.db` y los datos están excluidos. CI audita dependencias con `pip-audit` y el código con `bandit`. La API rechaza con 422 entradas inválidas o fuera de rango antes de cargar modelos.
+
+[Pruebas y CI](docs/docs/verificacion.md) detalla cada control y las vulnerabilidades revisadas.
 
 ## Flujo de trabajo
 

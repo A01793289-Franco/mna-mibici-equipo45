@@ -73,10 +73,24 @@ verify:
 	$(PYTHON_INTERPRETER) -m mibici.dataset --verify
 	$(PYTHON_INTERPRETER) -m mibici.features --verify
 
-## Ejecuta las pruebas unitarias
+## Ejecuta las pruebas con PyTest (unitarias, reproducibilidad, seguridad y validación)
 .PHONY: test
 test:
-	$(PYTHON_INTERPRETER) -m unittest discover -s tests -v
+	$(PYTHON_INTERPRETER) -m pytest -v
+
+## Valida los datos con DeepChecks (requiere requirements-validation.txt y verify)
+.PHONY: validate
+validate: verify
+	$(PYTHON_INTERPRETER) -m mibici.validation
+
+## Audita dependencias y analiza el código (mismas exclusiones que CI)
+.PHONY: security
+security:
+	$(PYTHON_INTERPRETER) -m pip_audit --skip-editable --progress-spinner off \
+		--ignore-vuln CVE-2026-53995 --ignore-vuln CVE-2026-115886 \
+		--ignore-vuln CVE-2026-116691 --ignore-vuln PYSEC-2026-3447 \
+		--ignore-vuln GHSA-xmj3-9gf7-h52w
+	$(PYTHON_INTERPRETER) -m bandit -c pyproject.toml -r mibici -ll
 
 ## Entrena P1-P3 y registra en MLflow, solo validación (requiere verify)
 .PHONY: train
