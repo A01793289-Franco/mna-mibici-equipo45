@@ -34,7 +34,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
       - name: Instalar dependencias (incluye DeepChecks)
-        run: python -m pip install --only-binary=:all: -r requirements-validation.txt
+        run: 'python -m pip install --only-binary=:all: -r requirements-validation.txt'
       - name: Revisar código
         run: python -m flake8 mibici tests
       - name: Ejecutar pruebas con datos sintéticos
@@ -57,7 +57,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
       - name: Instalar dependencias
-        run: python -m pip install --only-binary=:all: -r requirements-validation.txt
+        run: 'python -m pip install --only-binary=:all: -r requirements-validation.txt'
       - name: Revisar secretos, datos privados e historial
         run: python -m mibici.security --history --output reports/security/repositorio.json
       # Vulnerabilidades revisadas que no aplican (ver docs/docs/verificacion.md):
