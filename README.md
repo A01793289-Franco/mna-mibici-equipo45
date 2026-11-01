@@ -298,6 +298,27 @@ La [guía de tests](tests/README.md) identifica cada grupo y sus fixtures. Para 
 - Commits `tipo: descripción`, por ejemplo `feat: agrega ingesta mensual`.
 - Cada cambio entra mediante Pull Request revisado por otro integrante.
 
+### Colaboración en la actividad de pruebas y seguridad
+
+Las contribuciones de esta actividad se pueden comprobar en los siguientes commits y Pull Requests, integrados en `main` hasta el [commit 4089cda](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/4089cda4551188be6190d823d6500bb487c45bc2):
+
+| Integrante | Aportación en esta actividad | Rama | Evidencia en GitHub |
+|---|---|---|---|
+| Franco Francisco Peña Colorado | Pruebas unitarias y de reproducibilidad, validación con DeepChecks e integración inicial de controles en CI. | `feature-franco-mejoras` | [Commit 563acc5](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/563acc549c132ec2bd49703bcda948c392357c02) · [PR #10](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/10) |
+| Leonardo Peraza Alavez | Revisión de secretos y archivos privados en el repositorio e historial, pruebas de seguridad, organización de `tests/`, actualización de MLflow y documentación de las excepciones de dependencias. | `feat/seguridad-organizacion-pruebas` | [Commit edd2f69](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/edd2f69bdbb2db74ffbbff3972a8c93c7ab7a051) · [Evidencia ab7219f](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/ab7219f885808ff8b50a5bd32cd9bf19056d2869) · [Ajuste de CI 2f37d62](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/2f37d62c4cd1b2a3e52107e7a57c0930fdfe08ef) · [PR #11](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/11) |
+| Efren Pazzi Manzano | Ejecución de pruebas y chequeos en Windows, incorporación de cuatro capturas y documentación de la evidencia en este README. | `docs/evidencia-ejecucion` | [Commit 17f61a0](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/17f61a028ae7aa523999d4371c94d41486f79a7e) · [PR #12](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/12) |
+
+Esta tabla documenta tres contribuciones individuales. La responsabilidad general de revisión e interpretación asignada a Aldo en el proyecto no acredita una contribución en esta actividad.
+
+Para registrar nuevas aportaciones:
+
+1. Crear una rama desde `main` actualizado y realizar un cambio concreto de código, pruebas o documentación.
+2. Confirmar el cambio con el nombre y correo del integrante que lo realizó y un mensaje que describa el aporte.
+3. Abrir un Pull Request que explique el cambio y su verificación; el integrante que revise deja su evaluación en GitHub.
+4. Integrar el PR conservando su autoría y añadir su enlace a esta tabla.
+
+El historial local se consulta con `git log origin/main --format="%h | %an | %s"`; los enlaces anteriores permiten revisar los cambios y su autoría desde GitHub.
+
 ## Integrantes y responsabilidades
 
 | Integrante | Responsabilidad |
