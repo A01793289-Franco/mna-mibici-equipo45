@@ -252,7 +252,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 172 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 184 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Calidad, validación de datos y seguridad
 
@@ -265,9 +265,19 @@ python -m mibici.validation
 - **Pruebas (PyTest):** `tests/` reúne las pruebas `unittest` existentes y las nuevas de PyTest con fixtures en `tests/conftest.py`: utilidades de ingesta (`column_mapping`, `csv_format`, `canonical_hash`, `data_path`), la cuadrícula horaria `hourly_counts`, reproducibilidad del entrenamiento y controles de seguridad.
 - **Reproducibilidad:** `tests/test_reproducibility.py` entrena dos veces con la misma semilla y exige predicciones, métricas registradas en MLflow, modelos guardados y CSV de grupos idénticos. Una prueba de control confirma que otra semilla cambia el boosting.
 - **Validación de datos (DeepChecks):** `mibici/validation.py` revisa tipos, nulos, duplicados, rangos y coherencia del calendario y la partición (bloqueantes), y el drift entre entrenamiento, validación y prueba (informativo). La evidencia se guarda en [reports/deepchecks/resumen.md](reports/deepchecks/resumen.md) y su JSON; `--html` escribe además reportes interactivos, fuera de Git por tamaño. Requiere `requirements-validation.txt` porque deepchecks 0.19.1 necesita adaptaciones para numpy 2, pandas 3 y scikit-learn 1.9.
-- **Seguridad:** `.env.example` documenta la única variable de entorno; `.env`, `mlflow.db` y los datos están excluidos. CI audita dependencias con `pip-audit` y el código con `bandit`. La API rechaza con 422 entradas inválidas o fuera de rango antes de cargar modelos.
+- **Seguridad:** `.env.example` documenta la variable de entorno sin valores privados. `.gitignore` excluye datos, modelos, bases locales y llaves. `mibici/security.py` revisa archivos actuales e historial de Git, informa solo rutas y tipos de hallazgo y termina con error si detecta secretos o archivos privados. CI añade `pip-audit` y Bandit. La API rechaza entradas inválidas antes de cargar modelos.
 
-[Pruebas y CI](docs/docs/verificacion.md) detalla cada control y las vulnerabilidades revisadas.
+Desde la raíz, estos comandos funcionan sin `make`:
+
+```text
+python -m pytest -v
+python -m mibici.security --history --output reports/security/repositorio.json
+python -m bandit -c pyproject.toml -r mibici -ll
+```
+
+La [guía de tests](tests/README.md) identifica cada grupo y sus fixtures. Para ejecutar únicamente las pruebas de seguridad y privacidad se usa `python -m pytest tests/test_security.py tests/test_repository_security.py -v`. `make test` y `make security` siguen disponibles como atajos. La guía de verificación explica también la auditoría de dependencias y sus excepciones.
+
+[Pruebas y CI](docs/docs/verificacion.md) detalla cada control y las vulnerabilidades revisadas. La [evidencia de seguridad](reports/security/README.md) conserva los resultados de la revisión y de los análisis ejecutados.
 
 ## Flujo de trabajo
 
@@ -316,6 +326,6 @@ Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_paramet
 
 Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
 
-Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 83 pruebas y la documentación en Ubuntu y Windows.
+Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 184 pruebas y la documentación en Ubuntu y Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

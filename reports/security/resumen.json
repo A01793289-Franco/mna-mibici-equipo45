@@ -1,0 +1,147 @@
+{
+  "generado": "2026-11-01T03:05:28+00:00",
+  "codigo": "edd2f69bdbb2db74ffbbff3972a8c93c7ab7a051",
+  "python": "3.13.15",
+  "paquetes": {
+    "mlflow": "3.17.2",
+    "setuptools": "80.10.2",
+    "deepchecks": "0.19.1",
+    "pytest": "9.2.0",
+    "pip-audit": "2.10.1",
+    "bandit": "1.9.4"
+  },
+  "pytest": {
+    "comando": "python -m pytest -v",
+    "codigo_salida": 0,
+    "resultado": "184 passed, 219 warnings, 12 subtests passed in 30.62s"
+  },
+  "bandit": {
+    "comando": "python -m bandit -c pyproject.toml -r mibici -ll",
+    "codigo_salida": 0,
+    "avisos_bajos": 6,
+    "avisos_medios": 0,
+    "avisos_altos": 0,
+    "lineas_revisadas": 3552
+  },
+  "auditoria_anterior": {
+    "mlflow": "3.16.1",
+    "codigo_salida_sin_exclusiones": 1,
+    "hallazgos": [
+      {
+        "paquete": "mlflow",
+        "version": "3.16.1",
+        "id": "CVE-2026-53995",
+        "correcciones": [
+          "3.17.2"
+        ]
+      },
+      {
+        "paquete": "mlflow",
+        "version": "3.16.1",
+        "id": "CVE-2026-115886",
+        "correcciones": [
+          "3.17.0"
+        ]
+      },
+      {
+        "paquete": "mlflow",
+        "version": "3.16.1",
+        "id": "CVE-2026-116691",
+        "correcciones": [
+          "3.17.0"
+        ]
+      },
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "PYSEC-2026-3447",
+        "correcciones": [
+          "83.0.0"
+        ]
+      },
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "PYSEC-2026-3447",
+        "correcciones": [
+          "83.0.0"
+        ]
+      },
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "GHSA-xmj3-9gf7-h52w",
+        "correcciones": [
+          "84.1.0"
+        ]
+      }
+    ]
+  },
+  "auditoria_actual": {
+    "codigo_salida_sin_exclusiones": 1,
+    "hallazgos": [
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "PYSEC-2026-3447",
+        "correcciones": [
+          "83.0.0"
+        ]
+      },
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "PYSEC-2026-3447",
+        "correcciones": [
+          "83.0.0"
+        ]
+      },
+      {
+        "paquete": "setuptools",
+        "version": "80.10.2",
+        "id": "GHSA-xmj3-9gf7-h52w",
+        "correcciones": [
+          "84.1.0"
+        ]
+      }
+    ],
+    "excepciones_documentadas": [
+      "PYSEC-2026-3447",
+      "GHSA-xmj3-9gf7-h52w"
+    ],
+    "comando_con_excepciones": "python -m pip_audit --skip-editable --progress-spinner off --ignore-vuln PYSEC-2026-3447 --ignore-vuln GHSA-xmj3-9gf7-h52w",
+    "codigo_salida_con_excepciones": 0
+  },
+  "compatibilidad_modelos": [
+    {
+      "name": "mibici-p1-demanda",
+      "alias": "champion",
+      "version": "1",
+      "run_id": "da28d047b8384d089de6f74fcd4e175d",
+      "checked_rows": 5,
+      "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+      "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+      "status": "passed"
+    },
+    {
+      "name": "mibici-p2-riesgo",
+      "alias": "champion",
+      "version": "1",
+      "run_id": "fb52c91b260843a992fe74ecfac7201c",
+      "checked_rows": 5,
+      "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+      "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+      "status": "passed"
+    },
+    {
+      "name": "mibici-p3-grupos",
+      "alias": "champion",
+      "version": "1",
+      "run_id": "1079f92ad21d4f2cbc7dfa29c0d01253",
+      "checked_rows": 5,
+      "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+      "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+      "status": "passed"
+    }
+  ]
+}
