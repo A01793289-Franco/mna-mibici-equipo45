@@ -275,6 +275,19 @@ python -m mibici.security --history --output reports/security/repositorio.json
 python -m bandit -c pyproject.toml -r mibici -ll
 ```
 
+### Evidencia de ejecución
+
+Capturas de la ejecución exitosa de cada control, tomadas desde la raíz del repositorio con `requirements-validation.txt` instalado:
+
+| Control | Comando | Captura |
+|---|---|---|
+| Pruebas con PyTest | `python -m pytest -v` | ![Resultado de PyTest](reports/figures/evidencia/pytest.png) |
+| Validación de datos con DeepChecks | `python -m mibici.validation` | ![Resultado de DeepChecks](reports/figures/evidencia/deepchecks.png) |
+| Revisión de secretos en archivos e historial | `python -m mibici.security --history --output reports/security/repositorio.json` | ![Resultado de la revisión de secretos](reports/figures/evidencia/seguridad_repositorio.png) |
+| Análisis de código con Bandit | `python -m bandit -c pyproject.toml -r mibici -ll` | ![Resultado de Bandit](reports/figures/evidencia/bandit.png) |
+
+Las capturas muestran solo la salida de consola. Los resultados detallados están en [reports/deepchecks/resumen.md](reports/deepchecks/resumen.md) y [reports/security/README.md](reports/security/README.md).
+
 La [guía de tests](tests/README.md) identifica cada grupo y sus fixtures. Para ejecutar únicamente las pruebas de seguridad y privacidad se usa `python -m pytest tests/test_security.py tests/test_repository_security.py -v`. `make test` y `make security` siguen disponibles como atajos. La guía de verificación explica también la auditoría de dependencias y sus excepciones.
 
 [Pruebas y CI](docs/docs/verificacion.md) detalla cada control y las vulnerabilidades revisadas. La [evidencia de seguridad](reports/security/README.md) conserva los resultados de la revisión y de los análisis ejecutados.
