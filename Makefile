@@ -86,9 +86,9 @@ validate: verify
 ## Audita dependencias y analiza el código (mismas exclusiones que CI)
 .PHONY: security
 security:
+	$(PYTHON_INTERPRETER) -m mibici.security --history
 	$(PYTHON_INTERPRETER) -m pip_audit --skip-editable --progress-spinner off \
-		--ignore-vuln CVE-2026-53995 --ignore-vuln CVE-2026-115886 \
-		--ignore-vuln CVE-2026-116691 --ignore-vuln PYSEC-2026-3447 \
+		--ignore-vuln PYSEC-2026-3447 \
 		--ignore-vuln GHSA-xmj3-9gf7-h52w
 	$(PYTHON_INTERPRETER) -m bandit -c pyproject.toml -r mibici -ll
 

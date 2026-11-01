@@ -213,3 +213,8 @@ reports/deepchecks/html/
 *.pth
 /models/*
 !/models/.gitkeep
+
+*.sqlite
+*.sqlite3
+*.pem
+*.key

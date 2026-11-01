@@ -4,7 +4,6 @@ Complementan los análisis de CI (``pip-audit`` y ``bandit``) con reglas propias
 """
 
 from pathlib import Path
-import re
 import shutil
 import subprocess
 from unittest import mock
@@ -14,31 +13,9 @@ import pytest
 
 from mibici import api
 from mibici import config as cfg
+from mibici.security import SECRET_PATTERNS, TEXT_SUFFIXES
 
 ROOT = Path(cfg.ROOT_DIR)
-TEXT_SUFFIXES = {
-    ".py",
-    ".md",
-    ".txt",
-    ".toml",
-    ".cfg",
-    ".yaml",
-    ".yml",
-    ".json",
-    ".ipynb",
-    ".example",
-    "",
-}
-SECRET_PATTERNS = {
-    "llave privada": re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"),
-    "llave de AWS": re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
-    "token de GitHub": re.compile(r"\b(?:ghp|gho|ghs|ghu)_[A-Za-z0-9]{30,}|github_pat_\w{40,}"),
-    "credencial asignada": re.compile(
-        r"(?i)\b(?:password|passwd|secret|api_?key|access_?token)\b\s*[:=]\s*['\"][^'\"\s]{8,}['\"]"
-    ),
-    "URL con usuario y contraseña": re.compile(r"\b[a-z][a-z0-9+.-]*://[^/\s:@]+:[^/\s@]+@"),
-}
-
 git = pytest.mark.skipif(shutil.which("git") is None, reason="requiere git")
 
 
