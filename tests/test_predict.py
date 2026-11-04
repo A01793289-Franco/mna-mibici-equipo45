@@ -119,6 +119,24 @@ class TestPredict(unittest.TestCase):
                 predict.main(["--question", "P1", "--timestamp", "2020-01-01T08:00"])
         self.assertIn("No hay variables", str(caught.exception))
 
+    def test_missing_model_column_raises_clear_error(self):
+        """Verifica que una columna faltante produzca un error explicativo."""
+        when = self.p1["timestamp"].iloc[600]
+
+        incomplete = self.p1.drop(columns=["departures_lag_168"])
+
+        with self.assertRaises(predict.PredictionError) as caught:
+            predict.predict_hour(
+                "P1",
+                when,
+                table=incomplete,
+                model=mock.Mock(),
+                columns=["hour", "departures_lag_168"],
+            )
+
+        self.assertIn("departures_lag_168", str(caught.exception))
+        self.assertIn("Faltan columnas", str(caught.exception))
+
 
 if __name__ == "__main__":
     unittest.main()
