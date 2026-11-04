@@ -42,6 +42,97 @@ El experimento tiene dos iteraciones. La **primera** son seis corridas (baseline
 - [Ingesta y variables: decisiones, comandos y limitaciones](references/ingesta_features.md).
 - [Manifiesto de datos](references/data_manifest.json) y [manifiesto de variables](references/feature_manifest.json).
 
+## Recuperación de modelos desde MLflow externo (despliegue)
+
+
+Esta implementación prepara la recuperación de modelos del proyecto MiBici desde
+un servidor externo de MLflow Model Registry para su posterior uso en FastAPI
+y contenedores Docker o Podman.
+
+### Estrategia de recuperación
+
+Se utiliza la estrategia de **MLflow externo**: el modelo no se incorpora
+directamente a la imagen del contenedor. En su lugar, se recupera mediante
+su nombre registrado y el alias `champion`.
+
+Modelos disponibles:
+
+| Pregunta | Modelo registrado |
+|---|---|
+| P1 | `mibici-p1-demanda` |
+| P2 | `mibici-p2-riesgo` |
+| P3 | `mibici-p3-grupos` |
+
+### Configuración del servidor
+
+Definir `MLFLOW_TRACKING_URI` con la dirección de un servidor MLflow
+accesible desde el entorno donde se ejecuta la aplicación.
+
+Ejemplo en PowerShell:
+
+```powershell
+$env:MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
+```
+
+Ejemplo en Linux o macOS:
+
+```bash
+export MLFLOW_TRACKING_URI="http://127.0.0.1:5000"
+```
+
+Si la aplicación se ejecuta dentro de Docker o Podman y MLflow está
+alojado en la computadora anfitriona, se debe configurar una dirección
+accesible desde el contenedor. Por ejemplo:
+
+`MLFLOW_TRACKING_URI=http://host.containers.internal:5000`
+
+La disponibilidad de este nombre depende del motor y de la configuración
+de red. El servidor MLflow también debe permitir el acceso desde el
+contenedor.
+
+### Uso desde Python
+
+El módulo `mibici/model_loader.py` proporciona la función
+`load_registered_model()`.
+
+```python
+from mibici.model_loader import load_registered_model
+
+result = load_registered_model(question="P1", alias="champion")
+
+model = result["model"]
+columns = result["columns"]
+model_uri = result["model_uri"]
+```
+
+La función valida la configuración del servidor, reutiliza
+`load_champion()` y devuelve el modelo cargado, su URI y las columnas
+de entrada necesarias para la inferencia.
+
+### Pruebas automatizadas
+
+Las pruebas se encuentran en `tests/test_model_loader.py`.
+
+```bash
+python -m pytest tests/test_model_loader.py -v
+```
+
+Las pruebas unitarias verifican la configuración de MLflow, la
+integración con `load_champion()` y el manejo de entradas inválidas.
+
+La ejecución CI #2 de GitHub Actions finalizó correctamente en Ubuntu,
+Windows y las comprobaciones de seguridad.
+
+### Validación de integración pendiente
+
+Las pruebas unitarias utilizan mocks y no requieren un servidor real.
+
+Antes del despliegue final, se deberá comprobar la conectividad con
+MLflow, la disponibilidad del alias `champion`, el acceso a los
+artefactos registrados y la recuperación efectiva del modelo desde
+el entorno del contenedor.
+
+
 ## Datos y configuración
 
 Fuente: [datos abiertos de MiBici](https://www.mibici.net/es/datos-abiertos/). Se utilizaron nueve meses completos, enero-septiembre de 2026, y el catálogo de septiembre.
