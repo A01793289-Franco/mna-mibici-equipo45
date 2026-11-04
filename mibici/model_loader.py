@@ -1,16 +1,16 @@
 
-"""Recuperación de modelos registrados en MLflow para despliegue."""
+"""Integración del Model Registry de MLflow para despliegue externo."""
 
 import os
 
 import mlflow
-import mlflow.sklearn
 
+from mibici.predict import load_champion
 from mibici.train import REGISTERED_MODELS
 
 
 def load_registered_model(question="P1", alias="champion"):
-    """Recupera un modelo y su firma desde MLflow Model Registry."""
+    """Carga un modelo registrado usando un servidor MLflow externo."""
 
     if question not in REGISTERED_MODELS:
         raise ValueError(f"Pregunta no soportada: {question}")
@@ -24,16 +24,10 @@ def load_registered_model(question="P1", alias="champion"):
 
     mlflow.set_tracking_uri(tracking_uri)
 
-    model_name = REGISTERED_MODELS[question]
-    model_uri = f"models:/{model_name}@{alias}"
-
-    info = mlflow.models.get_model_info(model_uri)
-    model = mlflow.sklearn.load_model(model_uri)
-
-    columns = list(info.signature.inputs.input_names())
+    model, columns = load_champion(question, alias)
 
     return {
         "model": model,
-        "model_uri": model_uri,
+        "model_uri": f"models:/{REGISTERED_MODELS[question]}@{alias}",
         "columns": columns,
     }
