@@ -3,6 +3,8 @@ import json
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from mlflow.exceptions import MlflowException
 import pandas as pd
 from pydantic import BaseModel, ConfigDict, Field
@@ -10,11 +12,25 @@ from pydantic import BaseModel, ConfigDict, Field
 from mibici import config as cfg
 from mibici.features import local_time
 from mibici.predict import PredictionError, features_table, load_champion, predict_hour
-from mibici.train import REGISTERED_MODELS, configure_mlflow
+from mibici.schemas import P1Response, P1Variables, P2Response, P2Variables
+from mibici.train import REGISTERED_MODELS, class_probabilities, configure_mlflow
 
 app = FastAPI(title="MiBici Equipo 45", version="0.1.0")
 # station_id es int32 en las tablas de variables; un valor mayor desborda el filtro de Parquet.
 MAX_STATION_ID = 2**31 - 1
+
+
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request, error):
+    """Responde 422 con ubicación, mensaje y tipo, sin devolver el valor recibido.
+
+    El valor puede no ser serializable (por ejemplo NaN) y provocaría un error 500.
+    """
+    details = [
+        {"loc": list(item["loc"]), "msg": item["msg"], "type": item["type"]}
+        for item in error.errors()
+    ]
+    return JSONResponse(status_code=422, content={"detail": details})
 
 
 class PredictionRequest(BaseModel):
@@ -67,4 +83,57 @@ def predict(request: PredictionRequest):
         "model_uri": f"models:/{REGISTERED_MODELS[request.question]}@champion",
         "timezone": cfg.TIMEZONE,
         "prediction": record,
+    }
+
+
+def load_model_or_503(question):
+    """Carga el champion de la pregunta; si no está disponible responde 503."""
+    try:
+        configure_mlflow()
+        return load_champion(question)
+    except (PredictionError, MlflowException) as error:
+        raise HTTPException(
+            status_code=503, detail="El modelo champion no está disponible"
+        ) from error
+
+
+def variables_frame(variables, columns):
+    """Una fila con las columnas que pide la firma del modelo; 422 si falta alguna."""
+    values = variables.model_dump()
+    missing = [name for name in columns if values.get(name) is None]
+    if missing:
+        raise HTTPException(
+            status_code=422,
+            detail=f"El modelo champion requiere variables ausentes en la petición: {missing}",
+        )
+    return pd.DataFrame([{name: values[name] for name in columns}])
+
+
+@app.post("/predict/p1", response_model=P1Response)
+def predict_p1(variables: P1Variables):
+    """Demanda esperada de salidas a partir de las variables de P1."""
+    model, columns = load_model_or_503("P1")
+    frame = variables_frame(variables, columns)
+    return {
+        "question": "P1",
+        "model_uri": f"models:/{REGISTERED_MODELS['P1']}@champion",
+        "prediction": {"demanda_esperada": float(model.predict(frame)[0])},
+    }
+
+
+@app.post("/predict/p2", response_model=P2Response)
+def predict_p2(variables: P2Variables):
+    """Clase de riesgo y probabilidades a partir de las variables de P2."""
+    model, columns = load_model_or_503("P2")
+    frame = variables_frame(variables, columns)
+    probabilities = class_probabilities(model, frame)[0]
+    label = int(probabilities.argmax())
+    return {
+        "question": "P2",
+        "model_uri": f"models:/{REGISTERED_MODELS['P2']}@champion",
+        "prediction": {
+            "clase": label,
+            "riesgo": cfg.P2_CLASS_NAMES[label],
+            **{f"prob_{name}": float(p) for name, p in zip(cfg.P2_CLASS_NAMES, probabilities)},
+        },
     }
