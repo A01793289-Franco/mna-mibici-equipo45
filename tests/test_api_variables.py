@@ -190,6 +190,61 @@ def test_missing_champion_returns_503(client, path, payload):
         assert client.post(path, json=payload).status_code == 503
 
 
+@pytest.mark.parametrize(
+    "path,payload",
+    [
+        ("/predict/p1", P1_PAYLOAD),
+        ("/predict/p2", P2_PAYLOAD),
+        ("/predict", {"question": "P1", "station_id": 2, "timestamp": "2026-08-15T08:00"}),
+    ],
+)
+@pytest.mark.parametrize("uri", [None, ""])
+def test_without_tracking_uri_or_local_db_returns_503_with_clear_message(
+    client, monkeypatch, tmp_path, path, payload, uri
+):
+    if uri is None:
+        monkeypatch.delenv("MLFLOW_TRACKING_URI", raising=False)
+    else:
+        monkeypatch.setenv("MLFLOW_TRACKING_URI", uri)
+    monkeypatch.setattr(api.cfg, "MLFLOW_DB", tmp_path / "no_existe.db")
+    with (
+        mock.patch.object(api, "connect_mlflow") as connect,
+        mock.patch.object(api, "load_champion") as load,
+    ):
+        response = client.post(path, json=payload)
+    assert response.status_code == 503
+    assert "MLFLOW_TRACKING_URI" in response.json()["detail"]
+    connect.assert_not_called()
+    load.assert_not_called()
+    assert not (tmp_path / "no_existe.db").exists()
+
+
+def test_tracking_uri_connects_even_without_local_db(client, monkeypatch, tmp_path, p1_model):
+    monkeypatch.setenv("MLFLOW_TRACKING_URI", "http://mlflow.invalid:5000")
+    monkeypatch.setattr(api.cfg, "MLFLOW_DB", tmp_path / "no_existe.db")
+    with (
+        mock.patch.object(api, "connect_mlflow") as connect,
+        mock.patch.object(api, "load_champion", return_value=(p1_model, P1_COLUMNS)),
+    ):
+        response = client.post("/predict/p1", json=P1_PAYLOAD)
+    assert response.status_code == 200
+    connect.assert_called_once_with()
+
+
+def test_local_db_keeps_working_without_tracking_uri(client, monkeypatch, tmp_path, p1_model):
+    monkeypatch.delenv("MLFLOW_TRACKING_URI", raising=False)
+    database = tmp_path / "mlflow.db"
+    database.touch()
+    monkeypatch.setattr(api.cfg, "MLFLOW_DB", database)
+    with (
+        mock.patch.object(api, "connect_mlflow") as connect,
+        mock.patch.object(api, "load_champion", return_value=(p1_model, P1_COLUMNS)),
+    ):
+        response = client.post("/predict/p1", json=P1_PAYLOAD)
+    assert response.status_code == 200
+    connect.assert_called_once_with()
+
+
 def test_openapi_declares_request_and_response_schemas(client):
     spec = client.get("/openapi.json").json()
     for path, request_name, response_name in (

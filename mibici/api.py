@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import os
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
@@ -13,11 +14,25 @@ from mibici import config as cfg
 from mibici.features import local_time
 from mibici.predict import PredictionError, features_table, load_champion, predict_hour
 from mibici.schemas import P1Response, P1Variables, P2Response, P2Variables
-from mibici.train import REGISTERED_MODELS, class_probabilities, configure_mlflow
+from mibici.train import REGISTERED_MODELS, class_probabilities
+from mibici.train import configure_mlflow as connect_mlflow
 
 app = FastAPI(title="MiBici Equipo 45", version="0.1.0")
 # station_id es int32 en las tablas de variables; un valor mayor desborda el filtro de Parquet.
 MAX_STATION_ID = 2**31 - 1
+
+
+def configure_mlflow():
+    """Conecta con MLflow; responde 503 si no hay servidor configurado ni base local.
+
+    Sin esta comprobación, un contenedor sin ``MLFLOW_TRACKING_URI`` intenta crear ``mlflow.db``
+    y tarda minutos en fallar.
+    """
+    if not os.environ.get("MLFLOW_TRACKING_URI") and not cfg.MLFLOW_DB.exists():
+        raise HTTPException(
+            status_code=503, detail="Configura MLFLOW_TRACKING_URI para conectar con MLflow."
+        )
+    connect_mlflow()
 
 
 @app.exception_handler(RequestValidationError)

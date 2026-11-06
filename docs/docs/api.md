@@ -78,7 +78,7 @@ La respuesta incluye la pregunta, la URI `models:/...@champion`, la zona del pro
 | 200 | Predicción completada |
 | 404 | No existe una fila de variables para esa estación y hora |
 | 422 | Campos, pregunta o fecha inválidos; hora incompleta |
-| 503 | No hay champion, faltan variables locales o hay filas duplicadas |
+| 503 | No hay champion, faltan variables locales, hay filas duplicadas o no hay `MLFLOW_TRACKING_URI` ni `mlflow.db` local |
 
 Cada petición carga el alias vigente y reutiliza `predict_hour`; la lectura Parquet filtra por estación y fecha. No entrena modelos ni recalcula variables. Si se actualiza la versión de los datos, se deben reconstruir las variables y entrenar o verificar modelos sobre esa misma versión.
 
