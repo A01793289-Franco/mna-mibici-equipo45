@@ -192,6 +192,13 @@ Comprobado en Windows 11 con Podman 6.1.4: construcción de la imagen, ejecució
 
 `/health` solo confirma que la API responde; no comprueba MLflow ni los modelos.
 
+### Evidencia de ejecución en Podman
+
+| Paso | Captura |
+|---|---|
+| Construcción de la imagen | ![Construcción con Podman](reports/figures/evidencia/podman_build.png) |
+| Contenedor activo y predicciones de P1 y P2 | ![Predicciones desde el contenedor](reports/figures/evidencia/podman_prediccion.png) |
+| Validación de una entrada inválida | ![Respuesta 422](reports/figures/evidencia/podman_validacion.png) |
 
 ## Datos y configuración
 
