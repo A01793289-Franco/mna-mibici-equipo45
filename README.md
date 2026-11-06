@@ -123,14 +123,74 @@ integración con `load_champion()` y el manejo de entradas inválidas.
 La ejecución CI #2 de GitHub Actions finalizó correctamente en Ubuntu,
 Windows y las comprobaciones de seguridad.
 
-### Validación de integración pendiente
+## Despliegue en contenedor con Podman
 
-Las pruebas unitarias utilizan mocks y no requieren un servidor real.
+**Estrategia:** inferencia en tiempo real con FastAPI. P1 y P2 predicen la hora siguiente para apoyar decisiones de operación, por lo que conviene responder a cada petición. P3 se mantiene por lotes, porque sus perfiles no cambian entre peticiones. El modelo no se incluye en la imagen: se recupera del Registry por su alias `champion`, así que cambiar de versión no requiere reconstruirla.
 
-Antes del despliegue final, se deberá comprobar la conectividad con
-MLflow, la disponibilidad del alias `champion`, el acceso a los
-artefactos registrados y la recuperación efectiva del modelo desde
-el entorno del contenedor.
+Comprobado en Windows 11 con Podman 6.1.4: construcción de la imagen, ejecución como usuario sin privilegios y predicciones de P1 y P2 con el modelo recuperado desde MLflow.
+
+1. Iniciar MLflow en el anfitrión, en una terminal aparte:
+
+   ```text
+   python -m mlflow server --backend-store-uri sqlite:///mlflow_contenedor.db --artifacts-destination ./mlartifacts_contenedor --host 0.0.0.0 --port 5000 --allowed-hosts "host.containers.internal:5000,localhost:5000,127.0.0.1:5000"
+   ```
+
+   `--allowed-hosts` es necesario porque MLflow rechaza con 403 otros nombres de host. `0.0.0.0` expone el servidor sin autenticación en la red local: úsalo solo durante la prueba. Se usa un registro nuevo porque el `mlflow.db` creado sin servidor guarda rutas locales de artefactos, inaccesibles desde el contenedor.
+
+2. Registrar los modelos de P1 y P2 (requiere los datos de la sección de ingesta). En PowerShell:
+
+   ```powershell
+   $env:MLFLOW_TRACKING_URI = "http://127.0.0.1:5000"
+   python -m mlflow run . -e train --env-manager local --experiment-name mibici-equipo45 -P question=p1 -P model=hgb_station -P register=true
+   python -m mlflow run . -e train --env-manager local --experiment-name mibici-equipo45 -P question=p2 -P model=persistence -P register=true
+   ```
+
+3. Construir la imagen y levantar el contenedor:
+
+   ```text
+   podman build -t mibici-api -f Containerfile .
+   podman run --rm -p 8000:8000 -e MLFLOW_TRACKING_URI=http://host.containers.internal:5000 mibici-api
+   ```
+
+   Si la construcción falla con `Network is unreachable` al instalar dependencias, añade `--network=host` a `podman build`. Así ocurrió en el equipo de la comprobación; `podman run` no necesitó ese ajuste.
+
+4. Consumir la API (documentación en <http://127.0.0.1:8000/docs>):
+
+   ```powershell
+   $body = '{"station_id":2,"hour":8,"weekday":5,"is_weekend":1,"month":8,"departures_lag_1":2.0,"departures_lag_24":3.0,"departures_lag_168":4.0,"departures_mean_24":2.5,"departures_mean_168":3.5}'
+   Invoke-RestMethod -Method Post -Uri http://127.0.0.1:8000/predict/p1 -ContentType application/json -Body $body | ConvertTo-Json
+   ```
+
+   Respuesta:
+
+   ```json
+   {
+     "question": "P1",
+     "model_uri": "models:/mibici-p1-demanda@champion",
+     "prediction": {"demanda_esperada": 2.6144151108240576}
+   }
+   ```
+
+   `POST /predict/p2` recibe además `virtual_occupancy`, `net_flow_lag_1` y `net_flow_lag_24`. Con `virtual_occupancy` 0.05, `net_flow_lag_1` -1.0 y `net_flow_lag_24` 0.5 responde:
+
+   ```json
+   {
+     "question": "P2",
+     "model_uri": "models:/mibici-p2-riesgo@champion",
+     "prediction": {"clase": 1, "riesgo": "riesgo_sin_bicicletas", "prob_normal": 0.0, "prob_riesgo_sin_bicicletas": 1.0, "prob_riesgo_sin_anclajes": 0.0}
+   }
+   ```
+
+   El champion de P2 es la regla de persistencia, por eso sus salidas son 0 o 1 y no probabilidades calibradas.
+
+| Situación | Respuesta |
+|---|---|
+| Variables inválidas | 422 |
+| MLflow inaccesible o sin champion | 503 (unos 35 s si el servidor no responde) |
+| `/predict` sin montar `data/processed` | 503; usar `/predict/p1` o `/predict/p2` |
+| Sin `MLFLOW_TRACKING_URI` | 503 inmediato con un mensaje que pide configurarla: la variable es obligatoria en el contenedor |
+
+`/health` solo confirma que la API responde; no comprueba MLflow ni los modelos.
 
 
 ## Datos y configuración
@@ -161,6 +221,8 @@ mibici/
   verify_registry.py
   project.py
   api.py
+  schemas.py
+  model_loader.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -332,7 +394,7 @@ Con los datos y los modelos `champion` ya generados, y la misma `MLFLOW_TRACKING
 python -m uvicorn mibici.api:app --host 127.0.0.1 --port 8000
 ```
 
-La documentación interactiva está en <http://127.0.0.1:8000/docs>. `POST /predict` recibe `question` (P1/P2), `station_id` y `timestamp`; devuelve la predicción de la estación. Reutiliza las variables existentes y el alias vigente. No calcula horas futuras ni consulta inventario real. La [guía de la API](docs/docs/api.md) contiene ejemplos y códigos de error. P3 se conserva en el módulo de consola.
+La documentación interactiva está en <http://127.0.0.1:8000/docs>. `POST /predict/p1` y `POST /predict/p2` reciben las variables del modelo y funcionan en el contenedor (ver [Despliegue en contenedor con Podman](#despliegue-en-contenedor-con-podman)). `POST /predict` recibe `question` (P1/P2), `station_id` y `timestamp`; devuelve la predicción de la estación. Reutiliza las variables existentes y el alias vigente. No calcula horas futuras ni consulta inventario real. La [guía de la API](docs/docs/api.md) contiene ejemplos y códigos de error. P3 se conserva en el módulo de consola.
 
 El sitio de documentación se construye desde la raíz:
 
@@ -343,7 +405,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 184 pruebas, incluidas nueve de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 225 pruebas, incluidas 46 de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Calidad, validación de datos y seguridad
 
@@ -451,6 +513,6 @@ Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_paramet
 
 Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
 
-Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 184 pruebas y la documentación en Ubuntu y Windows.
+Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 225 pruebas y la documentación en Ubuntu y Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

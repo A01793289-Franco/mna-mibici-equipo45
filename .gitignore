@@ -195,6 +195,9 @@ mlruns/
 mlartifacts/
 mlflow.db
 mlflow.db-*
+mlflow_contenedor.db
+mlflow_contenedor.db-*
+mlartifacts_contenedor/
 .env.*
 !.env.example
 *.csv
