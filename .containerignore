@@ -1,0 +1,4 @@
+*
+!mibici/
+!requirements-api.txt
+**/__pycache__/
