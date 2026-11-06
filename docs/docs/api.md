@@ -69,6 +69,16 @@ Respuesta de P1:
 
 Respuesta de P2: `prediction` contiene `clase` (0 normal, 1 sin bicicletas, 2 sin anclajes), `riesgo` y las tres probabilidades `prob_*`. Un valor inválido devuelve 422 con la ubicación y el motivo, sin cargar el modelo; si no hay `champion`, 503.
 
+Las salidas también se validan: P1 exige demanda finita y no negativa. P2 exige probabilidades finitas en [0, 1] que sumen uno (tolerancia absoluta de 0.000001), con clase y nombre de riesgo coherentes y una probabilidad máxima para la clase elegida. Si el modelo produce una salida inválida, se devuelve 503 con un mensaje genérico.
+
+Con la API en ejecución, este comando verifica por HTTP los esquemas, las dos predicciones y siete entradas inválidas. Funciona con un servicio local, Docker o Podman y termina con código 1 ante un fallo:
+
+```text
+python -m mibici.verify_api --base-url http://127.0.0.1:8000 --output reports/deployment/verificacion_local.json
+```
+
+`--unavailable` comprueba una instancia sin Registry: espera 503 en las predicciones y 200 en `/health`. No confirma disponibilidad de modelos. La evidencia de la prueba real está en `reports/deployment/` del repositorio.
+
 ## Respuesta y errores
 
 La respuesta incluye la pregunta, la URI `models:/...@champion`, la zona del proyecto y la predicción con estación y fecha ISO en UTC. P1 devuelve `demanda_esperada`. P2 devuelve la clase, el nombre del riesgo y las tres probabilidades. Si gana la regla de persistencia, esas salidas son 0/1, no probabilidades calibradas.
@@ -78,7 +88,7 @@ La respuesta incluye la pregunta, la URI `models:/...@champion`, la zona del pro
 | 200 | Predicción completada |
 | 404 | No existe una fila de variables para esa estación y hora |
 | 422 | Campos, pregunta o fecha inválidos; hora incompleta |
-| 503 | No hay champion, faltan variables locales, hay filas duplicadas o no hay `MLFLOW_TRACKING_URI` ni `mlflow.db` local |
+| 503 | No hay champion, el modelo produce una salida inválida, faltan variables locales, hay filas duplicadas o no hay `MLFLOW_TRACKING_URI` ni `mlflow.db` local |
 
 Cada petición carga el alias vigente y reutiliza `predict_hour`; la lectura Parquet filtra por estación y fecha. No entrena modelos ni recalcula variables. Si se actualiza la versión de los datos, se deben reconstruir las variables y entrenar o verificar modelos sobre esa misma versión.
 

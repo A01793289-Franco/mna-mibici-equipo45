@@ -15,6 +15,8 @@ python -m pytest -v
 | MLflow Project y Registry | `test_project.py`, `test_registry_integration.py`, `test_predict.py` |
 | Validación DeepChecks | `test_validation.py` |
 | API y seguridad | `test_api.py`, `test_security.py`, `test_repository_security.py` |
+| Recuperación y variables de la API | `test_model_loader.py`, `test_api_variables.py` |
+| Verificador HTTP y salidas del modelo | `test_verify_api.py` |
 
 Para ejecutar únicamente los controles de seguridad y privacidad:
 
@@ -32,3 +34,5 @@ python -m bandit -c pyproject.toml -r mibici -ll
 ```
 
 La [guía de verificación](../docs/docs/verificacion.md) explica DeepChecks, la auditoría de dependencias y sus excepciones documentadas.
+
+La verificación contra un contenedor y un Registry reales se ejecuta por separado: `python -m mibici.verify_api --base-url http://127.0.0.1:8000`. No forma parte de las pruebas unitarias de CI; requiere iniciar el servicio con sus modelos. Su [evidencia](../reports/deployment/README.md) incluye los controles de ausencia de Registry y las versiones recuperadas.

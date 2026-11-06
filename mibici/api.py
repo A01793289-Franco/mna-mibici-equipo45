@@ -4,7 +4,7 @@ import os
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
-from fastapi.exceptions import RequestValidationError
+from fastapi.exceptions import RequestValidationError, ResponseValidationError
 from fastapi.responses import JSONResponse
 from mlflow.exceptions import MlflowException
 import pandas as pd
@@ -46,6 +46,13 @@ async def invalid_request(request, error):
         for item in error.errors()
     ]
     return JSONResponse(status_code=422, content={"detail": details})
+
+
+@app.exception_handler(ResponseValidationError)
+async def invalid_prediction(request, error):
+    return JSONResponse(
+        status_code=503, content={"detail": "El modelo produjo una salida inválida"}
+    )
 
 
 class PredictionRequest(BaseModel):

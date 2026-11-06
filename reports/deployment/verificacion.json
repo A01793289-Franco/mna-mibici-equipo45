@@ -1,0 +1,965 @@
+{
+  "generated_at": "2026-11-06T09:40:27.284636+00:00",
+  "base_commit": "6369efba942b6bc5a7d3c1ac3dc91b99a3d4b938",
+  "final_source": "Base más api.py, schemas.py y verify_api.py de este cambio; hashes comprobables en Git.",
+  "source_sha256": {
+    "Containerfile": "926b5626a99507220c77f2d6e6ec2809eedb5d5b741607bdf68c737a18d6b662",
+    "requirements-api.txt": "14ecd2c1eb7b0dcc754c3954adfa21cdf5268c2d3b5d999814337be3448402a9",
+    "mibici/api.py": "95d354682bcaaed6075e5b6261913f6b1f675f80207fcfd3d33ff331415dcf81",
+    "mibici/schemas.py": "228333831ea90b9a5d3186553e4ca5cd850711acb648722746c98d68b9774af5",
+    "mibici/verify_api.py": "d8254f3dfd5047f86ec3f49fbf58f83de1fbc1b91fe727fa75cdbe7e5295eb89"
+  },
+  "docker_version": "29.8.0",
+  "images": [
+    {
+      "tag": "mibici-api:verificacion-6369efb",
+      "id": "sha256:cd3fc874167f5a24e549e780c3adaa2e844e48d88c29a9d4a2147129d5b26b2e",
+      "size_bytes": 1262790354,
+      "architecture": "amd64",
+      "os": "linux",
+      "user": "1000",
+      "command": [
+        "python",
+        "-m",
+        "uvicorn",
+        "mibici.api:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ]
+    },
+    {
+      "tag": "mibici-api:verificacion-final",
+      "id": "sha256:6e6caa9c7c46ad999ae8b2da0143ed9661a9388a2a0502455f3cf0348ce5ffe3",
+      "size_bytes": 1262804196,
+      "architecture": "amd64",
+      "os": "linux",
+      "user": "1000",
+      "command": [
+        "python",
+        "-m",
+        "uvicorn",
+        "mibici.api:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "8000"
+      ]
+    }
+  ],
+  "containers": [
+    {
+      "name": "mibici-registry-verificacion",
+      "id": "be4b99893134306ff7807afe9a1cf7a8ece7b0a875f0674dca00b7ef9c525817",
+      "image": "mibici-api:verificacion-6369efb",
+      "state": "running",
+      "user": "1000",
+      "ports": {
+        "8000/tcp": null
+      },
+      "mounts": [
+        {
+          "destination": "/registry",
+          "read_only": false
+        },
+        {
+          "destination": "/registry-artifacts",
+          "read_only": true
+        }
+      ]
+    },
+    {
+      "name": "mibici-api-base-verificacion",
+      "id": "28825ec1f6b68c7eb58b9b09174c674ae7d9eca7ac7f0d36dfb73fc2275beadd",
+      "image": "mibici-api:verificacion-6369efb",
+      "state": "running",
+      "user": "1000",
+      "ports": {
+        "8000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8010"
+          }
+        ]
+      },
+      "mounts": []
+    },
+    {
+      "name": "mibici-api-final-verificacion",
+      "id": "6b6ef23b186d5fcc00d0cfa2e8b883dddd7601aeb1aeee274f69a3600ad1ceb7",
+      "image": "mibici-api:verificacion-final",
+      "state": "running",
+      "user": "1000",
+      "ports": {
+        "8000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8012"
+          }
+        ]
+      },
+      "mounts": []
+    },
+    {
+      "name": "mibici-api-sin-registry-verificacion",
+      "id": "c1f2313dd75c8413aeebd067e28d55f76c779fbabf2338b8b81adda7ccc374b7",
+      "image": "mibici-api:verificacion-final",
+      "state": "running",
+      "user": "1000",
+      "ports": {
+        "8000/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8011"
+          }
+        ]
+      },
+      "mounts": []
+    }
+  ],
+  "baseline": {
+    "generated_at": "2026-11-06T09:39:00.983849+00:00",
+    "base_url": "http://127.0.0.1:8010",
+    "mode": "prediction",
+    "passed": true,
+    "checks": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "status": 200,
+        "response": {
+          "status": "ok",
+          "service": "mibici-prediction"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/openapi.json",
+        "status": 200,
+        "response": {
+          "openapi": "3.1.0",
+          "paths": {
+            "/predict/p1": {
+              "post": {
+                "summary": "Predict P1",
+                "description": "Demanda esperada de salidas a partir de las variables de P1.",
+                "operationId": "predict_p1_predict_p1_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P1Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P1Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/predict/p2": {
+              "post": {
+                "summary": "Predict P2",
+                "description": "Clase de riesgo y probabilidades a partir de las variables de P2.",
+                "operationId": "predict_p2_predict_p2_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P2Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P2Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 200,
+        "response": {
+          "question": "P1",
+          "model_uri": "models:/mibici-p1-demanda@champion",
+          "prediction": {
+            "demanda_esperada": 2.6144151108240576
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 200,
+        "response": {
+          "question": "P2",
+          "model_uri": "models:/mibici-p2-riesgo@champion",
+          "prediction": {
+            "clase": 1,
+            "riesgo": "riesgo_sin_bicicletas",
+            "prob_normal": 0.0,
+            "prob_riesgo_sin_bicicletas": 1.0,
+            "prob_riesgo_sin_anclajes": 0.0
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be less than or equal to 23",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be a valid integer",
+              "type": "int_type"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "departures_lag_1"
+              ],
+              "msg": "Input should be greater than or equal to 0",
+              "type": "greater_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body"
+              ],
+              "msg": "Value error, is_weekend no coincide con weekday (5 y 6 son fin de semana)",
+              "type": "value_error"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "station_id"
+              ],
+              "msg": "Field required",
+              "type": "missing"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "extra"
+              ],
+              "msg": "Extra inputs are not permitted",
+              "type": "extra_forbidden"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "virtual_occupancy"
+              ],
+              "msg": "Input should be less than or equal to 1",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "final": {
+    "generated_at": "2026-11-06T09:39:25.179788+00:00",
+    "base_url": "http://127.0.0.1:8012",
+    "mode": "prediction",
+    "passed": true,
+    "checks": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "status": 200,
+        "response": {
+          "status": "ok",
+          "service": "mibici-prediction"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/openapi.json",
+        "status": 200,
+        "response": {
+          "openapi": "3.1.0",
+          "paths": {
+            "/predict/p1": {
+              "post": {
+                "summary": "Predict P1",
+                "description": "Demanda esperada de salidas a partir de las variables de P1.",
+                "operationId": "predict_p1_predict_p1_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P1Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P1Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/predict/p2": {
+              "post": {
+                "summary": "Predict P2",
+                "description": "Clase de riesgo y probabilidades a partir de las variables de P2.",
+                "operationId": "predict_p2_predict_p2_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P2Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P2Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 200,
+        "response": {
+          "question": "P1",
+          "model_uri": "models:/mibici-p1-demanda@champion",
+          "prediction": {
+            "demanda_esperada": 2.6144151108240576
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 200,
+        "response": {
+          "question": "P2",
+          "model_uri": "models:/mibici-p2-riesgo@champion",
+          "prediction": {
+            "clase": 1,
+            "riesgo": "riesgo_sin_bicicletas",
+            "prob_normal": 0.0,
+            "prob_riesgo_sin_bicicletas": 1.0,
+            "prob_riesgo_sin_anclajes": 0.0
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be less than or equal to 23",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be a valid integer",
+              "type": "int_type"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "departures_lag_1"
+              ],
+              "msg": "Input should be greater than or equal to 0",
+              "type": "greater_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body"
+              ],
+              "msg": "Value error, is_weekend no coincide con weekday (5 y 6 son fin de semana)",
+              "type": "value_error"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "station_id"
+              ],
+              "msg": "Field required",
+              "type": "missing"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "extra"
+              ],
+              "msg": "Extra inputs are not permitted",
+              "type": "extra_forbidden"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "virtual_occupancy"
+              ],
+              "msg": "Input should be less than or equal to 1",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "without_registry": {
+    "generated_at": "2026-11-06T09:39:23.797282+00:00",
+    "base_url": "http://127.0.0.1:8011",
+    "mode": "unavailable",
+    "passed": true,
+    "checks": [
+      {
+        "method": "GET",
+        "path": "/health",
+        "status": 200,
+        "response": {
+          "status": "ok",
+          "service": "mibici-prediction"
+        }
+      },
+      {
+        "method": "GET",
+        "path": "/openapi.json",
+        "status": 200,
+        "response": {
+          "openapi": "3.1.0",
+          "paths": {
+            "/predict/p1": {
+              "post": {
+                "summary": "Predict P1",
+                "description": "Demanda esperada de salidas a partir de las variables de P1.",
+                "operationId": "predict_p1_predict_p1_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P1Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P1Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "/predict/p2": {
+              "post": {
+                "summary": "Predict P2",
+                "description": "Clase de riesgo y probabilidades a partir de las variables de P2.",
+                "operationId": "predict_p2_predict_p2_post",
+                "requestBody": {
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P2Variables"
+                      }
+                    }
+                  },
+                  "required": true
+                },
+                "responses": {
+                  "200": {
+                    "description": "Successful Response",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/P2Response"
+                        }
+                      }
+                    }
+                  },
+                  "422": {
+                    "description": "Validation Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "$ref": "#/components/schemas/HTTPValidationError"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 503,
+        "response": {
+          "detail": "Configura MLFLOW_TRACKING_URI para conectar con MLflow."
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 503,
+        "response": {
+          "detail": "Configura MLFLOW_TRACKING_URI para conectar con MLflow."
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be less than or equal to 23",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "hour"
+              ],
+              "msg": "Input should be a valid integer",
+              "type": "int_type"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "departures_lag_1"
+              ],
+              "msg": "Input should be greater than or equal to 0",
+              "type": "greater_than_equal"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body"
+              ],
+              "msg": "Value error, is_weekend no coincide con weekday (5 y 6 son fin de semana)",
+              "type": "value_error"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "station_id"
+              ],
+              "msg": "Field required",
+              "type": "missing"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p1",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "extra"
+              ],
+              "msg": "Extra inputs are not permitted",
+              "type": "extra_forbidden"
+            }
+          ]
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/predict/p2",
+        "status": 422,
+        "response": {
+          "detail": [
+            {
+              "loc": [
+                "body",
+                "virtual_occupancy"
+              ],
+              "msg": "Input should be less than or equal to 1",
+              "type": "less_than_equal"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "registry_comparison": {
+    "mlflow_version": "3.17.2",
+    "passed": true,
+    "comparisons": [
+      {
+        "question": "P1",
+        "registered_name": "mibici-p1-demanda",
+        "version": "1",
+        "alias": "champion",
+        "source": "models:/m-ac152dab64ae4d9b8dbc1f0626aca7ed",
+        "run_id": "da28d047b8384d089de6f74fcd4e175d",
+        "training_commit": "92e305f3de71dada5853035ba0081401aad197be",
+        "columns": [
+          "hour",
+          "weekday",
+          "is_weekend",
+          "month",
+          "departures_lag_1",
+          "departures_lag_24",
+          "departures_lag_168",
+          "departures_mean_24",
+          "departures_mean_168",
+          "station_id"
+        ],
+        "request": {
+          "station_id": 2,
+          "hour": 8,
+          "weekday": 5,
+          "is_weekend": 1,
+          "month": 8,
+          "departures_lag_1": 2.0,
+          "departures_lag_24": 3.0,
+          "departures_lag_168": 4.0,
+          "departures_mean_24": 2.5,
+          "departures_mean_168": 3.5
+        },
+        "response": {
+          "question": "P1",
+          "model_uri": "models:/mibici-p1-demanda@champion",
+          "prediction": {
+            "demanda_esperada": 2.6144151108240576
+          }
+        },
+        "direct_prediction": 2.6144151108240576,
+        "matches": true
+      },
+      {
+        "question": "P2",
+        "registered_name": "mibici-p2-riesgo",
+        "version": "1",
+        "alias": "champion",
+        "source": "models:/m-baf7f54923ab47838896afa36c66d434",
+        "run_id": "fb52c91b260843a992fe74ecfac7201c",
+        "training_commit": "92e305f3de71dada5853035ba0081401aad197be",
+        "columns": [
+          "hour",
+          "weekday",
+          "is_weekend",
+          "month",
+          "departures_lag_1",
+          "departures_lag_24",
+          "departures_lag_168",
+          "departures_mean_24",
+          "departures_mean_168",
+          "virtual_occupancy",
+          "net_flow_lag_1",
+          "net_flow_lag_24"
+        ],
+        "request": {
+          "station_id": 2,
+          "hour": 8,
+          "weekday": 5,
+          "is_weekend": 1,
+          "month": 8,
+          "departures_lag_1": 2.0,
+          "departures_lag_24": 3.0,
+          "departures_lag_168": 4.0,
+          "departures_mean_24": 2.5,
+          "departures_mean_168": 3.5,
+          "virtual_occupancy": 0.05,
+          "net_flow_lag_1": -1.0,
+          "net_flow_lag_24": 0.5
+        },
+        "response": {
+          "question": "P2",
+          "model_uri": "models:/mibici-p2-riesgo@champion",
+          "prediction": {
+            "clase": 1,
+            "riesgo": "riesgo_sin_bicicletas",
+            "prob_normal": 0.0,
+            "prob_riesgo_sin_bicicletas": 1.0,
+            "prob_riesgo_sin_anclajes": 0.0
+          }
+        },
+        "direct_prediction": [
+          0.0,
+          1.0,
+          0.0
+        ],
+        "matches": true
+      }
+    ]
+  }
+}
