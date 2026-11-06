@@ -200,6 +200,20 @@ Comprobado en Windows 11 con Podman 6.1.4: construcción de la imagen, ejecució
 | Contenedor activo y predicciones de P1 y P2 | ![Predicciones desde el contenedor](reports/figures/evidencia/podman_prediccion.png) |
 | Validación de una entrada inválida | ![Respuesta 422](reports/figures/evidencia/podman_validacion.png) |
 
+### Verificación independiente del despliegue
+
+El [reporte de Docker](reports/deployment/README.md) conserva la construcción desde un clon de `main`, una segunda imagen con los controles de salida de esta revisión, los modelos y versiones recuperados, las respuestas HTTP y una captura de Swagger. Las predicciones de las dos imágenes coinciden con la carga directa de los champion de P1 y P2. El Registry de esta prueba usa una copia de la base histórica; sus artefactos se montan en modo de solo lectura.
+
+Con el contenedor activo y `requirements-api.txt` instalado en el entorno local, este comando funciona en Linux, macOS, PowerShell y CMD:
+
+```text
+python -m mibici.verify_api --base-url http://127.0.0.1:8000 --output reports/deployment/verificacion_local.json
+```
+
+Verifica once controles: estado del proceso, esquemas OpenAPI, predicciones de P1/P2 y siete entradas inválidas. Termina con código 1 si falla un control. La API exige demanda finita y no negativa, probabilidades finitas entre cero y uno que sumen uno, y coherencia entre clase, riesgo y probabilidad máxima. Una salida inválida del modelo devuelve 503 sin publicar sus valores.
+
+Para comprobar el manejo de una instancia iniciada **sin** `MLFLOW_TRACKING_URI`, ejecuta el mismo comando con `--unavailable`. En ese modo se espera 503 en ambas predicciones, aunque `/health` siga respondiendo 200. Este control requiere otra instancia; no representa una predicción exitosa.
+
 ## Datos y configuración
 
 Fuente: [datos abiertos de MiBici](https://www.mibici.net/es/datos-abiertos/). Se utilizaron nueve meses completos, enero-septiembre de 2026, y el catálogo de septiembre.
@@ -230,6 +244,7 @@ mibici/
   api.py
   schemas.py
   model_loader.py
+  verify_api.py
   stations.py
 references/
   Machine Learning Canvas.pdf
@@ -412,7 +427,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 225 pruebas, incluidas 46 de la API, y pasa localmente junto con lint y MkDocs estricto. La API también se comprobó contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 234 pruebas y pasa localmente junto con lint y MkDocs estricto. Las nueve pruebas nuevas cubren el verificador HTTP y las salidas inválidas del modelo. La API también se comprobó en Docker contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Calidad, validación de datos y seguridad
 
@@ -479,6 +494,17 @@ Para registrar nuevas aportaciones:
 
 El historial local se consulta con `git log origin/main --format="%h | %an | %s"`; los enlaces anteriores permiten revisar los cambios y su autoría desde GitHub.
 
+### Colaboración en la actividad de API y contenedor
+
+Esta tabla corresponde a la actividad de despliegue. Cada enlace muestra una aportación concreta de esta semana:
+
+| Integrante | Aportación | Evidencia en GitHub |
+|---|---|---|
+| Aldo Isai Pérez Hernández | Prueba de columnas faltantes y recuperación de modelos desde MLflow externo. | [PR #14](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/14) y [PR #15](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/15) |
+| Efren Pazzi Manzano | Endpoints P1/P2 por variables y esquemas de entrada/salida con Pydantic. | [PR #16](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/16) |
+| Franco Francisco Peña Colorado | Containerfile, dependencias de la API y ejecución documentada con Podman en Windows. | [PR #17](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/17) y [PR #18](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/18) |
+| Leonardo Peraza Alavez | Verificación independiente en Docker con modelos reales, controles de salida, pruebas de regresión y comando de verificación HTTP. | [Rama feat/verificacion-despliegue](https://github.com/A01793289-Franco/mna-mibici-equipo45/tree/feat/verificacion-despliegue) y [evidencia](reports/deployment/README.md) |
+
 ## Integrantes y responsabilidades
 
 | Integrante | Responsabilidad |
@@ -520,6 +546,6 @@ Las capturas `mlflow_01_lista`, `mlflow_02_detalle`, `mlflow_02_metricas_paramet
 
 Verificaciones de la segunda entrega: 74 pruebas de unidad e integración aprobadas en Linux; descarga y reconstrucción desde un clon limpio; entorno Python 3.13.15 creado por MLflow; ingesta, entrenamiento completo y carga de los tres modelos ejecutados mediante MLflow Project. Las 52 corridas del protocolo guardaron 48 modelos con sus artefactos. Los detalles están en `reports/resultados_mlflow_entrega2.md` y su JSON.
 
-Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI comprueba la suite actual de 225 pruebas y la documentación en Ubuntu y Windows.
+Las verificaciones históricas incluyen notebook exploratorio con seis figuras y análisis de errores con dos figuras. Franco también documentó la reproducción de las mejoras iniciales en Windows con Python 3.13.16: 59 pruebas, regeneración de ingesta y variables, hashes, predicción, ajuste de hiperparámetros y sensibilidad. Su evidencia se conserva en el bloque `segunda_iteracion` de [resultados_mlflow.json](reports/resultados_mlflow.json) y en el [anexo histórico](reports/TC5061_Anexo_Segunda_Iteracion_Equipo45.md). La ejecución completa del MLflow Project definitivo se comprobó en Linux; CI ejecuta la suite actual y la documentación en Ubuntu y Windows.
 
 Referencias bibliográficas y justificaciones: [propuesta](references/propuesta.md).

@@ -1,0 +1,48 @@
+{
+  "generated_at": "2026-11-06T09:44:21.552413+00:00",
+  "scope": "Árbol de trabajo de feat/verificacion-despliegue antes del commit; el escaneo incluye los archivos añadidos al índice.",
+  "python": "3.13.15",
+  "pytest": {
+    "command": "python -m pytest -q",
+    "exit_code": 0,
+    "passed": 234,
+    "subtests_passed": 12,
+    "warnings": 221,
+    "seconds": 280.92
+  },
+  "flake8": {
+    "command": "python -m flake8 mibici tests",
+    "exit_code": 0
+  },
+  "mkdocs": {
+    "command": "python -m mkdocs build --strict -f docs/mkdocs.yml",
+    "exit_code": 0
+  },
+  "bandit": {
+    "command": "python -m bandit -c pyproject.toml -r mibici -ll",
+    "exit_code": 0,
+    "severity": {
+      "low": 6,
+      "medium": 0,
+      "high": 0
+    }
+  },
+  "security": {
+    "commit": "6369efba942b6bc5a7d3c1ac3dc91b99a3d4b938",
+    "historial_incluido": true,
+    "archivos_revisados": {
+      "actuales": 95,
+      "historicos": 238,
+      "textos_grandes_omitidos": 0
+    },
+    "aprobado": true,
+    "hallazgos": []
+  },
+  "original_registry_sha256_before": "6b8caa054c8ddfe54eb83d5ca01762c6de7403f15a35c2324993db8629f5e2d9",
+  "original_registry_sha256_after": "6b8caa054c8ddfe54eb83d5ca01762c6de7403f15a35c2324993db8629f5e2d9",
+  "container_source_sha256": {
+    "mibici/api.py": "95d354682bcaaed6075e5b6261913f6b1f675f80207fcfd3d33ff331415dcf81",
+    "mibici/schemas.py": "228333831ea90b9a5d3186553e4ca5cd850711acb648722746c98d68b9774af5",
+    "mibici/verify_api.py": "d8254f3dfd5047f86ec3f49fbf58f83de1fbc1b91fe727fa75cdbe7e5295eb89"
+  }
+}

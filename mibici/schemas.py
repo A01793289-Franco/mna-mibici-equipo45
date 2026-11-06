@@ -5,6 +5,7 @@ Las variables de entrada son las mismas columnas que usan los modelos de P1 y P2
 rango y coherencia antes de cargar cualquier modelo; los campos extra se rechazan.
 """
 
+import math
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -70,15 +71,34 @@ class P2Variables(Variables):
 
 
 class P1Prediction(BaseModel):
-    demanda_esperada: float = Field(description="Salidas esperadas en la hora siguiente")
+    model_config = ConfigDict(allow_inf_nan=False)
+
+    demanda_esperada: float = Field(ge=0, description="Salidas esperadas en la hora siguiente")
 
 
 class P2Prediction(BaseModel):
+    model_config = ConfigDict(allow_inf_nan=False)
+
     clase: int = Field(ge=0, le=2, description="0 normal, 1 sin bicicletas, 2 sin anclajes")
     riesgo: Literal[cfg.P2_CLASS_NAMES]
     prob_normal: float = Field(ge=0, le=1)
     prob_riesgo_sin_bicicletas: float = Field(ge=0, le=1)
     prob_riesgo_sin_anclajes: float = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def probabilities_match_risk(self):
+        values = [
+            self.prob_normal,
+            self.prob_riesgo_sin_bicicletas,
+            self.prob_riesgo_sin_anclajes,
+        ]
+        if not math.isclose(sum(values), 1.0, abs_tol=1e-6):
+            raise ValueError("Las probabilidades deben sumar uno")
+        if self.riesgo != cfg.P2_CLASS_NAMES[self.clase]:
+            raise ValueError("El riesgo no coincide con la clase")
+        if values[self.clase] != max(values):
+            raise ValueError("La clase no coincide con la probabilidad máxima")
+        return self
 
 
 class P1Response(BaseModel):
