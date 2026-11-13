@@ -467,6 +467,44 @@ La [guía de tests](tests/README.md) identifica cada grupo y sus fixtures. Para 
 
 [Pruebas y CI](docs/docs/verificacion.md) detalla cada control y las vulnerabilidades revisadas. La [evidencia de seguridad](reports/security/README.md) conserva los resultados de la revisión y de los análisis ejecutados.
 
+## Monitoreo de drift con Evidently
+
+Compara los datos con los que se entrenó el modelo contra datos posteriores y mide si las variables de entrada cambiaron. El reporte HTML muestra el *data drift* por variable y la calidad de los datos.
+
+```text
+python -m pip install -r requirements-validation.txt
+python -m mibici.monitoring
+```
+
+Tarda unos 2 minutos. Escribe en `reports/evidently/` un reporte HTML por conjunto (`p1_sep.html`, `p2_sep.html`) y los resúmenes [resumen.md](reports/evidently/resumen.md) y `resumen.json`. Con `--current sep jul_ago` añade la comparación con julio-agosto (sus HTML quedan fuera de Git) y con `--dataset p1` se limita a un conjunto.
+
+**Conjuntos elegidos y por qué:**
+
+| Conjunto | Periodo | Motivo |
+|---|---|---|
+| Referencia | Entrenamiento: 2026-01-08 a 2026-06-30 | Es la distribución con la que se ajustaron los modelos. |
+| Actual | Septiembre 2026 | Es el periodo posterior más reciente de los datos abiertos y simula producción. Cambia de temporada respecto al entrenamiento. |
+| Actual (adicional) | Julio-agosto 2026 | Periodo intermedio, para ver si el cambio es gradual. |
+
+No hay un año posterior en los datos abiertos que usa el proyecto, y la API no registra las peticiones que recibe, por eso septiembre hace de producción. Solo se comparan las variables de entrada: no se compara el objetivo ni las predicciones, de modo que no se evalúa ningún modelo ni se usa septiembre para decidir (el uso único de la prueba ya se hizo). `month` se excluye porque cada periodo cubre meses distintos y siempre mostraría drift. Se usan todas las filas y los umbrales por defecto de Evidently: distancia de Wasserstein normalizada 0.1 en variables numéricas y de Jensen-Shannon 0.1 en categóricas; el conjunto tiene drift si la mitad o más de las variables lo muestran.
+
+**Evidencia de ejecución:** ![Reporte de Evidently para P1](reports/figures/evidencia/evidently_p1.png) ![Reporte de Evidently para P2](reports/figures/evidencia/evidently_p2.png)
+
+**Resultados** (detalle en [resumen.md](reports/evidently/resumen.md)):
+
+| Comparación | Variables con drift | Conjunto con drift |
+|---|---|---|
+| P1, entrenamiento contra septiembre | 1 de 9 (`station_id`) | No |
+| P1, entrenamiento contra julio-agosto | 2 de 9 (`station_id`, `departures_mean_168`) | No |
+| P2, entrenamiento contra septiembre | 1 de 12 (`station_id`) | No |
+| P2, entrenamiento contra julio-agosto | 2 de 12 (`station_id`, `departures_mean_168`) | No |
+
+- **`station_id`** (distancia 0.26 en septiembre): hay 58 estaciones que no aparecen en el entrenamiento (413 estaciones contra 471) y suman 12.2% de las filas de septiembre. Es un cambio esperado de la red de estaciones. El modelo de P1 con estación agrupa las no vistas en una categoría "otras", así que no las distingue.
+- **Demanda reciente:** en septiembre el nivel sube (media de `departures_lag_1` de 1.30 a 1.44) y en julio-agosto baja (a 1.17), en sentidos opuestos respecto al entrenamiento. Las variables `departures_mean_24` (0.095) y `departures_mean_168` (0.086) quedan cerca del umbral de 0.1 en septiembre, y en julio-agosto `departures_mean_168` lo supera (0.105). Son cambios estacionales de nivel, todavía moderados.
+- **Calidad:** en ningún periodo hay valores faltantes, filas duplicadas por estación y hora ni columnas constantes.
+
+Lo que no cubre: no mide *prediction drift* ni *target drift*, no usa datos reales de una API en producción y el resultado de este periodo no garantiza que no haya drift en meses futuros. Con estos resultados el drift no justifica por sí solo reentrenar; conviene vigilar el nivel de demanda reciente y reentrenar cuando se incorporen estaciones nuevas.
+
 ## Flujo de trabajo
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.

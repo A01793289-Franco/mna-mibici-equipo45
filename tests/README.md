@@ -13,7 +13,7 @@ python -m pytest -v
 | Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_hourly_counts.py` |
 | Entrenamiento y reproducibilidad | `test_train.py`, `test_stations.py`, `test_sensitivity.py`, `test_reproducibility.py` |
 | MLflow Project y Registry | `test_project.py`, `test_registry_integration.py`, `test_predict.py` |
-| Validación DeepChecks | `test_validation.py` |
+| Validación DeepChecks y monitoreo Evidently | `test_validation.py`, `test_monitoring.py` |
 | API y seguridad | `test_api.py`, `test_security.py`, `test_repository_security.py` |
 | Recuperación y variables de la API | `test_model_loader.py`, `test_api_variables.py` |
 | Verificador HTTP y salidas del modelo | `test_verify_api.py` |
