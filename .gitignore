@@ -208,6 +208,7 @@ mlartifacts_contenedor/
 *.joblib
 # Reportes HTML de DeepChecks (pesados); se versionan resumen.json y resumen.md
 reports/deepchecks/html/
+reports/evidently/*_jul_ago.html
 *.skops
 *.onnx
 *.h5
