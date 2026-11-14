@@ -29,6 +29,13 @@ class TestProject(unittest.TestCase):
         args.final_test = "true"
         self.assertIn("--final-test", project.training_arguments(args))
 
+    def test_train_window_reaches_training_only_when_requested(self):
+        args = project.parser().parse_args(["train", "--question", "p1"])
+        self.assertNotIn("--train-window", project.training_arguments(args))
+        args.train_window = "train_val"
+        values = project.training_arguments(args)
+        self.assertEqual(values[values.index("--train-window") + 1], "train_val")
+
     def test_invalid_boolean_is_rejected(self):
         with self.assertRaises(ValueError):
             project.boolean("yes")
@@ -41,6 +48,26 @@ class TestProject(unittest.TestCase):
             ["--question", "p1", "--learning-rate", "nan"],
             ["--question", "p1", "--seed", "-1"],
             ["--question", "p1", "--model", "hgb", "--tune"],
+            ["--question", "p2", "--model", "hgb", "--train-window", "train_val"],
+            ["--question", "p1", "--train-window", "train_val"],
+            [
+                "--question",
+                "p1",
+                "--model",
+                "hgb_station",
+                "--train-window",
+                "train_val",
+                "--tune",
+            ],
+            [
+                "--question",
+                "p1",
+                "--model",
+                "hgb_station",
+                "--train-window",
+                "train_val",
+                "--final-test",
+            ],
         ):
             with (
                 self.subTest(arguments=arguments),

@@ -27,6 +27,9 @@ def training_arguments(args):
     register_default = cfg.PROJECT_REGISTER and args.model == "all"
     if not resolve(args.register, register_default, boolean):
         arguments.append("--no-register")
+    window = resolve(args.train_window, "train")
+    if window != "train":
+        arguments += ["--train-window", window]
     for key in ("learning_rate", "max_iter", "max_leaf_nodes", "l2_regularization", "c"):
         value = getattr(args, key)
         if value != "config":
@@ -83,7 +86,8 @@ def parser():
         ("n-clusters", "Número de grupos P3"),
         ("tune", "Búsqueda: true/false"),
         ("final-test", "Evaluación final de septiembre: true/false"),
-        ("register", "Promoción a champion: true/false"),
+        ("register", "Registro en el Model Registry: true/false"),
+        ("train-window", "Ventana: train o train_val"),
     ):
         training.add_argument(
             "--" + name, default="config", help=description + "; config usa config.py"

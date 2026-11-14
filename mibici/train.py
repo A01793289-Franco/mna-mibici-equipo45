@@ -77,6 +77,8 @@ HORIZON_LABEL = f"h{cfg.HORIZON_HOURS}"
 # Registro de modelos: un nombre por pregunta y el alias de la versión elegida.
 REGISTERED_MODELS = {"P1": "mibici-p1-demanda", "P2": "mibici-p2-riesgo", "P3": "mibici-p3-grupos"}
 CHAMPION_ALIAS = "champion"
+# Versión alternativa registrada para compararla con champion; no la usa la API.
+CHALLENGER_ALIAS = "challenger"
 # Regla de elección del campeón: solo métricas de validación. (métrica, True si mayor es mejor)
 CHAMPION_RULE = {"P1": ("val_mae", False), "P2": ("val_f1_macro", True), "P3": ("val_ari", True)}
 MODEL_ARTIFACT = "model"
@@ -665,24 +667,54 @@ def register_champion(question, candidates):
     se registra igual, pero la versión queda etiquetada ``supera_baselines=no`` y se avisa.
     Regresa ``(nombre_del_run, version)`` o ``None`` si no hay modelo.
     """
-    import mlflow
     from mlflow.tracking import MlflowClient
 
     best = pick_champion(question, candidates)
     if best is None:
         print(f"{question}: ningún run guardó un modelo; no se registra nada.")
         return None
-    run_id = candidates[best][0]
     name = REGISTERED_MODELS[question]
-    version = mlflow.register_model(model_uri(run_id), name)
-    client = MlflowClient()
-    source = client.get_run(run_id)
     description = (
         f"Equipo {cfg.TEAM}, {question}. Selección por {CHAMPION_RULE[question][0]} en validación; "
         "la prueba no participa. P2 es un proxy simulado; P3 asigna perfiles por centroides "
         "(K-means) o por perfil de entrenamiento más cercano (Ward)."
     )
+    version = _register_validated(question, candidates[best][0], description)
+    client = MlflowClient()
     client.update_registered_model(name, description=description)
+    client.set_registered_model_alias(name, CHAMPION_ALIAS, version)
+    metric = CHAMPION_RULE[question][0]
+    beaten_by = baselines_beating(question, best, candidates)
+    client.set_model_version_tag(name, version, "run_name", best)
+    client.set_model_version_tag(name, version, "criterio", f"{metric} en validación")
+    client.set_model_version_tag(
+        name,
+        version,
+        "supera_baselines",
+        "no: " + ", ".join(beaten_by) if beaten_by else "si",
+    )
+    print(f"{question}: {name} v{version} @{CHAMPION_ALIAS} <- {best}", flush=True)
+    if beaten_by:
+        print(
+            f"Aviso {question}: {', '.join(beaten_by)} supera al modelo en {metric}; "
+            "el modelo no aporta frente a esa regla.",
+            flush=True,
+        )
+    return best, int(version)
+
+
+def _register_validated(question, run_id, description):
+    """Crea una versión del modelo de la pregunta, la etiqueta y comprueba que carga y predice.
+
+    Regresa el número de versión. Si la comprobación falla, la versión queda sin alias.
+    """
+    import mlflow
+    from mlflow.tracking import MlflowClient
+
+    name = REGISTERED_MODELS[question]
+    version = mlflow.register_model(model_uri(run_id), name)
+    client = MlflowClient()
+    source = client.get_run(run_id)
     client.update_model_version(name, version.version, description=f"{description} Run: {run_id}.")
     for key, value in {
         "equipo": cfg.TEAM,
@@ -700,25 +732,29 @@ def register_champion(question, candidates):
     finally:
         client.delete_registered_model_alias(name, candidate_alias)
     client.set_model_version_tag(name, version.version, "validation_status", "passed")
-    client.set_registered_model_alias(name, CHAMPION_ALIAS, version.version)
-    metric = CHAMPION_RULE[question][0]
-    beaten_by = baselines_beating(question, best, candidates)
-    client.set_model_version_tag(name, version.version, "run_name", best)
-    client.set_model_version_tag(name, version.version, "criterio", f"{metric} en validación")
-    client.set_model_version_tag(
-        name,
-        version.version,
-        "supera_baselines",
-        "no: " + ", ".join(beaten_by) if beaten_by else "si",
+    return version.version
+
+
+def register_challenger(question, run_id, run_name, criterio):
+    """Registra una versión alternativa con el alias ``challenger``; ``champion`` no se mueve.
+
+    La promoción se decide aparte, comparando ambas versiones en un periodo que ninguna usó
+    para entrenar.
+    """
+    from mlflow.tracking import MlflowClient
+
+    name = REGISTERED_MODELS[question]
+    description = (
+        f"Equipo {cfg.TEAM}, {question}. Versión alternativa: {criterio}. "
+        "No sustituye al champion hasta compararla."
     )
-    print(f"{question}: {name} v{version.version} @{CHAMPION_ALIAS} <- {best}", flush=True)
-    if beaten_by:
-        print(
-            f"Aviso {question}: {', '.join(beaten_by)} supera al modelo en {metric}; "
-            "el modelo no aporta frente a esa regla.",
-            flush=True,
-        )
-    return best, int(version.version)
+    version = _register_validated(question, run_id, description)
+    client = MlflowClient()
+    client.set_model_version_tag(name, version, "run_name", run_name)
+    client.set_model_version_tag(name, version, "criterio", criterio)
+    client.set_registered_model_alias(name, CHALLENGER_ALIAS, version)
+    print(f"{question}: {name} v{version} @{CHALLENGER_ALIAS} <- {run_name}", flush=True)
+    return run_name, int(version)
 
 
 def search_combinations():
@@ -1027,6 +1063,76 @@ def run_p1(
     if register:
         register_champion("P1", candidates)
     return results
+
+
+def run_p1_reentrenado(
+    tables=None,
+    figures_dir=cfg.FIGURES_DIR,
+    context=None,
+    register=True,
+    model_params=None,
+    seed=cfg.SEED,
+):
+    """P1 alternativo: HGB con estación reentrenado con enero-agosto (entrenamiento y validación).
+
+    Septiembre, que ninguna versión usó para entrenar, es el periodo de evaluación; sus métricas
+    llevan el prefijo ``test_``. La versión se registra como ``challenger`` y ``champion`` no se
+    mueve.
+    """
+    data = tables if tables is not None else pd.read_parquet(cfg.FEATURE_FILES["p1"])
+    context = context or run_context()
+    frames, _ = _split_frames(data, final_test=False)
+    if frames["test"].empty:
+        raise ValueError("Faltan filas de septiembre para evaluar el reentrenamiento")
+    training = pd.concat([frames["train"], frames["val"]], ignore_index=True)
+    test = frames["test"]
+    columns = list(P1_FEATURE_COLUMNS_V2)
+    model_params = {**(model_params or {}), "random_state": seed}
+    start = time.perf_counter()
+    model = make_demand_station_model(**model_params).fit(training[columns], training[P1_TARGET])
+    fit_seconds = time.perf_counter() - start
+    prediction = model.predict(test[columns])
+    metrics = regression_metrics(test[P1_TARGET], prediction, "test")
+    metrics["fit_seconds"] = fit_seconds
+    metrics["inference_seconds_per_1000"] = inference_cost(model, test[columns])
+    run_name = f"P1_hgb_poisson_estacion_reentrenado_{HORIZON_LABEL}"
+    figure = plot_demand_by_hour(
+        test,
+        prediction,
+        f"P1 reentrenado enero-agosto: demanda por hora ({HORIZON_LABEL}, septiembre)",
+        Path(figures_dir) / f"p1_hgb_poisson_estacion_reentrenado_{HORIZON_LABEL}.png",
+    )
+    grouper, estimator = model.steps[0][1], model.steps[-1][1]
+    params = {
+        **_common_params(context, columns, {"train": len(training), "test": len(test)}, seed),
+        "train_end_exclusive": cfg.VALIDATION_END.isoformat(),
+        "ventana_entrenamiento": "train+val",
+        "modelo": "StationGrouper + HistGradientBoostingRegressor",
+        "loss": "poisson",
+        **estimator.get_params(),
+        "station_id": "categórica: estaciones frecuentes y 'otras'",
+        "categorias_estacion": grouper.n_categories_,
+        "estaciones_en_otras": grouper.n_grouped_stations_,
+    }
+    run_id = log_run(
+        run_name,
+        "P1",
+        "candidato",
+        params,
+        metrics,
+        [figure],
+        context,
+        model=model,
+        input_example=training[columns],
+        training=training[[*columns, P1_TARGET]],
+        target=P1_TARGET,
+    )
+    _print_results("P1", {run_name: metrics})
+    if register:
+        register_challenger(
+            "P1", run_id, run_name, "reentrenado con enero-agosto; evaluado en septiembre"
+        )
+    return {run_name: metrics}
 
 
 def run_p2(
@@ -1353,6 +1459,12 @@ def main(argv=None):
         help="entrena y registra runs, pero no crea versiones ni alias en el Model Registry",
     )
     parser.add_argument(
+        "--train-window",
+        choices=["train", "train_val"],
+        default="train",
+        help="train_val: P1 hgb_station reentrenado con enero-agosto y registrado como challenger",
+    )
+    parser.add_argument(
         "--figures-dir",
         type=Path,
         default=cfg.FIGURES_DIR,
@@ -1392,6 +1504,12 @@ def main(argv=None):
             or (value == 0 and key != "l2_regularization")
         ):
             parser.error(f"Valor inválido de {key}: {value}")
+    if args.train_window == "train_val" and (
+        args.question != "P1" or args.model != "hgb_station" or args.tune or args.final_test
+    ):
+        parser.error(
+            "train_val solo aplica a P1 con model=hgb_station, sin --tune ni --final-test"
+        )
     if "c" in model_params:
         model_params["C"] = model_params.pop("c")
     verify_inputs()
@@ -1402,6 +1520,15 @@ def main(argv=None):
         print("Aviso: hay cambios sin commit; el commit registrado no describe el código exacto.")
     questions = list(RUNNERS) if args.question == "all" else [args.question]
     with project_run():
+        if args.train_window == "train_val":
+            run_p1_reentrenado(
+                context=context,
+                register=not args.no_register,
+                figures_dir=args.figures_dir,
+                model_params=model_params,
+                seed=args.seed,
+            )
+            questions = []
         for question in questions:
             kwargs = {
                 "context": context,

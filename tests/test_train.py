@@ -427,6 +427,38 @@ class TestMlflowRuns(unittest.TestCase):
         after = len(client.search_model_versions(f"name = '{train.REGISTERED_MODELS['P1']}'"))
         self.assertEqual(before, after)
 
+    def test_retrained_p1_registers_challenger_without_moving_champion(self):
+        data = demand_table()
+        name = train.REGISTERED_MODELS["P1"]
+        train.run_p1(data, figures_dir=self.root / "figs", context=self.context)
+        client = self.mlflow.tracking.MlflowClient()
+        champion = client.get_model_version_by_alias(name, "champion").version
+        results = train.run_p1_reentrenado(
+            data, figures_dir=self.root / "figs", context=self.context
+        )
+        metrics = results["P1_hgb_poisson_estacion_reentrenado_h1"]
+        self.assertIn("test_mae", metrics)
+        self.assertFalse(any(key.startswith("val_") for key in metrics))
+        challenger = client.get_model_version_by_alias(name, "challenger")
+        self.assertGreater(int(challenger.version), int(champion))
+        self.assertEqual(challenger.tags["validation_status"], "passed")
+        self.assertIn("enero-agosto", challenger.tags["criterio"])
+        self.assertEqual(client.get_model_version_by_alias(name, "champion").version, champion)
+        params = client.get_run(challenger.run_id).data.params
+        self.assertEqual(int(params["rows_train"]), int(data.split.isin(["train", "val"]).sum()))
+        self.assertEqual(params["train_end_exclusive"], cfg.VALIDATION_END.isoformat())
+
+    def test_retrained_p1_requires_september_rows(self):
+        data = demand_table()
+        client = self.mlflow.tracking.MlflowClient()
+        name = train.REGISTERED_MODELS["P1"]
+        before = len(client.search_model_versions(f"name = '{name}'"))
+        with self.assertRaises(ValueError):
+            train.run_p1_reentrenado(
+                data[data.split != "test"], figures_dir=self.root / "figs", context=self.context
+            )
+        self.assertEqual(len(client.search_model_versions(f"name = '{name}'")), before)
+
     def test_p1_test_metrics_only_with_final_test(self):
         results = train.run_p1(
             demand_table(),
