@@ -13,6 +13,7 @@ python -m pytest -v
 | Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_hourly_counts.py` |
 | Entrenamiento y reproducibilidad | `test_train.py`, `test_stations.py`, `test_sensitivity.py`, `test_reproducibility.py` |
 | MLflow Project y Registry | `test_project.py`, `test_registry_integration.py`, `test_predict.py` |
+| Comparación A/B de versiones registradas | `test_abtest.py` |
 | Validación DeepChecks y monitoreo Evidently | `test_validation.py`, `test_monitoring.py` |
 | API y seguridad | `test_api.py`, `test_security.py`, `test_repository_security.py` |
 | Recuperación y variables de la API | `test_model_loader.py`, `test_api_variables.py` |
@@ -25,6 +26,8 @@ python -m pytest tests/test_security.py tests/test_repository_security.py -v
 ```
 
 Los repositorios Git, archivos de datos y modelos que necesitan las pruebas se crean en carpetas temporales. La suite usa ejemplos sintéticos y no requiere el dataset real ni el servidor de MLflow del equipo.
+
+Las 12 pruebas A/B cubren la partición temporal, filas duplicadas, datos y predicciones inválidos, el origen de las estaciones conocidas, la reproducibilidad del bootstrap, la decisión por segmentos y la carga de versiones en un Registry temporal. Verifican que la comparación no cambie los alias. La evidencia con los dos modelos reales se genera por separado con `python -m mibici.abtest` y se conserva en `reports/abtest/`.
 
 El escaneo del repositorio y su historial es una comprobación adicional, separada de los ejemplos sintéticos:
 

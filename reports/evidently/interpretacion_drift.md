@@ -134,21 +134,21 @@ Las métricas ya se calcularon en la segunda entrega (`reports/resultados_mlflow
 | Julio–agosto | 1.17 | 0.750 | 64.0 % |
 | Septiembre | 1.44 | 0.862 | 59.7 % |
 
-La demanda media se obtiene como MAE ÷ WAPE y coincide con la media de `departures_lag_1` del resumen de Evidently. En septiembre el MAE sube 15 % mientras la demanda sube 23 %; el WAPE, que divide el error entre la demanda, baja. El error crece en viajes porque hay más viajes, no porque el modelo empeore en términos relativos. La referencia estacional, que no aprende nada, sube en la misma proporción (MAE de 0.899 a 1.026, +14 %), lo que confirma que el cambio viene del nivel de demanda del periodo. Coincide con Evidently: las variables de demanda reciente se mueven en el sentido del nivel (bajan en julio–agosto, suben en septiembre) sin superar el umbral en septiembre.
+La demanda media del objetivo se obtiene como MAE ÷ WAPE y es próxima a la media del rezago `departures_lag_1` del resumen de Evidently; no son exactamente la misma variable ni las mismas horas. En septiembre el MAE sube aproximadamente 15 % y la demanda media 23 %, mientras el WAPE baja. El aumento de demanda y el cambio de la referencia estacional (MAE de 0.899 a 1.026) son compatibles con un cambio de escala, pero esta comparación descriptiva no demuestra la causa del error. Las variables de demanda reciente cambian entre periodos y no superan el umbral de drift en septiembre. El mejor WAPE global tampoco garantiza el mismo comportamiento en cada estación.
 
 ### Modelo P2 — Clasificación de riesgo (champion: persistencia)
 
 El F1 macro pasa de 0.882 en julio–agosto a 0.870 en septiembre (−1.5 %). La regla solo usa `virtual_occupancy`, que no presenta drift en ningún periodo (0.075 en septiembre, 0.047 en julio–agosto), y su desempeño se mantiene.
 
-**Límite:** las métricas son globales. No hay desglose entre estaciones conocidas y nuevas, que es donde el drift de `station_id` podría concentrar el error de P1.
+**Desglose de P1:** la [comparación A/B](../abtest/resultados.md) evalúa las mismas filas de septiembre y separa las 413 estaciones conocidas por A de las 58 nuevas. B mejora el MAE en ambos segmentos; en las nuevas su WAPE sigue en 101.23 %. Su menor MAE absoluto no implica buen error relativo: tienen menor demanda. El cambio en `station_id` justifica esta vigilancia por segmento, aunque la comparación no prueba que ese cambio cause los errores.
 
-**Importante:** Evidently identificó cambios en las distribuciones de las variables de entrada; las métricas de esta sección son las que permiten afirmar que, por ahora, esos cambios no se traducen en deterioro relativo.
+**Importante:** Evidently identifica cambios de distribución, no degradación ni causalidad. Las métricas globales de esta sección y el desglose A/B complementan la interpretación. La ausencia de drift global no garantiza estabilidad del desempeño.
 
 ## 7. Recomendaciones técnicas
 
 1. Mantener el monitoreo periódico de `station_id`, `departures_mean_168` y `departures_mean_24`.
-2. En la próxima evaluación, desglosar el error de P1 entre estaciones conocidas y nuevas; las métricas actuales son globales.
-3. Comparar resultados entre estaciones conocidas y estaciones nuevas.
+2. Mantener mensualmente el desglose de P1 entre estaciones conocidas y nuevas implementado en `mibici.abtest`.
+3. Revisar MAE y WAPE juntos; el WAPE superior a 100 % en estaciones nuevas exige seguimiento aunque B mejore su MAE.
 4. Investigar los cambios en el catálogo y la participación relativa de las estaciones.
 5. Complementar las alertas globales con monitoreo por variable y segmento.
 6. No reentrenar solo por drift. Reentrenar con datos recientes incorpora las filas de las estaciones nuevas y el nivel de demanda más reciente, pero no les da categoría propia: con menos historia siguen en "otras". La nueva versión se registra en MLflow y sustituye al champion solo si mejora en un periodo que ninguna de las dos usó para entrenar.
@@ -164,7 +164,7 @@ Sin embargo, se identificaron dos hallazgos relevantes:
 
 **Segundo**, `departures_mean_168` presenta un cambio temporal durante julio–agosto, lo que sugiere modificaciones en los patrones históricos de demanda.
 
-Las métricas ya calculadas muestran que estos cambios no deterioran el desempeño relativo: el MAE de P1 sube con la demanda pero su WAPE baja, y el F1 macro de P2 apenas cambia. Estos hallazgos justifican mantener un monitoreo continuo y evaluar el desempeño por periodo y estación.
+En las métricas globales ya calculadas, el WAPE de P1 baja y el F1 macro de P2 cambia poco; esto no descarta deterioro en segmentos concretos ni demuestra la causa del cambio. La comparación A/B recomienda B por una mejora pequeña y consistente en septiembre, con límites retrospectivos explícitos. Estos hallazgos justifican mantener el monitoreo por periodo y estación.
 
 **No se recomienda reemplazar inmediatamente los modelos únicamente por los resultados de drift.** La decisión de reentrenamiento debe complementarse con la comparación de métricas de desempeño y la evaluación de versiones alternativas registradas en MLflow.
 

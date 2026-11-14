@@ -1,0 +1,95 @@
+{
+  "review_date": "2026-11-14",
+  "training_code": "61f237f05e5ddddd8101460a6b8e7524f8cf8c21",
+  "abtest_code": "17eb7296b0c04ba7ad62e363b46d82506d2fdb02",
+  "pytest": {
+    "passed": 259,
+    "subtests_passed": 16,
+    "warnings": 243,
+    "exit_code": 0
+  },
+  "flake8": {
+    "exit_code": 0
+  },
+  "mkdocs_strict": {
+    "exit_code": 0
+  },
+  "bandit": {
+    "command": "python -m bandit -c pyproject.toml -r mibici -ll",
+    "exit_code": 0,
+    "low": 6,
+    "medium": 0,
+    "high": 0
+  },
+  "pip_audit": {
+    "exit_code": 0,
+    "ignored_ids": [
+      "PYSEC-2026-3447",
+      "GHSA-xmj3-9gf7-h52w"
+    ],
+    "ignored_advisories": 3,
+    "exceptions_documented_in": "docs/docs/verificacion.md"
+  },
+  "security": {
+    "commit": "17eb7296b0c04ba7ad62e363b46d82506d2fdb02",
+    "historial_incluido": true,
+    "archivos_revisados": {
+      "actuales": 109,
+      "historicos": 272,
+      "textos_grandes_omitidos": 0
+    },
+    "aprobado": true,
+    "hallazgos": []
+  },
+  "pdf": {
+    "pages": 7,
+    "body_pages": 4,
+    "annex_pages": 2,
+    "cover_pages": 1,
+    "font": "Liberation Sans (Arial equivalent)",
+    "body_font_size": 11,
+    "body_leading": 12.65,
+    "visually_reviewed": true
+  },
+  "drift_reproduction": {
+    "evidently": "0.7.23",
+    "data_version_matches": true,
+    "feature_version_matches": true,
+    "comparisons": [
+      {
+        "dataset": "p1",
+        "period": "sep",
+        "quality_matches": true,
+        "drift_matches": true,
+        "score_tolerance": 1e-12
+      },
+      {
+        "dataset": "p1",
+        "period": "jul_ago",
+        "quality_matches": true,
+        "drift_matches": true,
+        "score_tolerance": 1e-12
+      },
+      {
+        "dataset": "p2",
+        "period": "sep",
+        "quality_matches": true,
+        "drift_matches": true,
+        "score_tolerance": 1e-12
+      },
+      {
+        "dataset": "p2",
+        "period": "jul_ago",
+        "quality_matches": true,
+        "drift_matches": true,
+        "score_tolerance": 1e-12
+      }
+    ]
+  },
+  "real_registry_versions": {
+    "A": 1,
+    "B": 2,
+    "name": "mibici-p1-demanda",
+    "aliases_unchanged": true
+  }
+}

@@ -427,7 +427,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 247 pruebas y pasa localmente junto con lint y MkDocs estricto. Las nueve pruebas nuevas cubren el verificador HTTP y las salidas inválidas del modelo. La API también se comprobó en Docker contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 259 pruebas aprobadas localmente. Las 12 incorporadas en esta entrega cubren la comparación A/B, sus controles temporales y la recuperación de versiones del Registry. La API también se comprobó en Docker contra los champion reales de P1 y P2 en la entrega de despliegue. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. Los reportes conservan la evidencia de sus corridas originales.
 
 ## Calidad, validación de datos y seguridad
 
@@ -526,6 +526,35 @@ En septiembre, la versión 2 obtiene MAE 0.8577, RMSE 1.6111, WAPE 59.41 % y R²
 
 ![Model Registry con champion y challenger](reports/figures/evidencia/registry_challenger.png)
 
+## Comparación A/B de versiones registradas
+
+La entrega de drift completa los seis pasos de la actividad con una comparación **offline retrospectiva de P1**, sobre exactamente las mismas 338,690 filas de septiembre y 471 estaciones. El código resuelve los alias una vez, carga las versiones numéricas del Registry, comprueba firmas y versiones de datos, y rechaza entrenamientos que alcancen el periodo de evaluación. No modifica los alias.
+
+```text
+python -m mibici.abtest
+python -m mibici.abtest --champion-version 1 --challenger-version 2
+```
+
+Se usa `MLFLOW_TRACKING_URI` del entorno o `--tracking-uri`. Primero se generan los datos y las variables, y se registran las dos versiones como explica la sección anterior. La comparación guarda parámetros, métricas, versiones, hashes y artefactos en MLflow y en `reports/abtest/`.
+
+| Métrica en septiembre | A: v1, enero-junio | B: v2, enero-agosto |
+|---|---:|---:|
+| MAE | 0.862040 | 0.857719 |
+| RMSE | 1.668304 | 1.611107 |
+| WAPE | 59.7064 % | 59.4071 % |
+| R² | 0.642540 | 0.666630 |
+
+**Resultado:** se recomienda B. Reduce el MAE un 0.5013 %; la diferencia MAE(A)-MAE(B) es 0.004321, con intervalo del 95 % [0.002236, 0.006238] mediante bootstrap pareado en bloques circulares de siete días, 5,000 repeticiones y semilla 42. Mejora también RMSE y MAE en las 58 estaciones nuevas respecto de A. En estas estaciones el WAPE de B sigue siendo 101.23 %: el error es grande en relación con su demanda, aunque su MAE sea bajo. La mejora global es pequeña y no garantiza beneficios en otros meses.
+
+La reproducción utilizó un Registry local aislado y el entrenamiento existente de `main` en `61f237f`; las versiones 1 y 2 son las de esa reproducción. El comparador se ejecutó desde el commit limpio `17eb729`. Septiembre ya había sido consultado en entregas previas: esta comparación no constituye una prueba final inédita ni un experimento aleatorio con tráfico real. No se ajustaron hiperparámetros a partir del resultado A/B.
+
+El monitoreo mensual propuesto combina calidad, drift por variable y segmento y desempeño cuando se dispone de etiquetas. Una alerta inicia revisión; no dispara una promoción automática. Se reentrena con datos anteriores a una nueva ventana de evaluación, se registra otra versión y se aplica la comparación pareada antes de decidir el cambio; se conserva la versión anterior para reversión.
+
+- [Protocolo y reglas de decisión](references/protocolo_abtest.md).
+- [Resultados y límites](reports/abtest/resultados.md), [JSON completo](reports/abtest/resultados.json) y [gráfica](reports/abtest/comparacion.png).
+- [Revisión de la actividad y verificaciones](reports/abtest/revision_actividad.md).
+- [Reporte PDF de entrega](reports/TC5061_Drift_ABTest_Equipo45.pdf).
+
 ## Flujo de trabajo
 
 - Ramas `feat/descripcion`, `fix/descripcion`, `docs/descripcion` o `chore/descripcion`.
@@ -563,6 +592,15 @@ Esta tabla corresponde a la actividad de despliegue. Cada enlace muestra una apo
 | Efren Pazzi Manzano | Endpoints P1/P2 por variables y esquemas de entrada/salida con Pydantic. | [PR #16](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/16) |
 | Franco Francisco Peña Colorado | Containerfile, dependencias de la API y ejecución documentada con Podman en Windows. | [PR #17](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/17) y [PR #18](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/18) |
 | Leonardo Peraza Alavez | Verificación independiente en Docker con modelos reales, controles de salida, pruebas de regresión y comando de verificación HTTP. | [Rama feat/verificacion-despliegue](https://github.com/A01793289-Franco/mna-mibici-equipo45/tree/feat/verificacion-despliegue) y [evidencia](reports/deployment/README.md) |
+
+### Colaboración en la actividad de drift y comparación A/B
+
+| Integrante | Aportación en esta actividad | Evidencia |
+|---|---|---|
+| Efren Pazzi Manzano | Monitoreo con Evidently, pruebas, reportes y capturas. | [PR #20](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/20) |
+| Aldo Isai Pérez Hernández | Interpretación de drift e implicaciones para el modelo. | [PR #21](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/21) |
+| Franco Francisco Peña Colorado | Definición de periodos, relación con métricas y entrenamiento/registro del challenger. | [PR #22](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/22) y [PR #23](https://github.com/A01793289-Franco/mna-mibici-equipo45/pull/23) |
+| Leonardo Peraza Alavez | Comparación pareada de versiones registradas, segmentación, pruebas, reproducción independiente y reporte final. | [Código 17eb729](https://github.com/A01793289-Franco/mna-mibici-equipo45/commit/17eb7296b0c04ba7ad62e363b46d82506d2fdb02) y [rama feat/drift-abtest-entrega](https://github.com/A01793289-Franco/mna-mibici-equipo45/tree/feat/drift-abtest-entrega) |
 
 ## Integrantes y responsabilidades
 

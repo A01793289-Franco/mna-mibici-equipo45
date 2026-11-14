@@ -1,0 +1,330 @@
+{
+  "generated_at": "2026-11-14T08:30:24.739028+00:00",
+  "scope": "Comparación offline retrospectiva de versiones registradas de P1.",
+  "context": {
+    "git_commit": "17eb7296b0c04ba7ad62e363b46d82506d2fdb02",
+    "git_dirty": "false",
+    "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+    "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd"
+  },
+  "models": {
+    "A": {
+      "name": "mibici-p1-demanda",
+      "version": 1,
+      "uri": "models:/mibici-p1-demanda/1",
+      "requested_alias": "champion",
+      "run_id": "a9284a97452a4a2383b1ca148d9a15c7",
+      "train_start": "2026-01-01",
+      "train_end_exclusive": "2026-07-01",
+      "training_rows": 1552105,
+      "git_commit": "61f237f05e5ddddd8101460a6b8e7524f8cf8c21",
+      "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+      "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd",
+      "columns": [
+        "hour",
+        "weekday",
+        "is_weekend",
+        "month",
+        "departures_lag_1",
+        "departures_lag_24",
+        "departures_lag_168",
+        "departures_mean_24",
+        "departures_mean_168",
+        "station_id"
+      ]
+    },
+    "B": {
+      "name": "mibici-p1-demanda",
+      "version": 2,
+      "uri": "models:/mibici-p1-demanda/2",
+      "requested_alias": "challenger",
+      "run_id": "ad655fdb19c042a190b794e084684c8c",
+      "train_start": "2026-01-01",
+      "train_end_exclusive": "2026-09-01",
+      "training_rows": 2217852,
+      "git_commit": "61f237f05e5ddddd8101460a6b8e7524f8cf8c21",
+      "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+      "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd",
+      "columns": [
+        "hour",
+        "weekday",
+        "is_weekend",
+        "month",
+        "departures_lag_1",
+        "departures_lag_24",
+        "departures_lag_168",
+        "departures_mean_24",
+        "departures_mean_168",
+        "station_id"
+      ]
+    }
+  },
+  "evaluation": {
+    "rows": 338690,
+    "stations": 471,
+    "start": "2026-09-01T00:00:00-06:00",
+    "end": "2026-09-30T23:00:00-06:00",
+    "sha256": "7728e0f935f0a27ca4405da1836e59694c5ee9655bf250af847352d3ee7bd757",
+    "table_sha256": "b66f92d7bdb6c4838190e0cc90ae85a0f108ec1fbdad0be7114ec878368080c7"
+  },
+  "packages": {
+    "mlflow": "3.17.2",
+    "scikit-learn": "1.9.1",
+    "numpy": "2.5.3",
+    "pandas": "3.0.6",
+    "pyarrow": "25.0.0"
+  },
+  "metrics": {
+    "A": {
+      "mae": 0.8620404875078282,
+      "rmse": 1.6683036870482388,
+      "wape": 0.5970644022781725,
+      "r2": 0.6425396668180666
+    },
+    "B": {
+      "mae": 0.8577193052294183,
+      "rmse": 1.611107007232531,
+      "wape": 0.594071475435893,
+      "r2": 0.6666300808745653
+    }
+  },
+  "segments": {
+    "known": {
+      "rows": 297360,
+      "stations": 413,
+      "A": {
+        "mae": 0.9161368412508623,
+        "rmse": 1.7559510422671545,
+        "wape": 0.5798356652860657,
+        "r2": 0.6406983941124684
+      },
+      "B": {
+        "mae": 0.911665145398518,
+        "rmse": 1.694231694059946,
+        "wape": 0.5770054671947404,
+        "r2": 0.6655124514109125
+      }
+    },
+    "new": {
+      "rows": 41330,
+      "stations": 58,
+      "A": {
+        "mae": 0.472829460432374,
+        "rmse": 0.789868504995251,
+        "wape": 1.019247984127159,
+        "r2": 0.35662818456799705
+      },
+      "B": {
+        "mae": 0.46959118926804605,
+        "rmse": 0.7866790721626433,
+        "wape": 1.012267451752378,
+        "r2": 0.36181347371811423
+      }
+    }
+  },
+  "uncertainty": {
+    "method": "paired_circular_day_blocks",
+    "block_days": 7,
+    "repeats": 5000,
+    "seed": 42,
+    "confidence": 0.95,
+    "mae_improvement_a_minus_b": 0.004321182278409941,
+    "ci_low": 0.0022364589017495767,
+    "ci_high": 0.006237790400324486,
+    "daily": [
+      {
+        "date": "2026-09-01",
+        "rows": 11280,
+        "mae_a": 0.7917929227169225,
+        "mae_b": 0.7837889630178523
+      },
+      {
+        "date": "2026-09-02",
+        "rows": 11280,
+        "mae_a": 0.7944348823059556,
+        "mae_b": 0.7913912381078126
+      },
+      {
+        "date": "2026-09-03",
+        "rows": 11280,
+        "mae_a": 0.7766599667712932,
+        "mae_b": 0.767857039965297
+      },
+      {
+        "date": "2026-09-04",
+        "rows": 11280,
+        "mae_a": 0.7880745827143829,
+        "mae_b": 0.7845165522442709
+      },
+      {
+        "date": "2026-09-05",
+        "rows": 11280,
+        "mae_a": 0.8407253289670716,
+        "mae_b": 0.8258638205483797
+      },
+      {
+        "date": "2026-09-06",
+        "rows": 11280,
+        "mae_a": 0.6607948531478071,
+        "mae_b": 0.6609551500644495
+      },
+      {
+        "date": "2026-09-07",
+        "rows": 11280,
+        "mae_a": 0.7795691724387268,
+        "mae_b": 0.7763659884663534
+      },
+      {
+        "date": "2026-09-08",
+        "rows": 11280,
+        "mae_a": 0.772246467907512,
+        "mae_b": 0.7690533974087453
+      },
+      {
+        "date": "2026-09-09",
+        "rows": 11280,
+        "mae_a": 0.8117782088026992,
+        "mae_b": 0.8054072099820703
+      },
+      {
+        "date": "2026-09-10",
+        "rows": 11280,
+        "mae_a": 0.797376141801743,
+        "mae_b": 0.7970556889798986
+      },
+      {
+        "date": "2026-09-11",
+        "rows": 11280,
+        "mae_a": 0.8906115711390017,
+        "mae_b": 0.887429948182042
+      },
+      {
+        "date": "2026-09-12",
+        "rows": 11280,
+        "mae_a": 0.7464446354825399,
+        "mae_b": 0.7433890749477343
+      },
+      {
+        "date": "2026-09-13",
+        "rows": 11280,
+        "mae_a": 0.7938838061121374,
+        "mae_b": 0.7972896872828098
+      },
+      {
+        "date": "2026-09-14",
+        "rows": 11280,
+        "mae_a": 0.9433866890767086,
+        "mae_b": 0.9386348912211696
+      },
+      {
+        "date": "2026-09-15",
+        "rows": 11280,
+        "mae_a": 0.9312609583041842,
+        "mae_b": 0.9268109245501249
+      },
+      {
+        "date": "2026-09-16",
+        "rows": 11280,
+        "mae_a": 0.9104892686423866,
+        "mae_b": 0.9172238189015741
+      },
+      {
+        "date": "2026-09-17",
+        "rows": 11280,
+        "mae_a": 0.9815805527497263,
+        "mae_b": 0.9797260099639628
+      },
+      {
+        "date": "2026-09-18",
+        "rows": 11282,
+        "mae_a": 0.9391700317595658,
+        "mae_b": 0.9344693368053254
+      },
+      {
+        "date": "2026-09-19",
+        "rows": 11304,
+        "mae_a": 0.7997906565077985,
+        "mae_b": 0.7962429232940351
+      },
+      {
+        "date": "2026-09-20",
+        "rows": 11304,
+        "mae_a": 0.8039267420610112,
+        "mae_b": 0.8073988312259296
+      },
+      {
+        "date": "2026-09-21",
+        "rows": 11304,
+        "mae_a": 0.9582991818908119,
+        "mae_b": 0.9582258016085728
+      },
+      {
+        "date": "2026-09-22",
+        "rows": 11304,
+        "mae_a": 0.9966618921142524,
+        "mae_b": 0.9773562490442183
+      },
+      {
+        "date": "2026-09-23",
+        "rows": 11304,
+        "mae_a": 0.9792419378369447,
+        "mae_b": 0.9770014483447826
+      },
+      {
+        "date": "2026-09-24",
+        "rows": 11304,
+        "mae_a": 0.9132763175724127,
+        "mae_b": 0.9084641296847963
+      },
+      {
+        "date": "2026-09-25",
+        "rows": 11304,
+        "mae_a": 0.9356268358374589,
+        "mae_b": 0.9272878846446732
+      },
+      {
+        "date": "2026-09-26",
+        "rows": 11304,
+        "mae_a": 0.8432823490375642,
+        "mae_b": 0.8360022111487528
+      },
+      {
+        "date": "2026-09-27",
+        "rows": 11304,
+        "mae_a": 0.8430864146124605,
+        "mae_b": 0.8338899545428812
+      },
+      {
+        "date": "2026-09-28",
+        "rows": 11304,
+        "mae_a": 0.9231837186524702,
+        "mae_b": 0.9193346292799259
+      },
+      {
+        "date": "2026-09-29",
+        "rows": 11304,
+        "mae_a": 0.9477296291035244,
+        "mae_b": 0.9433590824523657
+      },
+      {
+        "date": "2026-09-30",
+        "rows": 11304,
+        "mae_a": 0.9656126115110403,
+        "mae_b": 0.9586023143062352
+      }
+    ]
+  },
+  "relative_mae_improvement": 0.005012737036171633,
+  "decision": {
+    "policy": "MAE menor, IC95 de mejora positivo, RMSE y MAE de estaciones nuevas sin empeorar",
+    "checks": {
+      "mae_improves": true,
+      "ci_excludes_no_improvement": true,
+      "rmse_does_not_worsen": true,
+      "new_stations_do_not_worsen": true
+    },
+    "recommended": "challenger",
+    "automatic_promotion": false
+  },
+  "run_id": "7a429366dfcd415e80e0a167217deebe"
+}
