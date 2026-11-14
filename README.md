@@ -427,7 +427,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 234 pruebas y pasa localmente junto con lint y MkDocs estricto. Las nueve pruebas nuevas cubren el verificador HTTP y las salidas inválidas del modelo. La API también se comprobó en Docker contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 247 pruebas y pasa localmente junto con lint y MkDocs estricto. Las nueve pruebas nuevas cubren el verificador HTTP y las salidas inválidas del modelo. La API también se comprobó en Docker contra los champion reales de P1 y P2. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. El reporte conserva la evidencia de sus corridas originales; estos cambios añaden una interfaz local y comprobaciones de calidad.
 
 ## Calidad, validación de datos y seguridad
 
@@ -504,6 +504,27 @@ No hay un año posterior en los datos abiertos que usa el proyecto, y la API no 
 - **Calidad:** en ningún periodo hay valores faltantes, filas duplicadas por estación y hora ni columnas constantes.
 
 Lo que no cubre: no mide *prediction drift* ni *target drift*, no usa datos reales de una API en producción y el resultado de este periodo no garantiza que no haya drift en meses futuros. Con las métricas ya calculadas, el MAE de P1 sube en septiembre al ritmo de la demanda pero su WAPE baja (64.0 % a 59.7 %), y el F1 macro de P2 casi no cambia (0.882 a 0.870): el drift no justifica por sí solo reentrenar. Reentrenar con datos recientes incorpora las filas de las estaciones nuevas, pero no les da categoría propia: con menos historia siguen en "otras". La [interpretación completa](reports/evidently/interpretacion_drift.md) detalla cada variable y su efecto en los modelos.
+
+## Versión alternativa de P1 en el Model Registry
+
+Para responder al drift se entrenó una segunda versión de `mibici-p1-demanda`: el mismo HGB con estación y los mismos hiperparámetros, pero reentrenado con enero-agosto (entrenamiento más validación) en lugar de enero-junio. Así incorpora el nivel de demanda más reciente, otra temporada y las filas de las 57 estaciones que aparecen en julio-agosto. Septiembre, que ninguna de las dos versiones usó para entrenar, queda como periodo de evaluación.
+
+Con el servidor MLflow activo y `MLFLOW_TRACKING_URI` configurada:
+
+```text
+python -m mlflow run . -e train --env-manager local --experiment-name mibici-equipo45 -P question=p1 -P model=hgb_station -P train_window=train_val -P register=true
+```
+
+La versión se registra con el alias `challenger`; `champion` no se mueve y la API sigue sirviendo la versión 1. Antes de asignar el alias, la versión se carga desde el Registry y se comprueba que reproduce sus predicciones (`validation_status=passed`). La promoción se decide al comparar ambas versiones.
+
+| Versión | Alias | Entrenamiento | Filas | Estaciones en "otras" | Commit |
+|---|---|---|---|---|---|
+| 1 | `champion` | 2026-01-08 a 2026-06-30 | 1,552,105 | 159 de 413 | `af7bf60` |
+| 2 | `challenger` | 2026-01-08 a 2026-08-31 | 2,217,852 | 216 de 470 | `a78a5dc` |
+
+En septiembre, la versión 2 obtiene MAE 0.8577, RMSE 1.6111, WAPE 59.41 % y R² 0.6666. El agrupador sigue conservando 254 estaciones, las de más filas, así que las estaciones nuevas entran al entrenamiento dentro de "otras" y no con categoría propia.
+
+![Model Registry con champion y challenger](reports/figures/evidencia/registry_challenger.png)
 
 ## Flujo de trabajo
 
