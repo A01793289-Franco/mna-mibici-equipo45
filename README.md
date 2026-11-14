@@ -482,13 +482,13 @@ Tarda unos 2 minutos. Escribe en `reports/evidently/` un reporte HTML por conjun
 
 | Conjunto | Periodo | Motivo |
 |---|---|---|
-| Referencia | Entrenamiento: 2026-01-08 a 2026-06-30 | Es la distribución con la que se ajustaron los modelos. |
+| Referencia | Entrenamiento: 2026-01-08 a 2026-06-30 | Es la distribución con la que se ajustaron los modelos. Empieza el 8 de enero porque las primeras 168 h no tienen historia para los rezagos de 7 días. |
 | Actual | Septiembre 2026 | Es el periodo posterior más reciente de los datos abiertos y simula producción. Cambia de temporada respecto al entrenamiento. |
 | Actual (adicional) | Julio-agosto 2026 | Periodo intermedio, para ver si el cambio es gradual. |
 
 No hay un año posterior en los datos abiertos que usa el proyecto, y la API no registra las peticiones que recibe, por eso septiembre hace de producción. Solo se comparan las variables de entrada: no se compara el objetivo ni las predicciones, de modo que no se evalúa ningún modelo ni se usa septiembre para decidir (el uso único de la prueba ya se hizo). `month` se excluye porque cada periodo cubre meses distintos y siempre mostraría drift. Se usan todas las filas y los umbrales por defecto de Evidently: distancia de Wasserstein normalizada 0.1 en variables numéricas y de Jensen-Shannon 0.1 en categóricas; el conjunto tiene drift si la mitad o más de las variables lo muestran.
 
-**Evidencia de ejecución:** ![Reporte de Evidently para P1](reports/figures/evidencia/evidently_p1.png) ![Reporte de Evidently para P2](reports/figures/evidencia/evidently_p2.png)
+**Evidencia de ejecución:** ![Reporte de Evidently para P1](reports/figures/evidencia/evidently_p1.png) ![Reporte de Evidently para P2](reports/figures/evidencia/evidently_p2.png) ![Resumen de calidad de datos en Evidently](reports/figures/evidencia/evidently_calidad.png)
 
 **Resultados** (detalle en [resumen.md](reports/evidently/resumen.md)):
 
@@ -503,7 +503,7 @@ No hay un año posterior en los datos abiertos que usa el proyecto, y la API no 
 - **Demanda reciente:** en septiembre el nivel sube (media de `departures_lag_1` de 1.30 a 1.44) y en julio-agosto baja (a 1.17), en sentidos opuestos respecto al entrenamiento. Las variables `departures_mean_24` (0.095) y `departures_mean_168` (0.086) quedan cerca del umbral de 0.1 en septiembre, y en julio-agosto `departures_mean_168` lo supera (0.105). Son cambios estacionales de nivel, todavía moderados.
 - **Calidad:** en ningún periodo hay valores faltantes, filas duplicadas por estación y hora ni columnas constantes.
 
-Lo que no cubre: no mide *prediction drift* ni *target drift*, no usa datos reales de una API en producción y el resultado de este periodo no garantiza que no haya drift en meses futuros. Con estos resultados el drift no justifica por sí solo reentrenar; conviene vigilar el nivel de demanda reciente y reentrenar cuando se incorporen estaciones nuevas.
+Lo que no cubre: no mide *prediction drift* ni *target drift*, no usa datos reales de una API en producción y el resultado de este periodo no garantiza que no haya drift en meses futuros. Con las métricas ya calculadas, el MAE de P1 sube en septiembre al ritmo de la demanda pero su WAPE baja (64.0 % a 59.7 %), y el F1 macro de P2 casi no cambia (0.882 a 0.870): el drift no justifica por sí solo reentrenar. El motivo concreto para hacerlo son las estaciones nuevas, cuando acumulen historia. La [interpretación completa](reports/evidently/interpretacion_drift.md) detalla cada variable y su efecto en los modelos.
 
 ## Flujo de trabajo
 

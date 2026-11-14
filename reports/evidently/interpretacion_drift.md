@@ -27,6 +27,8 @@ El umbral configurado es de **0.10**. Una variable presenta drift cuando su dist
 
 El conjunto completo se considera con drift cuando al menos el 50 % de las variables evaluadas presenta drift.
 
+La referencia empieza el 8 de enero y no el 1 porque las primeras 168 horas no tienen historia para los rezagos y medias de siete días y se excluyen al construir las variables. `station_id`, `hour`, `weekday` e `is_weekend` se tratan como categóricas: son códigos o valores discretos sin una distancia numérica con sentido (la estación 300 no está "más lejos" de la 2 que la 3), por eso se comparan con Jensen-Shannon. `month` se excluye porque cada periodo cubre meses distintos y siempre mostraría drift. P3 queda fuera: agrupa estaciones por lotes, no hace predicciones por hora y no forma parte de la API.
+
 ## 3. Resultados generales
 
 | Modelo | Periodo | Variables con drift | Drift global |
@@ -65,8 +67,8 @@ No obstante, el drift de `station_id` no demuestra por sí mismo una pérdida de
 
 **Implicaciones potenciales**
 
-- P1 podría presentar mayores errores de predicción en estaciones nuevas.
-- P2 podría experimentar diferencias en su capacidad de identificar situaciones de riesgo.
+- **P1:** el champion (HGB con estación) asigna las estaciones no vistas a la categoría "otras" (`mibici/stations.py`). Para el 12.2 % de las filas de septiembre predice sin un efecto propio de la estación, solo con calendario y demanda reciente. Ahí se espera el mayor error relativo, aunque las métricas disponibles son globales y no permiten confirmarlo (sección 6).
+- **P2:** el champion es la regla de persistencia, que solo usa `virtual_occupancy` (`mibici/deployable.py`). El drift de `station_id` no la afecta directamente; el riesgo aplicaría si el champion pasara a ser un modelo que use la estación.
 - Las métricas globales podrían ocultar problemas concentrados en determinadas estaciones.
 
 **Recomendación:** evaluar el desempeño por estación, diferenciando entre estaciones conocidas y nuevas.
@@ -111,7 +113,7 @@ Se recomienda mantenerla bajo observación para identificar posibles cambios pos
 
 ## 5. Calidad de los datos
 
-Los reportes de Evidently indican:
+El resumen de datos de Evidently y las comprobaciones propias de `mibici/monitoring.py` (duplicados por estación y hora, estaciones nuevas) indican:
 
 - Cero valores faltantes.
 - Cero filas duplicadas por estación y hora.
@@ -121,40 +123,35 @@ Estos resultados sugieren consistencia estructural en los conjuntos analizados.
 
 Sin embargo, una buena calidad estructural no garantiza que los datos sean representativos de todas las condiciones de operación ni que las predicciones mantengan su desempeño.
 
-## 6. Implicaciones para los modelos
+## 6. Desempeño observado en los periodos posteriores
 
-### Modelo P1 — Predicción de demanda
+Las métricas ya se calcularon en la segunda entrega (`reports/resultados_mlflow_entrega2.md`): julio–agosto como validación y septiembre como evaluación retrospectiva. Se citan aquí sin volver a evaluar ningún modelo, así que no se usa de nuevo el conjunto de prueba.
 
-Los cambios en la composición de estaciones y en los promedios históricos podrían afectar la precisión de las predicciones.
+### Modelo P1 — Predicción de demanda (champion: HGB con estación)
 
-Se recomienda evaluar:
+| Periodo | Demanda media por estación-hora | MAE | WAPE |
+|---|---|---|---|
+| Julio–agosto | 1.17 | 0.750 | 64.0 % |
+| Septiembre | 1.44 | 0.862 | 59.7 % |
 
-- MAE (*Mean Absolute Error*).
-- RMSE (*Root Mean Squared Error*).
-- Errores por estación y periodo.
+La demanda media se obtiene como MAE ÷ WAPE y coincide con la media de `departures_lag_1` del resumen de Evidently. En septiembre el MAE sube 15 % mientras la demanda sube 23 %; el WAPE, que divide el error entre la demanda, baja. El error crece en viajes porque hay más viajes, no porque el modelo empeore en términos relativos. La referencia estacional, que no aprende nada, sube en la misma proporción (MAE de 0.899 a 1.026, +14 %), lo que confirma que el cambio viene del nivel de demanda del periodo. Coincide con Evidently: las variables de demanda reciente se mueven en el sentido del nivel (bajan en julio–agosto, suben en septiembre) sin superar el umbral en septiembre.
 
-### Modelo P2 — Clasificación de riesgo
+### Modelo P2 — Clasificación de riesgo (champion: persistencia)
 
-Los cambios en los datos podrían afectar la identificación de situaciones de riesgo.
+El F1 macro pasa de 0.882 en julio–agosto a 0.870 en septiembre (−1.5 %). La regla solo usa `virtual_occupancy`, que no presenta drift en ningún periodo (0.075 en septiembre, 0.047 en julio–agosto), y su desempeño se mantiene.
 
-Se recomienda evaluar:
+**Límite:** las métricas son globales. No hay desglose entre estaciones conocidas y nuevas, que es donde el drift de `station_id` podría concentrar el error de P1.
 
-- Matriz de confusión.
-- Precisión.
-- Recall.
-- F1-score.
-- Desempeño por clase y estación.
-
-**Importante:** Evidently identificó cambios en las distribuciones de las variables de entrada, pero estos resultados no constituyen evidencia directa de deterioro predictivo.
+**Importante:** Evidently identificó cambios en las distribuciones de las variables de entrada; las métricas de esta sección son las que permiten afirmar que, por ahora, esos cambios no se traducen en deterioro relativo.
 
 ## 7. Recomendaciones técnicas
 
 1. Mantener el monitoreo periódico de `station_id`, `departures_mean_168` y `departures_mean_24`.
-2. Evaluar el desempeño de los modelos sobre datos posteriores al entrenamiento.
+2. En la próxima evaluación, desglosar el error de P1 entre estaciones conocidas y nuevas; las métricas actuales son globales.
 3. Comparar resultados entre estaciones conocidas y estaciones nuevas.
 4. Investigar los cambios en el catálogo y la participación relativa de las estaciones.
 5. Complementar las alertas globales con monitoreo por variable y segmento.
-6. Considerar el reentrenamiento únicamente cuando exista evidencia de deterioro o una mejora demostrable de una versión alternativa.
+6. No reentrenar solo por drift. El motivo concreto son las estaciones nuevas: cuando acumulen historia, un reentrenamiento les daría categoría propia en P1. La nueva versión se registra en MLflow y sustituye al champion solo si mejora la validación.
 7. Evitar utilizar repetidamente el conjunto reservado para prueba final durante la selección de modelos o hiperparámetros.
 
 ## 8. Conclusión
@@ -167,7 +164,7 @@ Sin embargo, se identificaron dos hallazgos relevantes:
 
 **Segundo**, `departures_mean_168` presenta un cambio temporal durante julio–agosto, lo que sugiere modificaciones en los patrones históricos de demanda.
 
-Estos hallazgos justifican mantener un monitoreo continuo y evaluar el desempeño predictivo por periodo y estación.
+Las métricas ya calculadas muestran que estos cambios no deterioran el desempeño relativo: el MAE de P1 sube con la demanda pero su WAPE baja, y el F1 macro de P2 apenas cambia. Estos hallazgos justifican mantener un monitoreo continuo y evaluar el desempeño por periodo y estación.
 
 **No se recomienda reemplazar inmediatamente los modelos únicamente por los resultados de drift.** La decisión de reentrenamiento debe complementarse con la comparación de métricas de desempeño y la evaluación de versiones alternativas registradas en MLflow.
 
@@ -180,5 +177,8 @@ Los resultados analizados provienen de los siguientes archivos del repositorio:
 - `reports/evidently/p1_sep.html`
 - `reports/evidently/p2_sep.html`
 - `mibici/monitoring.py`
+- `reports/resultados_mlflow_entrega2.md`
+
+Los hallazgos de julio–agosto provienen de `resumen.md` y `resumen.json`; sus reportes HTML se generan con `--current sep jul_ago` y no se versionan por su tamaño.
 
 Este documento corresponde exclusivamente a la interpretación de resultados del punto 3 y no modifica los modelos, el entrenamiento ni los reportes generados por Evidently.
