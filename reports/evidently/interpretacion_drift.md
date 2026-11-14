@@ -67,7 +67,7 @@ No obstante, el drift de `station_id` no demuestra por sí mismo una pérdida de
 
 **Implicaciones potenciales**
 
-- **P1:** el champion (HGB con estación) asigna las estaciones no vistas a la categoría "otras" (`mibici/stations.py`). Para el 12.2 % de las filas de septiembre predice sin un efecto propio de la estación, solo con calendario y demanda reciente. Ahí se espera el mayor error relativo, aunque las métricas disponibles son globales y no permiten confirmarlo (sección 6).
+- **P1:** el champion (HGB con estación) asigna a la categoría "otras" las estaciones no vistas y las menos frecuentes (`mibici/stations.py`): conserva 254 categorías (límite de HistGradientBoosting) elegidas por número de filas. En septiembre, 46.0 % de las filas cae en "otras"; 12.2 % corresponde a estaciones nuevas. Para esas filas predice sin un efecto propio de la estación, solo con calendario y demanda reciente. Ahí se espera el mayor error relativo, aunque las métricas disponibles son globales y no permiten confirmarlo (sección 6).
 - **P2:** el champion es la regla de persistencia, que solo usa `virtual_occupancy` (`mibici/deployable.py`). El drift de `station_id` no la afecta directamente; el riesgo aplicaría si el champion pasara a ser un modelo que use la estación.
 - Las métricas globales podrían ocultar problemas concentrados en determinadas estaciones.
 
@@ -151,7 +151,7 @@ El F1 macro pasa de 0.882 en julio–agosto a 0.870 en septiembre (−1.5 %). La
 3. Comparar resultados entre estaciones conocidas y estaciones nuevas.
 4. Investigar los cambios en el catálogo y la participación relativa de las estaciones.
 5. Complementar las alertas globales con monitoreo por variable y segmento.
-6. No reentrenar solo por drift. El motivo concreto son las estaciones nuevas: cuando acumulen historia, un reentrenamiento les daría categoría propia en P1. La nueva versión se registra en MLflow y sustituye al champion solo si mejora la validación.
+6. No reentrenar solo por drift. Reentrenar con datos recientes incorpora las filas de las estaciones nuevas y el nivel de demanda más reciente, pero no les da categoría propia: con menos historia siguen en "otras". La nueva versión se registra en MLflow y sustituye al champion solo si mejora en un periodo que ninguna de las dos usó para entrenar.
 7. Evitar utilizar repetidamente el conjunto reservado para prueba final durante la selección de modelos o hiperparámetros.
 
 ## 8. Conclusión
