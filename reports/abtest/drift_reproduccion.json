@@ -1,0 +1,35 @@
+{
+  "evidently": "0.7.23",
+  "data_version_matches": true,
+  "feature_version_matches": true,
+  "comparisons": [
+    {
+      "dataset": "p1",
+      "period": "sep",
+      "quality_matches": true,
+      "drift_matches": true,
+      "score_tolerance": 1e-12
+    },
+    {
+      "dataset": "p1",
+      "period": "jul_ago",
+      "quality_matches": true,
+      "drift_matches": true,
+      "score_tolerance": 1e-12
+    },
+    {
+      "dataset": "p2",
+      "period": "sep",
+      "quality_matches": true,
+      "drift_matches": true,
+      "score_tolerance": 1e-12
+    },
+    {
+      "dataset": "p2",
+      "period": "jul_ago",
+      "quality_matches": true,
+      "drift_matches": true,
+      "score_tolerance": 1e-12
+    }
+  ]
+}
