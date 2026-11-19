@@ -10,7 +10,7 @@ python -m pytest -v
 
 | Grupo | Archivos |
 |---|---|
-| Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_hourly_counts.py` |
+| Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_catalog_sources.py`, `test_hourly_counts.py` |
 | Entrenamiento y reproducibilidad | `test_train.py`, `test_stations.py`, `test_sensitivity.py`, `test_reproducibility.py` |
 | MLflow Project y Registry | `test_project.py`, `test_registry_integration.py`, `test_predict.py` |
 | Comparación A/B de versiones registradas | `test_abtest.py` |
