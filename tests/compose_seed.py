@@ -1,6 +1,8 @@
 import argparse
+import os
 from pathlib import Path
 import tempfile
+from unittest import mock
 
 import mlflow
 import pandas as pd
@@ -13,7 +15,10 @@ from mibici.verify_api import P1_EXAMPLE, P2_EXAMPLE
 
 
 def seed_bundle(directory):
-    with tempfile.TemporaryDirectory() as temporary:
+    with (
+        tempfile.TemporaryDirectory() as temporary,
+        mock.patch.dict(os.environ, {"MLFLOW_SQLALCHEMYSTORE_POOLCLASS": "NullPool"}),
+    ):
         root = Path(temporary)
         train.configure_mlflow(
             tracking_uri=f"sqlite:///{(root / 'mlflow.db').as_posix()}",
