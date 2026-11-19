@@ -87,7 +87,7 @@ jobs:
           cache: pip
           cache-dependency-path: requirements*.txt
       - name: Instalar cliente de verificación
-        run: python -m pip install --only-binary=:all: -r requirements-api.txt
+        run: 'python -m pip install --only-binary=:all: -r requirements-api.txt'
       - name: Preparar modelos sintéticos exclusivos para la prueba de CI
         run: python -m tests.compose_seed --directory models/ci-serving
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f
