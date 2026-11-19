@@ -49,15 +49,19 @@ def test_env_example_is_versioned_and_not_ignored():
     assert git_output("check-ignore", "--no-index", "-q", ".env.example").returncode == 1
 
 
-def test_env_example_has_no_values_and_only_variables_the_code_reads():
+def test_env_example_has_only_non_secret_settings_consumed_by_code_or_compose():
     lines = (ROOT / ".env.example").read_text(encoding="utf-8").splitlines()
     variables = dict(
         line.split("=", 1) for line in lines if line.strip() and not line.startswith("#")
     )
-    assert variables == {"MLFLOW_TRACKING_URI": ""}
+    assert variables.pop("MLFLOW_TRACKING_URI") == ""
+    compose = (ROOT / "docker-compose.yml").read_text(encoding="utf-8")
+    for name, value in variables.items():
+        assert "${" + name + ":-" in compose
+        assert not any(word in name.lower() for word in ("token", "password", "secret"))
+        assert not value.startswith(("http://", "https://"))
     code = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "mibici").glob("*.py"))
-    for name in variables:
-        assert name in code, f"{name} no se usa en mibici/"
+    assert "MLFLOW_TRACKING_URI" in code
 
 
 @git
