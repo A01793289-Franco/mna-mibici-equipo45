@@ -63,6 +63,9 @@ python -m mibici.registry_bundle export --directory models/serving
 `models/serving` queda excluido de Git. Se necesita esta preparación porque los modelos
 serializados y las bases de MLflow no se versionan en el repositorio. La exportación falla
 si el destino ya existe; para preparar una versión distinta, utiliza otro directorio.
+En Linux con Docker Engine, el UID 1000 del contenedor necesita permiso de lectura del
+paquete y de acceso a sus directorios. Si el usuario anfitrión tiene otro UID, prepara
+este paquete local con `chmod -R a+rX models/serving` antes del primer arranque.
 Se puede detener el servidor de origen después de exportar: el servicio conservará su
 propia copia de los artefactos. Si el servidor de origen ocupa el puerto 5000, cambia
 `MLFLOW_PORT` en `.env` o detenlo antes del arranque.
@@ -153,7 +156,8 @@ en Ubuntu/Windows y de seguridad:
 
 1. Instala las versiones declaradas con caché de pip.
 2. Crea un Registry temporal con dos baselines de datos sintéticos y exporta un paquete
-   mediante el mismo mecanismo que se usa con modelos reales.
+   mediante el mismo mecanismo que se usa con modelos reales. Prepara permisos de
+   lectura para el UID 1000 del contenedor, independiente del UID del runner.
 3. Construye el `Containerfile` con Buildx y caché de capas de GitHub Actions.
 4. Valida el YAML y despliega MLflow/API en el runner con Compose y espera sus estados.
 5. Verifica las 11 condiciones HTTP de P1/P2.
