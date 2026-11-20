@@ -236,6 +236,27 @@ Verifica once controles: estado del proceso, esquemas OpenAPI, predicciones de P
 
 Para comprobar el manejo de una instancia iniciada **sin** `MLFLOW_TRACKING_URI`, ejecuta el mismo comando con `--unavailable`. En ese modo se espera 503 en ambas predicciones, aunque `/health` siga respondiendo 200. Este control requiere otra instancia; no representa una predicción exitosa.
 
+## Pruebas de carga con Locust
+
+`load/locustfile.py` simula usuarios que envían variables válidas y aleatorias a `POST /predict/p1` y `POST /predict/p2`, consultan `GET /health` y, de vez en cuando, mandan una petición inválida que debe responder 422. Una respuesta cuenta como éxito solo si el código HTTP y el cuerpo son los esperados.
+
+Con la API de Compose levantada (`docker compose up -d --wait`) y en un entorno con `pip install -r requirements-load.txt`:
+
+```text
+python -m mibici.load_test
+python -m mibici.load_test --scenario carga --seconds 30
+```
+
+| Escenario | Usuarios | Duración |
+|---|---|---|
+| `baseline` | 5 | 60 s |
+| `carga` | 25 | 120 s |
+| `estres` | 100 | 120 s |
+
+Cada corrida escribe en `reports/carga/` el `resumen.json` y el `resumen.md` (peticiones, RPS, latencia media, p50, p95, p99 y máxima, y tasa de error por endpoint), además de un HTML de Locust por escenario. Los CSV crudos no se versionan. El comando termina con código 1 si algún escenario supera p95 de 500 ms (`--p95-ms`) o 1 % de errores (`--max-error-pct`). Los límites son un criterio de la actividad, no un contrato de servicio. Para la interfaz web de Locust: `locust -f load/locustfile.py --host http://127.0.0.1:8000`.
+
+Las cifras dependen de la máquina y de los límites de `docker-compose.yml` (la API tiene 2 CPU y 1 GB). El ejecutor se validó con un servidor de prueba y pruebas unitarias; las mediciones contra la API real deben generarse en el equipo que corre Compose.
+
 ## Datos y configuración
 
 Fuente: [datos abiertos de MiBici](https://www.mibici.net/es/datos-abiertos/). Se utilizaron nueve meses completos, enero-septiembre de 2026, y el catálogo de septiembre.
