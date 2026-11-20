@@ -1,0 +1,59 @@
+{
+  "review_date": "2026-11-18",
+  "timezone": "America/Merida",
+  "scope": "Clon de main con la corrección local aplicada; datos vacíos, sin CSV o Parquet previos.",
+  "base_commit": "d0542e3b7f1ed5bd9f1462a1cb979719bd87a9f2",
+  "code_sha256": {
+    "mibici/config.py": "91ccca8c72f1fa3b11681190977cf449abf96368f63b46f817aae0a157c419d5",
+    "mibici/dataset.py": "1cc2863f4c66461ef9304281b7545a957ae15d9405b14e66355894bb239cc149"
+  },
+  "python": "3.13.15",
+  "before": {
+    "recorded_catalog_url": "https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_09.csv",
+    "catalog_http_status": 404,
+    "ingest_exit_code": 1
+  },
+  "after": {
+    "ingest_exit_code": 0,
+    "verify_data_exit_code": 0,
+    "features_exit_code": 0,
+    "verify_features_exit_code": 0,
+    "catalog_url": "https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_10.csv",
+    "catalog_raw_sha256": "2da38dd60dcc74ccb95eb8ed1572e107cf5af44dfa6c5a4fbfa4e30f94ef7f3e",
+    "data_version": "85fa5af8030a91135df4e4d84f5abd96399cb9040515b4c60519a3d1d140f97e",
+    "feature_version": "a6d5c3e01bf87c807484d54b8ffd8bf86944b011a2e853ff7b9d588784c3d13b",
+    "summary": {
+      "months": 9,
+      "raw_rows": 3362065,
+      "clean_trips": 3358273,
+      "observed_stations": 471,
+      "catalog_stations": 470,
+      "stations_outside_catalog": [
+        405,
+        407
+      ]
+    },
+    "trip_raw_hashes_match_previous": true,
+    "trip_clean_hashes_match_previous": true,
+    "feature_tables_match_previous": {
+      "p1": true,
+      "p2": false,
+      "p3_train": false,
+      "p3_val": false,
+      "p3_test": false
+    }
+  },
+  "checks": {
+    "pytest_passed": 273,
+    "subtests_passed": 16,
+    "dependency_warnings": 243,
+    "new_catalog_tests": 14,
+    "flake8_exit_code": 0,
+    "mkdocs_strict_exit_code": 0,
+    "bandit_medium": 0,
+    "bandit_high": 0,
+    "security_findings": []
+  },
+  "historical_manifests_modified": false,
+  "interpretation": "Los viajes y la tabla P1 conservan hashes; P2 y P3 cambian con el catálogo actual. Es una nueva versión, no una reproducción exacta de todos los experimentos históricos."
+}

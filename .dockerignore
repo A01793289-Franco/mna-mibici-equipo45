@@ -1,0 +1,7 @@
+**
+!Containerfile
+!requirements-api.txt
+!mibici
+!mibici/**
+mibici/**/__pycache__
+mibici/**/*.pyc

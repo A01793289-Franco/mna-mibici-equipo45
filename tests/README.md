@@ -10,7 +10,7 @@ python -m pytest -v
 
 | Grupo | Archivos |
 |---|---|
-| Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_hourly_counts.py` |
+| Ingesta y variables | `test_data_features.py`, `test_dataset_utils.py`, `test_catalog_sources.py`, `test_hourly_counts.py` |
 | Entrenamiento y reproducibilidad | `test_train.py`, `test_stations.py`, `test_sensitivity.py`, `test_reproducibility.py` |
 | MLflow Project y Registry | `test_project.py`, `test_registry_integration.py`, `test_predict.py` |
 | Comparación A/B de versiones registradas | `test_abtest.py` |
@@ -18,6 +18,7 @@ python -m pytest -v
 | API y seguridad | `test_api.py`, `test_security.py`, `test_repository_security.py` |
 | Recuperación y variables de la API | `test_model_loader.py`, `test_api_variables.py` |
 | Verificador HTTP y salidas del modelo | `test_verify_api.py` |
+| Paquetes portables e importación idempotente para Compose | `test_registry_bundle.py` |
 
 Para ejecutar únicamente los controles de seguridad y privacidad:
 
@@ -39,3 +40,10 @@ python -m bandit -c pyproject.toml -r mibici -ll
 La [guía de verificación](../docs/docs/verificacion.md) explica DeepChecks, la auditoría de dependencias y sus excepciones documentadas.
 
 La verificación contra un contenedor y un Registry reales se ejecuta por separado: `python -m mibici.verify_api --base-url http://127.0.0.1:8000`. No forma parte de las pruebas unitarias de CI; requiere iniciar el servicio con sus modelos. Su [evidencia](../reports/deployment/README.md) incluye los controles de ausencia de Registry y las versiones recuperadas.
+
+El job adicional `compose` ejecuta este verificador contra contenedores reales con modelos
+sintéticos de integración. Comprueba también la persistencia al recrear los servicios.
+La [guía de operación](../references/operacion_compose.md) distingue esa prueba de la
+validación local con modelos genuinos del Registry. Las pruebas del paquete cubren
+independencia del origen, reinicios sin duplicados, hashes alterados, archivos ausentes,
+archivos adicionales, nombres inválidos, enlaces simbólicos y preservación de champions.

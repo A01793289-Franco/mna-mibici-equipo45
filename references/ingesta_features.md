@@ -9,7 +9,7 @@ python -m mibici.dataset
 python -m mibici.features
 python -m mibici.dataset --verify
 python -m mibici.features --verify
-python -m unittest discover -s tests -v
+python -m pytest -v
 ```
 
 Cada función de `features.py` incluye una docstring que explica su operación, su utilidad para P1, P2 o P3 y los cuidados temporales pertinentes. Este documento Markdown amplía las decisiones y los comandos de ejecución. Se conservan los comentarios de la plantilla incorporados por otros integrantes.
@@ -19,6 +19,22 @@ Los parámetros opcionales se consultan con `--help`. `--data-dir` permite usar 
 ## Descarga y limpieza
 
 `dataset.py` resuelve los enlaces publicados del rango elegido, descarga los nueve CSV y la nomenclatura, y procesa un mes a la vez en bloques. La primera ejecución requiere conexión. Las siguientes reutilizan archivos locales, verificando el hash registrado; si falta un CSV, se vuelve a descargar desde la URL guardada. `--refresh` acepta explícitamente archivos actualizados del portal y produce una nueva versión.
+
+### Catálogo de estaciones y clones nuevos
+
+`STATIONS_URL = None` activa el descubrimiento del catálogo publicado en el portal. `published_csv_links` extrae enlaces CSV, incluidos los que tienen parámetros de descarga. `discover_stations` selecciona la nomenclatura con el mes válido más reciente, publicada en el mismo dominio de MiBici. No se fija la URL de octubre u otro mes que pueda retirarse después.
+
+`download_stations` intenta primero reutilizar el catálogo del manifiesto, incluido su archivo local y SHA-256. Si el proveedor retiró la URL (HTTP 404/410) y no hay una URL explícita, busca el catálogo publicado, anuncia la sustitución y guarda su URL y hash reales en una nueva versión. No cambia los meses de viajes. La siguiente ejecución reutiliza ese catálogo y conserva el nuevo manifiesto si no cambió nada más.
+
+Un catálogo local corrupto o una descarga con bytes distintos a los registrados se rechazan. Los errores 403/5xx, de conectividad y de certificados no se interpretan como retirada de la fuente. Una URL indicada expresamente también falla sin sustitución. Para elegir un catálogo sin cambiar el código:
+
+```text
+python -m mibici.dataset --stations-url URL_DEL_CATALOGO
+```
+
+Si se necesita reproducir exactamente una ejecución histórica cuyo catálogo ya no publica MiBici, debe recuperarse una copia de esos bytes, conservar el nombre del archivo y verificar su SHA-256. El catálogo actual no es equivalente al histórico. Tras un cambio de catálogo o configuración, reconstruir las variables y entrenar modelos para las nuevas versiones; las corridas previas conservan su linaje original. Los manifiestos históricos versionados en Git no se reemplazan como parte de esta corrección de código.
+
+`tests/test_catalog_sources.py` cubre un directorio vacío, retirada 404/410, caché histórica, corrupción, actualización explícita, selección de URL y reproducción del manifiesto. Las pruebas de CI usan fuentes sintéticas; la descarga completa real se comprueba por separado.
 
 - Se detectan UTF-8 con/sin BOM, Windows-1252 o Latin-1 y delimitadores coma, punto y coma o tabulador. Enero utiliza Windows-1252; los otros meses seleccionados, UTF-8.
 - Se normalizan acentos y variantes de columnas. Solo se escriben `trip_id`, `started_at`, `ended_at`, `origin_id` y `destination_id`.

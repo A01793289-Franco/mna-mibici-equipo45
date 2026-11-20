@@ -2,6 +2,7 @@ FROM docker.io/library/python:3.13.15-slim
 WORKDIR /app
 COPY requirements-api.txt .
 RUN pip install --no-cache-dir --only-binary=:all: -r requirements-api.txt
+RUN mkdir -p /state && chown 1000:1000 /state
 COPY mibici ./mibici
 # Falla pronto si MLflow no responde, en lugar de reintentar durante minutos.
 ENV MPLBACKEND=Agg \

@@ -122,8 +122,40 @@ class CSVLinks(HTMLParser):
     def handle_starttag(self, tag, attrs):
         """Guarda el ``href`` de una etiqueta ``<a>`` cuando apunta a un CSV."""
         for name, value in attrs:
-            if tag == "a" and name == "href" and value and value.lower().endswith(".csv"):
+            if (
+                tag == "a"
+                and name == "href"
+                and value
+                and urlparse(value).path.lower().endswith(".csv")
+            ):
                 self.links.append(urljoin(cfg.DATA_PORTAL_URL, value))
+
+
+def published_csv_links(session):
+    response = session.get(cfg.DATA_PORTAL_URL, timeout=cfg.DOWNLOAD_TIMEOUT)
+    response.raise_for_status()
+    parser = CSVLinks()
+    parser.feed(response.text)
+    return parser.links
+
+
+def discover_stations(session):
+    candidates = []
+    for url in published_csv_links(session):
+        parsed = urlparse(url)
+        match = re.fullmatch(r"nomenclatura_(\d{4})_(\d{2})\.csv", Path(parsed.path).name)
+        if parsed.hostname != urlparse(cfg.DATA_PORTAL_URL).hostname or not match:
+            continue
+        try:
+            month = date(int(match[1]), int(match[2]), 1)
+        except ValueError:
+            continue
+        candidates.append((month, url))
+    if not candidates:
+        raise ValueError(
+            "El portal no publica un catálogo de estaciones reconocible; usa --stations-url"
+        )
+    return max(candidates)[1]
 
 
 def discover_sources(session, start, end):
@@ -133,11 +165,7 @@ def discover_sources(session, start, end):
     ruta cruda relativa. Un mes ausente detiene la ingesta en lugar de continuar con un periodo
     incompleto.
     """
-    response = session.get(cfg.DATA_PORTAL_URL, timeout=cfg.DOWNLOAD_TIMEOUT)
-    response.raise_for_status()
-    parser = CSVLinks()
-    parser.feed(response.text)
-    available = {Path(urlparse(url).path).name: url for url in parser.links}
+    available = {Path(urlparse(url).path).name: url for url in published_csv_links(session)}
     sources = []
     for period in pd.period_range(start, end - pd.Timedelta(days=1), freq="M"):
         filename = f"datos_abiertos_{period.year}_{period.month:02d}.csv"
@@ -174,6 +202,46 @@ def download_file(session, url, path, expected_hash=None, refresh=False):
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
+
+
+def download_stations(session, data_dir, previous, refresh=False, stations_url=None):
+    recorded = previous.get("stations", {})
+    explicit = stations_url or cfg.STATIONS_URL
+    url = explicit or (recorded.get("url") if not refresh else None) or discover_stations(session)
+
+    def fetch(source):
+        raw = Path(data_dir) / "raw" / Path(urlparse(source).path).name
+        expected = (
+            recorded.get("raw_sha256")
+            if raw.name == Path(recorded.get("raw_path", "")).name
+            else None
+        )
+        download_file(session, source, raw, expected, refresh)
+        return raw
+
+    try:
+        return url, fetch(url)
+    except requests.HTTPError as error:
+        if (
+            error.response is None
+            or error.response.status_code not in (404, 410)
+            or explicit
+            or refresh
+            or url != recorded.get("url")
+        ):
+            raise
+        replacement = discover_stations(session)
+        if replacement == url:
+            raise ValueError(
+                "El catálogo publicado tampoco está disponible; usa --stations-url"
+            ) from error
+        print(
+            f"El catálogo registrado ya no está disponible: {url}. "
+            f"Se usará {replacement}; se registrará una nueva versión de datos. "
+            "Reconstruye las variables y entrena los modelos para esa versión.",
+            flush=True,
+        )
+        return replacement, fetch(replacement)
 
 
 def csv_format(path):
@@ -384,6 +452,7 @@ def ingest(
     data_dir=cfg.DATA_DIR,
     manifest_path=cfg.MANIFEST_PATH,
     refresh=False,
+    stations_url=None,
 ):
     """Reconstruye meses completos y publica una versión verificable de datos sin muestras personales.
 
@@ -413,14 +482,8 @@ def ingest(
         for item in [*previous.get("trips", []), previous.get("stations", {})]
         if "raw_path" in item
     }
-    catalog_url = previous["stations"]["url"] if previous and not refresh else cfg.STATIONS_URL
-    catalog_raw = data_dir / "raw" / Path(urlparse(catalog_url).path).name
-    download_file(
-        session,
-        catalog_url,
-        catalog_raw,
-        expected.get(catalog_raw.relative_to(data_dir).as_posix()),
-        refresh,
+    catalog_url, catalog_raw = download_stations(
+        session, data_dir, previous, refresh, stations_url
     )
     station_path = cfg.data_path(cfg.STATIONS_FILE, data_dir)
     catalog, station_counts = clean_stations(catalog_raw, station_path)
@@ -480,7 +543,9 @@ def ingest(
 
 def main():
     """Expone ingesta, actualización explícita y verificación desde la terminal."""
-    parser = argparse.ArgumentParser(description="Descarga, limpia y versiona los archivos mensuales de MiBici.")
+    parser = argparse.ArgumentParser(
+        description="Descarga, limpia y versiona los archivos mensuales de MiBici."
+    )
     parser.add_argument(
         "--start",
         type=date.fromisoformat,
@@ -502,6 +567,10 @@ def main():
         help="Aceptar una actualización de fuentes y generar otra versión",
     )
     parser.add_argument(
+        "--stations-url",
+        help="URL explícita del catálogo de estaciones o de una copia histórica",
+    )
+    parser.add_argument(
         "--verify",
         action="store_true",
         help="Verificar hashes de la versión registrada, sin descargar",
@@ -511,7 +580,13 @@ def main():
         verify_manifest(json.loads(cfg.MANIFEST_PATH.read_text(encoding="utf-8")), args.data_dir)
         print("Versión y archivos verificados.")
     else:
-        ingest(args.start, args.end, args.data_dir, refresh=args.refresh)
+        ingest(
+            args.start,
+            args.end,
+            args.data_dir,
+            refresh=args.refresh,
+            stations_url=args.stations_url,
+        )
 
 
 if __name__ == "__main__":

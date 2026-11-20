@@ -1,0 +1,81 @@
+{
+  "generated_at": "2026-11-19T08:33:39.566198+00:00",
+  "docker_version": "29.8.0",
+  "compose_version": "5.5.1",
+  "image": {
+    "id": "sha256:0c85972d084ac49bd06c8728702af74ade072fd2ec94a37df63b2c71d2078a82",
+    "user": "1000",
+    "architecture": "amd64"
+  },
+  "files_sha256": {
+    "Containerfile": "1ea0aa7c8e3a275ae47e0ba24222d50923fa677be68f95c379ee412173cfe73d",
+    "docker-compose.yml": "6c2c02bcc36a045baf9acc9f7c910b367ae888fdc52b134cb3a9e9eb188040f8",
+    ".dockerignore": "403b1d980a8931b1e991e66cd32ba7c7c6ba7734a052e7645338afe486ed688d",
+    "requirements-api.txt": "14ecd2c1eb7b0dcc754c3954adfa21cdf5268c2d3b5d999814337be3448402a9",
+    "mibici/registry_bundle.py": "7b94273d99075e7bb8b124df0e9609035ce623bd51352cd4fd1793f92bec865e"
+  },
+  "model_bundle_sha256": "c1f11d2e2751e07481e5c7bd377b70a087c55eb6c3d182147c7a978bf27aab2a",
+  "model_provenance": {
+    "P1": {
+      "name": "mibici-p1-demanda",
+      "source_version": "1",
+      "source_run_id": "da28d047b8384d089de6f74fcd4e175d",
+      "tags": {
+        "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+        "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+        "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd"
+      }
+    },
+    "P2": {
+      "name": "mibici-p2-riesgo",
+      "source_version": "1",
+      "source_run_id": "fb52c91b260843a992fe74ecfac7201c",
+      "tags": {
+        "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+        "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+        "feature_version": "87c1e6136a5f0466e7e1a678191cb414bba6378e7ed9159432b8a07832535fdd"
+      }
+    }
+  },
+  "services": [
+    {
+      "Service": "api",
+      "State": "running",
+      "Health": "healthy",
+      "ExitCode": 0
+    },
+    {
+      "Service": "mlflow",
+      "State": "running",
+      "Health": "healthy",
+      "ExitCode": 0
+    },
+    {
+      "Service": "registry-init",
+      "State": "exited",
+      "Health": "",
+      "ExitCode": 0
+    }
+  ],
+  "http_checks": {
+    "http-real": {
+      "passed": true,
+      "count": 11
+    },
+    "http-real-restart": {
+      "passed": true,
+      "count": 11
+    }
+  },
+  "registry_after_recreation": {
+    "mibici-p1-demanda": {
+      "versions": 1,
+      "champion": "1"
+    },
+    "mibici-p2-riesgo": {
+      "versions": 1,
+      "champion": "1"
+    }
+  },
+  "passed": true
+}

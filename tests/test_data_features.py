@@ -42,7 +42,10 @@ class Response:
 class Session:
     def get(self, url, **kwargs):
         if url == cfg.DATA_PORTAL_URL:
-            return Response(b'<a href="/fixture/datos_abiertos_2026_01.csv">Enero</a>')
+            return Response(
+                b'<a href="/fixture/datos_abiertos_2026_01.csv">Enero</a>'
+                b'<a href="/fixture/nomenclatura_2026_01.csv">Estaciones</a>'
+            )
         if "nomenclatura" in url:
             return Response(
                 b"id,name,latitude,longitude,dpcapacity\n1,Estacion,20.67,-103.35,20\n"

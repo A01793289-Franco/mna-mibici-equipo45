@@ -4,6 +4,28 @@
 
 Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara.
 
+## Operación con Docker Compose y CI/CD
+
+La [guía de operación](references/operacion_compose.md) explica la preparación de los modelos
+P1/P2 desde el Registry existente, el arranque y las verificaciones. Tras exportar una vez
+el paquete local de modelos, todos los servicios se levantan con:
+
+```text
+docker compose up --build -d --wait --wait-timeout 240
+python -m mibici.verify_api --output reports/compose/http-local.json
+```
+
+Compose levanta MLflow, importa y verifica los modelos registrados y arranca FastAPI.
+Conserva el Registry y los artefactos en un volumen; los modelos y los datos permanecen fuera
+de Git y del contexto de construcción. API: `http://127.0.0.1:8000/docs`;
+MLflow: `http://127.0.0.1:5000`. Los puertos se pueden cambiar en `.env`.
+
+El workflow [CI](.github/workflows/ci.yml) se ejecuta en cada push y pull request:
+pruebas en Ubuntu/Windows, documentación, seguridad, construcción de la imagen con caché,
+despliegue temporal con Compose, peticiones HTTP P1/P2 y comprobación tras recrear los
+servicios. Conserva resultados y logs como artefactos de Actions. Los modelos sintéticos
+de esa prueba de CI no sustituyen los modelos reales del proyecto.
+
 | Pregunta | Definición acordada |
 |---|---|
 | P1: demanda | Viajes iniciados por estación durante la siguiente hora. |
@@ -317,7 +339,9 @@ python -m mibici.features --verify
 python -m pytest -v
 ```
 
-La primera ejecución descarga los CSV; las posteriores reutilizan los archivos y verifican sus hashes. `--refresh` permite aceptar una actualización de la fuente. `--help` muestra fechas, carpeta alternativa y escenarios del proxy. La ingesta usa bloques; las agregaciones de variables reúnen los eventos del rango en memoria. Se requiere espacio local y memoria suficientes para millones de viajes.
+La primera ejecución descarga los CSV; las posteriores reutilizan los archivos y verifican sus hashes. El catálogo se obtiene del enlace publicado en el portal, sin fijar un mes en el código. Si el catálogo del manifiesto se conserva localmente, se utiliza y verifica. Si su URL devuelve 404/410, la ingesta anuncia el cambio al catálogo publicado y registra su URL, hashes y una nueva versión de datos. Esto no reconstruye los bytes del catálogo histórico retirado: hay que generar de nuevo las variables y entrenar modelos para la nueva versión. Los manifiestos y resultados históricos del repositorio se conservan. La [verificación del 18 de noviembre](reports/ingesta_clon_limpio_20261118.json) documenta la descarga completa desde una carpeta vacía, la construcción de variables y sus verificaciones. Los viajes y P1 conservaron sus hashes; las tablas P2/P3 cambiaron con el catálogo actual, por lo que no equivalen a las de los experimentos históricos.
+
+`--stations-url URL` permite elegir un catálogo o una copia histórica sin editar `config.py` ni `dataset.py`. Una URL explícita que falle no se sustituye automáticamente. Los errores de hash, autenticación, red o servidor tampoco se ocultan con el cambio de catálogo. `--refresh` acepta explícitamente una actualización de las fuentes, incluido el catálogo que publica el portal. `--help` muestra fechas, carpeta alternativa y escenarios del proxy. La ingesta usa bloques; las agregaciones de variables reúnen los eventos del rango en memoria. Se requiere espacio local y memoria suficientes para millones de viajes.
 
 La información personal no se incluye en Parquet de modelado. Las tablas agregadas se guardan en `data/processed`; las limpias mensuales, en `data/interim`. [La documentación](references/ingesta_features.md) explica las columnas permitidas como predictores, supuestos de cobertura y manejo del proxy.
 
@@ -427,7 +451,7 @@ python -m mkdocs serve -f docs/mkdocs.yml -a 127.0.0.1:8001
 
 [Inicio de documentación](docs/docs/index.md), [instalación y ejecución](docs/docs/getting-started.md) y [pruebas y CI](docs/docs/verificacion.md) describen el flujo real del proyecto.
 
-GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 259 pruebas aprobadas localmente. Las 12 incorporadas en esta entrega cubren la comparación A/B, sus controles temporales y la recuperación de versiones del Registry. La API también se comprobó en Docker contra los champion reales de P1 y P2 en la entrega de despliegue. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. Los reportes conservan la evidencia de sus corridas originales.
+GitHub Actions ejecuta lint, pruebas con datos sintéticos y MkDocs estricto en Ubuntu y Windows, más un trabajo de seguridad. La suite actual tiene 273 pruebas aprobadas localmente. Incluye 12 de comparación A/B y 14 de resolución del catálogo para caché, descargas nuevas y fuentes retiradas. La API también se comprobó en Docker contra los champion reales de P1 y P2 en la entrega de despliegue. El estado de las ejecuciones remotas se consulta en la insignia de CI y en el PR. Los reportes conservan la evidencia de sus corridas originales.
 
 ## Calidad, validación de datos y seguridad
 
