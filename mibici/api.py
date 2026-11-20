@@ -1,6 +1,8 @@
 from datetime import datetime
 import json
 import os
+import threading
+import time
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException
@@ -74,13 +76,7 @@ def predict(request: PredictionRequest):
         raise HTTPException(
             status_code=422, detail="Indica una hora completa, sin minutos ni segundos"
         )
-    try:
-        configure_mlflow()
-        model, columns = load_champion(request.question)
-    except (PredictionError, MlflowException) as error:
-        raise HTTPException(
-            status_code=503, detail="El modelo champion no está disponible"
-        ) from error
+    model, columns = load_model_or_503(request.question)
     needed = list(dict.fromkeys(["station_id", "timestamp", *columns]))
     try:
         frame = pd.read_parquet(
@@ -108,11 +104,49 @@ def predict(request: PredictionRequest):
     }
 
 
+# Cargar el champion desde MLflow en cada petición descarga sus artefactos una y otra vez:
+# bajo carga satura el servidor de MLflow y la memoria. El modelo se conserva en memoria.
+MODEL_CACHE_SECONDS = float(os.environ.get("MODEL_CACHE_SECONDS", "300"))
+MODEL_RETRY_SECONDS = 30.0
+_MODEL_CACHE = {}
+_MODEL_LOCKS = {}
+
+
+def clear_model_cache():
+    _MODEL_CACHE.clear()
+
+
+def cached_champion(question):
+    """Champion de la pregunta, recargado desde MLflow cada ``MODEL_CACHE_SECONDS``.
+
+    Un champion nuevo se aplica cuando vence el plazo. Si MLflow falla durante una recarga, se
+    sigue sirviendo el modelo anterior y se reintenta tras ``MODEL_RETRY_SECONDS``. Con
+    ``MODEL_CACHE_SECONDS=0`` se carga en cada petición, como antes.
+    """
+    entry = _MODEL_CACHE.get(question)
+    if entry and time.monotonic() < entry[0]:
+        return entry[1], entry[2]
+    with _MODEL_LOCKS.setdefault(question, threading.Lock()):
+        entry = _MODEL_CACHE.get(question)
+        if entry and time.monotonic() < entry[0]:
+            return entry[1], entry[2]
+        try:
+            configure_mlflow()
+            model, columns = load_champion(question)
+        except (PredictionError, MlflowException, HTTPException):
+            if entry is None:
+                raise
+            retry = time.monotonic() + MODEL_RETRY_SECONDS
+            _MODEL_CACHE[question] = (retry, entry[1], entry[2])
+            return entry[1], entry[2]
+        _MODEL_CACHE[question] = (time.monotonic() + MODEL_CACHE_SECONDS, model, columns)
+        return model, columns
+
+
 def load_model_or_503(question):
-    """Carga el champion de la pregunta; si no está disponible responde 503."""
+    """Champion de la pregunta (en memoria); si no está disponible responde 503."""
     try:
-        configure_mlflow()
-        return load_champion(question)
+        return cached_champion(question)
     except (PredictionError, MlflowException) as error:
         raise HTTPException(
             status_code=503, detail="El modelo champion no está disponible"
