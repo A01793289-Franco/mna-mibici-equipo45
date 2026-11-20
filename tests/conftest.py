@@ -6,7 +6,7 @@ tablas sintéticas, sin datos reales ni red.
 
 import pytest
 
-from mibici import train
+from mibici import api, train
 from tests.test_train import demand_table, profile_table, risk_table
 
 CONTEXT = {
@@ -15,6 +15,14 @@ CONTEXT = {
     "data_version": "datos-v1",
     "feature_version": "vars-v1",
 }
+
+
+@pytest.fixture(autouse=True)
+def clean_model_cache():
+    """La API conserva el champion en memoria; cada prueba parte sin modelo guardado."""
+    api.clear_model_cache()
+    yield
+    api.clear_model_cache()
 
 
 @pytest.fixture

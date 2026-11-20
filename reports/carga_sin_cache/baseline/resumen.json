@@ -1,0 +1,83 @@
+{
+  "host": "http://127.0.0.1:8000",
+  "generated_at": "2026-11-20 11:04",
+  "locust": "2.46.0",
+  "scenarios": {
+    "baseline": {
+      "scenario": {
+        "users": 5,
+        "spawn_rate": 1,
+        "seconds": 60
+      },
+      "aggregated": {
+        "requests": 662,
+        "failures": 0,
+        "error_rate_pct": 0.0,
+        "rps": 11.14,
+        "mean_ms": 127.5,
+        "p50_ms": 120.0,
+        "p95_ms": 320.0,
+        "p99_ms": 410.0,
+        "max_ms": 463.2
+      },
+      "endpoints": {
+        "/health": {
+          "requests": 65,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 1.09,
+          "mean_ms": 5.2,
+          "p50_ms": 3.0,
+          "p95_ms": 15.0,
+          "p99_ms": 43.0,
+          "max_ms": 42.9
+        },
+        "/predict/p1": {
+          "requests": 339,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 5.7,
+          "mean_ms": 146.2,
+          "p50_ms": 150.0,
+          "p95_ms": 310.0,
+          "p99_ms": 410.0,
+          "max_ms": 447.4
+        },
+        "/predict/p1 [invalida]": {
+          "requests": 61,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 1.03,
+          "mean_ms": 6.5,
+          "p50_ms": 3.0,
+          "p95_ms": 18.0,
+          "p99_ms": 69.0,
+          "max_ms": 68.9
+        },
+        "/predict/p2": {
+          "requests": 197,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 3.31,
+          "mean_ms": 173.3,
+          "p50_ms": 190.0,
+          "p95_ms": 350.0,
+          "p99_ms": 430.0,
+          "max_ms": 463.2
+        }
+      },
+      "failures": [],
+      "evaluation": {
+        "limits": {
+          "p95_ms": 500.0,
+          "error_rate_pct": 1.0
+        },
+        "checks": {
+          "p95_ms": true,
+          "error_rate_pct": true
+        },
+        "passed": true
+      }
+    }
+  }
+}
