@@ -116,3 +116,8 @@ def test_reads_cp1252_csv_written_by_locust_on_windows(tmp_path):
         ("\n".join([STATS_HEADER, *rows]) + "\n").encode("cp1252")
     )
     assert "/predict/p1 [inválida]" in load_test.parse_stats(tmp_path / "x_stats.csv")
+
+
+def test_check_health_rejects_non_http_hosts():
+    with pytest.raises(load_test.LoadTestError, match="http"):
+        load_test.check_health("file:///etc/passwd")

@@ -17,8 +17,8 @@ import json
 from pathlib import Path
 import subprocess
 import sys
-import urllib.error
-import urllib.request
+
+import requests
 
 LOCUSTFILE = Path("load") / "locustfile.py"
 OUTPUT = Path("reports") / "carga"
@@ -173,15 +173,17 @@ def locust_version():
 
 
 def check_health(host, timeout=10):
+    if not host.startswith(("http://", "https://")):
+        raise LoadTestError(f"El host debe empezar con http:// o https://: {host}")
     try:
-        with urllib.request.urlopen(host.rstrip("/") + "/health", timeout=timeout) as response:
-            if response.status != 200:
-                raise LoadTestError(f"/health respondió HTTP {response.status}")
-    except (urllib.error.URLError, OSError) as error:
+        response = requests.get(host.rstrip("/") + "/health", timeout=timeout)
+    except requests.RequestException as error:
         raise LoadTestError(
             f"No se pudo consultar {host}/health ({error}). "
             "Levanta la API con `docker compose up -d --wait` antes de medir."
         ) from error
+    if response.status_code != 200:
+        raise LoadTestError(f"/health respondió HTTP {response.status_code}")
 
 
 def locust_command(name, scenario, host, directory):
