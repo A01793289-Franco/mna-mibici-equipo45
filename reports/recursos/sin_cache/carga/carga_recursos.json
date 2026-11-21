@@ -1,0 +1,40 @@
+{
+  "engine": "podman",
+  "interval_s": 2.0,
+  "generated_at": "2026-11-21 17:14",
+  "services": {
+    "api": {
+      "samples": 60,
+      "cpu_pct": {
+        "mean": 105.62,
+        "p95": 112.69,
+        "max": 114.19
+      },
+      "mem_mib": {
+        "mean": 486.0,
+        "p95": 582.6,
+        "max": 592.1
+      },
+      "mem_pct_max": 57.83,
+      "mem_limit_mib": 1024.2,
+      "pids_max": 950
+    },
+    "mlflow": {
+      "samples": 60,
+      "cpu_pct": {
+        "mean": 23.57,
+        "p95": 41.86,
+        "max": 70.48
+      },
+      "mem_mib": {
+        "mean": 1013.1,
+        "p95": 1015.7,
+        "max": 1024.2
+      },
+      "mem_pct_max": 100.0,
+      "mem_limit_mib": 1024.2,
+      "pids_max": 140
+    }
+  },
+  "errors": []
+}
