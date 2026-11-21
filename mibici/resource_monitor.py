@@ -8,6 +8,11 @@ Uso independiente (por ejemplo, para medir el consumo en reposo)::
 ``mibici.load_test --stats docker`` usa el mismo muestreador mientras corre Locust.
 Cada muestra es una lectura de ``stats --no-stream``; el resumen da media, p95 y máximo
 por servicio a lo largo de toda la medición, no una captura al terminar.
+
+Docker calcula el % de CPU del momento. Podman, con ``--no-stream``, reporta el promedio
+desde que arrancó el contenedor; por eso con Podman la CPU se calcula entre dos lecturas
+consecutivas del contador acumulado ``CPUNano`` y la primera lectura de cada contenedor
+solo sirve de referencia.
 """
 
 import argparse
@@ -23,10 +28,11 @@ import sys
 import threading
 import time
 
-# Docker nombra el campo de procesos ``PIDs``; Podman, ``PIDS``.
+# Docker nombra el campo de procesos ``PIDs``; Podman, ``PIDS``. Podman agrega ``CPUNano``,
+# el tiempo de CPU acumulado en nanosegundos.
 TEMPLATES = {
     "docker": "{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.PIDs}}",
-    "podman": "{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.PIDS}}",
+    "podman": "{{.Name}}|{{.CPUPerc}}|{{.MemUsage}}|{{.MemPerc}}|{{.PIDS}}|{{.CPUNano}}",
 }
 SERVICES = ("api", "mlflow")
 FIELDS = [
@@ -82,15 +88,15 @@ def service_of(container, services=SERVICES):
 
 def parse_line(line, services=SERVICES):
     """Una línea de ``stats`` con la plantilla de ``TEMPLATES``; ``None`` si no interesa."""
-    fields = line.strip().split("|")
-    if len(fields) != 5:
+    fields = [field.strip() for field in line.strip().split("|")]
+    if len(fields) not in (5, 6):
         return None
-    name, cpu, usage, mem_pct, pids = (field.strip() for field in fields)
+    name, cpu, usage, mem_pct, pids = fields[:5]
     service = service_of(name, services)
     if service is None:
         return None
     used, _, limit = usage.partition("/")
-    return {
+    row = {
         "service": service,
         "container": name,
         "cpu_pct": parse_percent(cpu),
@@ -99,6 +105,32 @@ def parse_line(line, services=SERVICES):
         "mem_pct": parse_percent(mem_pct),
         "pids": int(pids) if pids.isdigit() else 0,
     }
+    if len(fields) == 6:
+        row["cpu_nano"] = int(fields[5]) if fields[5].isdigit() else None
+    return row
+
+
+def cpu_from_counters(rows, previous, now):
+    """Sustituye el % de CPU por el del intervalo desde la lectura anterior (Podman).
+
+    ``previous`` guarda, por contenedor, el último ``(cpu_nano, instante)``. Las filas sin
+    lectura anterior válida (la primera, o tras un reinicio que reinicia el contador) se
+    descartan. Las filas sin ``cpu_nano`` (Docker) se devuelven sin cambios.
+    """
+    result = []
+    for row in rows:
+        row = dict(row)
+        if "cpu_nano" not in row:
+            result.append(row)
+            continue
+        nano = row.pop("cpu_nano")
+        last = previous.get(row["container"])
+        previous[row["container"]] = (nano, now)
+        if nano is None or last is None or last[0] is None or nano < last[0] or now <= last[1]:
+            continue
+        row["cpu_pct"] = round(100 * (nano - last[0]) / ((now - last[1]) * 1e9), 2)
+        result.append(row)
+    return result
 
 
 def percentile(values, q):
@@ -168,6 +200,7 @@ class Sampler:
         self.reader = reader
         self.rows = []
         self.errors = []
+        self._counters = {}
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._loop, daemon=True)
 
@@ -176,7 +209,8 @@ class Sampler:
         while not self._stop.is_set():
             tick = time.monotonic()
             try:
-                for row in self.reader():
+                rows = cpu_from_counters(self.reader(), self._counters, time.monotonic())
+                for row in rows:
                     self.rows.append({"elapsed_s": round(tick - start, 1), **row})
             except (MonitorError, subprocess.TimeoutExpired, OSError) as error:
                 self.errors.append(str(error))

@@ -8,7 +8,7 @@ from mibici import load_test, resource_monitor
 # Salidas reales: Docker Desktop (reports/carga_sin_cache) y Podman 6.1.4.
 DOCKER = "mibici-equipo45-api-1|0.21%|830.6MiB / 1GiB|81.12%|39"
 DOCKER_MLFLOW = "mibici-equipo45-mlflow-1|1.08%|1010MiB / 1GiB|98.59%|108"
-PODMAN = "mna-mibici-equipo45_api_1|3.39%|1.069MB / 16.46GB|0.01%|1"
+PODMAN = "mna-mibici-equipo45_api_1|3.39%|1.069MB / 16.46GB|0.01%|1|13530000"
 
 
 def test_parse_size_handles_binary_and_decimal_units():
@@ -37,6 +37,7 @@ def test_parse_line_reads_podman_compose_names():
     row = resource_monitor.parse_line(PODMAN)
     assert row["service"] == "api"
     assert row["mem_mib"] == 1.0
+    assert row["cpu_nano"] == 13530000
 
 
 def test_parse_line_ignores_other_containers_and_malformed_lines():
@@ -136,3 +137,29 @@ def test_load_test_markdown_includes_resources_only_when_measured():
 def test_run_locust_without_stats_does_not_sample(monkeypatch):
     monkeypatch.setattr(load_test.subprocess, "run", lambda *a, **k: "hecho")
     assert load_test.run_locust(["locust"]) == ("hecho", None)
+
+
+def podman_row(nano, container="p-api-1"):
+    return resource_monitor.parse_line(f"{container}|50.00%|200MiB / 1GiB|20%|5|{nano}")
+
+
+def test_podman_cpu_is_computed_between_readings_not_since_start():
+    previous = {}
+    # La primera lectura solo sirve de referencia: Podman da el promedio desde el arranque.
+    assert resource_monitor.cpu_from_counters([podman_row(1_000_000_000)], previous, 10.0) == []
+    # 3 s de CPU en 2 s de reloj = 150 % (un núcleo y medio).
+    rows = resource_monitor.cpu_from_counters([podman_row(4_000_000_000)], previous, 12.0)
+    assert rows[0]["cpu_pct"] == 150.0
+    assert "cpu_nano" not in rows[0]
+
+
+def test_podman_counter_reset_after_restart_is_skipped():
+    previous = {"p-api-1": (9_000_000_000, 10.0)}
+    assert resource_monitor.cpu_from_counters([podman_row(1_000)], previous, 12.0) == []
+    rows = resource_monitor.cpu_from_counters([podman_row(501_000)], previous, 13.0)
+    assert rows[0]["cpu_pct"] == 0.05
+
+
+def test_docker_rows_keep_reported_cpu():
+    row = resource_monitor.parse_line(DOCKER)
+    assert resource_monitor.cpu_from_counters([row], {}, 1.0) == [row]
