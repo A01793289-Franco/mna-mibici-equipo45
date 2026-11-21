@@ -32,7 +32,8 @@ comportamiento anterior. En esta medición ambas variantes dieron un rendimiento
 
 ### 2.2. Procedimiento
 
-- `docker-compose.yml` sin cambios: API con 2 CPU y 1 GiB; MLflow con 1 CPU y 1 GiB.
+- `docker-compose.yml` de `main` en ese momento: API con 2 CPU y 1 GiB; MLflow con 1 CPU y
+  1 GiB. Las mediciones son anteriores a la corrección de memoria de MLflow (sección 5.3).
 - Antes de cada escenario se recrearon los contenedores (`compose down` / `up --wait`), para que
   ningún escenario herede memoria o modelos cargados del anterior.
 - Reposo: 60 s sin tráfico. Baseline: 5 usuarios, 60 s. Carga: 25 usuarios, 120 s. Estrés:
@@ -131,15 +132,27 @@ Las series completas están en las gráficas `*_recursos.png` de cada carpeta (s
 MLflow usa 1,010 MiB de 1,024 MiB (98.7 %) incluso en reposo. La lectura de
 `/sys/fs/cgroup/memory.stat` dentro del contenedor muestra ~755 MiB de memoria anónima (del
 proceso) y menos de 1 MiB de caché de archivos: el kernel ya vació la caché para no pasar el
-límite. No hubo terminaciones por falta de memoria (`oom_kill 0`), pero el servicio no tiene
-margen. Es la misma situación que registró `docker stats` el 20 de noviembre (98.6 %), así que
+límite. Es la misma situación que registró `docker stats` el 20 de noviembre (98.6 %), así que
 no depende del motor de contenedores.
+
+**Causa.** MLflow 3.x arranca un sistema de trabajos en segundo plano (`huey_consumer`) que este
+proyecto no usa: 7 procesos de ~120 MiB cada uno, ~850 MiB de los ~940 MiB del contenedor. En un
+arranque limpio, `memory.peak` llega exactamente a 1 GiB y `memory.events` registra 5,894
+recortes forzados por el límite en 20 s. En CI esto provocó fallos intermitentes del job de
+Compose: el kernel terminó MLflow justo después de quedar sano, el servicio se reinició y
+`registry-init` recibió "Connection refused".
+
+**Corrección.** `MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false` en el servicio `mlflow` de
+`docker-compose.yml`. Con ella, el pico de memoria en un arranque limpio baja a 506 MiB, sin
+recortes forzados, y la importación de modelos y las 11 comprobaciones de `mibici.verify_api`
+siguen pasando.
 
 ## 6. Riesgos identificados
 
-1. **Memoria de MLflow al límite.** Cualquier aumento (más versiones, más usuarios de la UI, una
-   actualización de MLflow) puede provocar que el kernel lo termine. Afecta las recargas de la
-   API y la importación de modelos al arrancar.
+1. **Memoria de MLflow al límite (corregido).** Con el sistema de trabajos activo, el kernel
+   podía terminar MLflow y hacer fallar la importación de modelos al arrancar; ocurrió en CI. Con
+   `MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false` el pico baja a ~506 MiB. Si en el futuro se
+   necesitan los trabajos de MLflow, hay que subir antes su límite de memoria.
 2. **Capacidad de la API limitada a un proceso.** Con caché el p95 llega a 410 ms con 100
    usuarios y la API usa poco más de un núcleo. Pasar de ese nivel de tráfico requiere más
    procesos de uvicorn, no más CPU por proceso.
@@ -151,8 +164,8 @@ no depende del motor de contenedores.
 
 ## 7. Recomendaciones
 
-1. **Subir el límite de memoria de MLflow** a 1.5 GiB e investigar qué ocupa sus ~755 MiB (ya
-   corre con `--workers=1`); vigilar `memory.events` en busca de eventos `oom`.
+1. **Desactivar el sistema de trabajos de MLflow** (aplicado en `docker-compose.yml`) en lugar
+   de subir su límite de memoria, y vigilar `memory.events` en busca de eventos `oom`.
 2. **Mantener la caché activa** como configuración obligatoria del despliegue y documentar que
    `MODEL_CACHE_SECONDS=0` solo sirve para diagnóstico.
 3. **Para escalar la API, agregar workers de uvicorn** (por ejemplo `--workers 2`) antes que
@@ -208,7 +221,8 @@ Con Docker se usa `--engine docker` / `--stats docker`.
 
 La configuración desplegada (con caché) cumple los límites en los tres escenarios. Con 100
 usuarios atiende 211 RPS con p95 de 410 ms, usando 1.25 núcleos de los 2 asignados a la API y
-231 MiB de su 1 GiB. El recurso crítico no es la API sino la memoria de MLflow, que opera al
-99 % de su límite incluso sin tráfico. Sin caché, la carga del modelo en cada petición satura el
+231 MiB de su 1 GiB. El recurso crítico era la memoria de MLflow, que operaba al 99 % de su
+límite incluso sin tráfico por un sistema de trabajos que el proyecto no usa; al desactivarlo,
+su pico baja a ~506 MiB. Sin caché, la carga del modelo en cada petición satura el
 único proceso de la API y el servicio deja de ser utilizable. El dimensionamiento y el costo se
 analizan en el [análisis FinOps](../finops/analisis_costos.md).

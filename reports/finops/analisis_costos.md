@@ -137,10 +137,14 @@ Lo que se usó de verdad, con caché y en el peor escenario (estrés):
 | CPU de la API | 2 vCPU | 1.38 vCPU |
 | CPU de MLflow | 1 vCPU | 0.11 vCPU |
 | Memoria de la API | 1 GiB | 231 MiB |
-| Memoria de MLflow | 1 GiB | 1,024 MiB (en el límite) |
+| Memoria de MLflow | 1 GiB | 1,024 MiB (en el límite); ~506 MiB con la corrección* |
 
-El servicio necesita menos de 2 vCPU y unos 2 GiB de memoria si MLflow recibe el margen
-recomendado (1.5 GiB). Una **t3.large** (2 vCPU, 8 GiB) lo cubre:
+\* Al desactivar el sistema de trabajos de MLflow que el proyecto no usa
+(`MLFLOW_SERVER_ENABLE_JOB_EXECUTION=false`); ver el
+[análisis de recursos](../recursos/analisis_recursos.md#53-mlflow-vive-en-el-límite-de-memoria-con-o-sin-tráfico).
+
+El servicio necesita menos de 2 vCPU y menos de 1 GiB de memoria en uso (API ~231 MiB y MLflow
+~506 MiB). Una **t3.large** (2 vCPU, 8 GiB) lo cubre con amplio margen:
 
 | Instancia | us-east-1 / mes | mx-central-1 / mes | Ahorro frente a c6i.xlarge |
 |---|---:|---:|---:|
@@ -209,7 +213,7 @@ y el costo efectivo sería de USD 0.18–0.19 por 1,000 inferencias. Por eso la 
 optimización no es acelerar la inferencia, sino **pagar menos capacidad ociosa**: pasar a una
 t3.large (−51 %), encender el servicio solo cuando se necesita (−50 %) o generar las predicciones
 por lotes. Cualquier cambio debe validarse con una prueba de carga en la instancia elegida y con
-el límite de memoria de MLflow corregido.
+la corrección de memoria de MLflow aplicada.
 
 **La recomendación FinOps es optimizar el costo sujeto a cumplir los límites de desempeño, no
 minimizar el costo por inferencia de forma aislada.**

@@ -39,6 +39,9 @@ services:
     environment:
       <<: *environment
       MLFLOW_TRACKING_URI: sqlite:////state/mlflow.db
+      # Sin el sistema de trabajos de MLflow 3.x (7 procesos de ~120 MiB) que este
+      # proyecto no usa; con él, MLflow llega a su límite de 1 GiB al arrancar.
+      MLFLOW_SERVER_ENABLE_JOB_EXECUTION: 'false'
     ports:
       - 127.0.0.1:${MLFLOW_PORT:-5000}:5000
     volumes:
