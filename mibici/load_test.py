@@ -4,9 +4,12 @@ Uso (con la API de Compose levantada en el puerto 8000)::
 
     python -m mibici.load_test
     python -m mibici.load_test --scenario carga --seconds 30
+    python -m mibici.load_test --stats docker   # también muestrea CPU y memoria
 
 Genera en ``reports/carga/``: ``resumen.json``, ``resumen.md`` y un HTML de Locust por
 escenario. Los CSV crudos de Locust se guardan junto a ellos, pero Git los ignora.
+Con ``--stats`` se agregan ``{escenario}_recursos.csv``, ``.json`` y ``.png``
+(ver ``mibici.resource_monitor``).
 """
 
 import argparse
@@ -19,6 +22,8 @@ import subprocess
 import sys
 
 import requests
+
+from mibici import resource_monitor
 
 LOCUSTFILE = Path("load") / "locustfile.py"
 OUTPUT = Path("reports") / "carga"
@@ -100,17 +105,48 @@ def evaluate(aggregated, limits=None):
     return {"limits": limits, "checks": checks, "passed": all(checks.values())}
 
 
-def summarize_scenario(name, scenario, directory, limits=None):
+def summarize_scenario(name, scenario, directory, limits=None, resources=None):
     directory = Path(directory)
     endpoints = parse_stats(directory / f"{name}_stats.csv")
     aggregated = endpoints.pop("Aggregated")
-    return {
+    result = {
         "scenario": scenario,
         "aggregated": aggregated,
         "endpoints": endpoints,
         "failures": parse_failures(directory / f"{name}_failures.csv"),
         "evaluation": evaluate(aggregated, limits),
     }
+    if resources is not None:
+        result["resources"] = resources
+    return result
+
+
+def render_resources(summary):
+    """Tabla de recursos por escenario; vacía si la corrida no usó ``--stats``."""
+    rows = [
+        (name, service, values)
+        for name, result in summary["scenarios"].items()
+        for service, values in result.get("resources", {}).get("services", {}).items()
+    ]
+    if not rows:
+        return []
+    lines = [
+        "",
+        "## Recursos durante cada escenario",
+        "",
+        "| Escenario | Servicio | Muestras | CPU media (%) | CPU p95 (%) | CPU máx (%) "
+        "| Memoria media (MiB) | Memoria máx (MiB) | Memoria máx (%) | PIDS máx |",
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for name, service, values in rows:
+        cpu, mem = values["cpu_pct"], values["mem_mib"]
+        lines.append(
+            f"| {name} | {service} | {values['samples']} | {cpu['mean']} | {cpu['p95']} | "
+            f"{cpu['max']} | {mem['mean']} | {mem['max']} | {values['mem_pct_max']} | "
+            f"{values['pids_max']} |"
+        )
+    lines += ["", "CPU en % de un núcleo, como lo reporta `stats` (puede superar 100 %)."]
+    return lines
 
 
 def render_markdown(summary):
@@ -139,6 +175,7 @@ def render_markdown(summary):
         "",
         f"Límites: p95 ≤ {limits['p95_ms']:g} ms y tasa de error ≤ {limits['error_rate_pct']:g} %.",
     ]
+    lines += render_resources(summary)
     for name, result in summary["scenarios"].items():
         lines += [
             "",
@@ -212,7 +249,16 @@ def locust_command(name, scenario, host, directory):
     ]
 
 
-def run(host, names, seconds=None, directory=OUTPUT, limits=None):
+def run_locust(command, engine=None, interval=2.0):
+    """Corre Locust; con ``engine`` muestrea ``stats`` mientras dura la prueba."""
+    if engine is None:
+        return subprocess.run(command, check=False), None
+    with resource_monitor.Sampler(engine, interval) as sampler:
+        completed = subprocess.run(command, check=False)
+    return completed, sampler
+
+
+def run(host, names, seconds=None, directory=OUTPUT, limits=None, engine=None, interval=2.0):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     check_health(host)
@@ -220,10 +266,24 @@ def run(host, names, seconds=None, directory=OUTPUT, limits=None):
     for name in names:
         scenario = {**SCENARIOS[name], **({"seconds": seconds} if seconds else {})}
         print(f"== {name}: {scenario['users']} usuarios, {scenario['seconds']} s ==", flush=True)
-        completed = subprocess.run(locust_command(name, scenario, host, directory), check=False)
+        command = locust_command(name, scenario, host, directory)
+        try:
+            completed, sampler = run_locust(command, engine, interval)
+        except resource_monitor.MonitorError as error:
+            raise LoadTestError(str(error)) from error
         if completed.returncode != 0:
             raise LoadTestError(f"Locust terminó con código {completed.returncode} en {name}")
-        results[name] = summarize_scenario(name, scenario, directory, limits)
+        resources = None
+        if sampler is not None:
+            if not sampler.rows:
+                raise LoadTestError(
+                    f"`{engine} stats` no devolvió muestras de api ni mlflow en {name}: "
+                    f"{sampler.errors[-1:] or 'sin contenedores'}"
+                )
+            resources = resource_monitor.save(
+                sampler.rows, sampler.errors, directory, name, engine, interval
+            )
+        results[name] = summarize_scenario(name, scenario, directory, limits, resources)
     summary = {
         "host": host,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M"),
@@ -245,10 +305,24 @@ def main(argv=None):
     parser.add_argument("--output", type=Path, default=OUTPUT)
     parser.add_argument("--p95-ms", type=float, default=LIMITS["p95_ms"])
     parser.add_argument("--max-error-pct", type=float, default=LIMITS["error_rate_pct"])
+    parser.add_argument(
+        "--stats",
+        choices=resource_monitor.TEMPLATES,
+        help="Muestrea CPU y memoria de api y mlflow con `docker stats` o `podman stats`",
+    )
+    parser.add_argument("--stats-interval", type=float, default=2.0)
     args = parser.parse_args(argv)
     limits = {"p95_ms": args.p95_ms, "error_rate_pct": args.max_error_pct}
     try:
-        summary = run(args.host, args.scenario, args.seconds, args.output, limits)
+        summary = run(
+            args.host,
+            args.scenario,
+            args.seconds,
+            args.output,
+            limits,
+            args.stats,
+            args.stats_interval,
+        )
     except LoadTestError as error:
         print(error, file=sys.stderr)
         return 2
