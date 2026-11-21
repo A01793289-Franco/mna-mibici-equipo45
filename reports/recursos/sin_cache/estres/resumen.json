@@ -1,0 +1,123 @@
+{
+  "host": "http://127.0.0.1:8000",
+  "generated_at": "2026-11-21 17:17",
+  "locust": "2.46.0",
+  "scenarios": {
+    "estres": {
+      "scenario": {
+        "users": 100,
+        "spawn_rate": 20,
+        "seconds": 120
+      },
+      "aggregated": {
+        "requests": 256,
+        "failures": 0,
+        "error_rate_pct": 0.0,
+        "rps": 2.17,
+        "mean_ms": 31241.4,
+        "p50_ms": 23000.0,
+        "p95_ms": 73000.0,
+        "p99_ms": 75000.0,
+        "max_ms": 75418.2
+      },
+      "endpoints": {
+        "/health": {
+          "requests": 34,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 0.29,
+          "mean_ms": 11628.9,
+          "p50_ms": 13000.0,
+          "p95_ms": 27000.0,
+          "p99_ms": 27000.0,
+          "max_ms": 27344.0
+        },
+        "/predict/p1": {
+          "requests": 111,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 0.94,
+          "mean_ms": 40740.1,
+          "p50_ms": 46000.0,
+          "p95_ms": 73000.0,
+          "p99_ms": 75000.0,
+          "max_ms": 75418.2
+        },
+        "/predict/p1 [invalida]": {
+          "requests": 39,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 0.33,
+          "mean_ms": 14.1,
+          "p50_ms": 8.0,
+          "p95_ms": 45.0,
+          "p99_ms": 47.0,
+          "max_ms": 47.1
+        },
+        "/predict/p2": {
+          "requests": 72,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 0.61,
+          "mean_ms": 42773.8,
+          "p50_ms": 46000.0,
+          "p95_ms": 73000.0,
+          "p99_ms": 75000.0,
+          "max_ms": 74880.7
+        }
+      },
+      "failures": [],
+      "evaluation": {
+        "limits": {
+          "p95_ms": 500.0,
+          "error_rate_pct": 1.0
+        },
+        "checks": {
+          "p95_ms": false,
+          "error_rate_pct": true
+        },
+        "passed": false
+      },
+      "resources": {
+        "engine": "podman",
+        "interval_s": 2.0,
+        "generated_at": "2026-11-21 17:16",
+        "services": {
+          "api": {
+            "samples": 60,
+            "cpu_pct": {
+              "mean": 105.39,
+              "p95": 112.21,
+              "max": 114.82
+            },
+            "mem_mib": {
+              "mean": 506.5,
+              "p95": 621.3,
+              "max": 630.2
+            },
+            "mem_pct_max": 61.55,
+            "mem_limit_mib": 1024.2,
+            "pids_max": 1026
+          },
+          "mlflow": {
+            "samples": 60,
+            "cpu_pct": {
+              "mean": 24.15,
+              "p95": 45.81,
+              "max": 57.1
+            },
+            "mem_mib": {
+              "mean": 1012.3,
+              "p95": 1017.6,
+              "max": 1024.2
+            },
+            "mem_pct_max": 100.0,
+            "mem_limit_mib": 1024.2,
+            "pids_max": 141
+          }
+        },
+        "errors": []
+      }
+    }
+  }
+}
