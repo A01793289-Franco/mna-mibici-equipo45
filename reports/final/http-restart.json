@@ -1,0 +1,699 @@
+{
+  "generated_at": "2026-11-26T03:07:36.575657+00:00",
+  "base_url": "http://127.0.0.1:8000",
+  "mode": "prediction",
+  "passed": true,
+  "checks": [
+    {
+      "method": "GET",
+      "path": "/health",
+      "status": 200,
+      "response": {
+        "status": "ok",
+        "service": "mibici-prediction"
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/openapi.json",
+      "status": 200,
+      "response": {
+        "openapi": "3.1.0",
+        "info": {
+          "title": "MiBici Equipo 45",
+          "version": "0.1.0"
+        },
+        "paths": {
+          "/health": {
+            "get": {
+              "summary": "Health",
+              "operationId": "health_health_get",
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {}
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/predict": {
+            "post": {
+              "summary": "Predict",
+              "operationId": "predict_predict_post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/PredictionRequest"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {}
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/predict/p1": {
+            "post": {
+              "summary": "Predict P1",
+              "description": "Demanda esperada de salidas a partir de las variables de P1.",
+              "operationId": "predict_p1_predict_p1_post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/P1Variables"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P1Response"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "/predict/p2": {
+            "post": {
+              "summary": "Predict P2",
+              "description": "Clase de riesgo y probabilidades a partir de las variables de P2.",
+              "operationId": "predict_p2_predict_p2_post",
+              "requestBody": {
+                "content": {
+                  "application/json": {
+                    "schema": {
+                      "$ref": "#/components/schemas/P2Variables"
+                    }
+                  }
+                },
+                "required": true
+              },
+              "responses": {
+                "200": {
+                  "description": "Successful Response",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/P2Response"
+                      }
+                    }
+                  }
+                },
+                "422": {
+                  "description": "Validation Error",
+                  "content": {
+                    "application/json": {
+                      "schema": {
+                        "$ref": "#/components/schemas/HTTPValidationError"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "components": {
+          "schemas": {
+            "HTTPValidationError": {
+              "properties": {
+                "detail": {
+                  "items": {
+                    "$ref": "#/components/schemas/ValidationError"
+                  },
+                  "type": "array",
+                  "title": "Detail"
+                }
+              },
+              "type": "object",
+              "title": "HTTPValidationError"
+            },
+            "P1Prediction": {
+              "properties": {
+                "demanda_esperada": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Demanda Esperada",
+                  "description": "Salidas esperadas en la hora siguiente"
+                }
+              },
+              "type": "object",
+              "required": [
+                "demanda_esperada"
+              ],
+              "title": "P1Prediction"
+            },
+            "P1Response": {
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "const": "P1",
+                  "title": "Question"
+                },
+                "model_uri": {
+                  "type": "string",
+                  "title": "Model Uri"
+                },
+                "prediction": {
+                  "$ref": "#/components/schemas/P1Prediction"
+                }
+              },
+              "type": "object",
+              "required": [
+                "question",
+                "model_uri",
+                "prediction"
+              ],
+              "title": "P1Response"
+            },
+            "P1Variables": {
+              "properties": {
+                "hour": {
+                  "type": "integer",
+                  "maximum": 23.0,
+                  "minimum": 0.0,
+                  "title": "Hour",
+                  "description": "Hora local del día (0 a 23)"
+                },
+                "weekday": {
+                  "type": "integer",
+                  "maximum": 6.0,
+                  "minimum": 0.0,
+                  "title": "Weekday",
+                  "description": "Día de la semana (0 lunes a 6 domingo)"
+                },
+                "is_weekend": {
+                  "type": "integer",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Is Weekend",
+                  "description": "1 si es sábado o domingo"
+                },
+                "month": {
+                  "type": "integer",
+                  "maximum": 12.0,
+                  "minimum": 1.0,
+                  "title": "Month",
+                  "description": "Mes (1 a 12)"
+                },
+                "departures_lag_1": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 1",
+                  "description": "Salidas de la estación 1 hora antes"
+                },
+                "departures_lag_24": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 24",
+                  "description": "Salidas 24 horas antes"
+                },
+                "departures_lag_168": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 168",
+                  "description": "Salidas 168 horas antes"
+                },
+                "departures_mean_24": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Mean 24",
+                  "description": "Promedio de salidas de las 24 horas previas"
+                },
+                "departures_mean_168": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Mean 168",
+                  "description": "Promedio de salidas de las 168 horas previas"
+                },
+                "station_id": {
+                  "type": "integer",
+                  "maximum": 2147483647.0,
+                  "exclusiveMinimum": 0.0,
+                  "title": "Station Id",
+                  "description": "Identificador de la estación"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "hour",
+                "weekday",
+                "is_weekend",
+                "month",
+                "departures_lag_1",
+                "departures_lag_24",
+                "departures_lag_168",
+                "departures_mean_24",
+                "departures_mean_168",
+                "station_id"
+              ],
+              "title": "P1Variables",
+              "description": "Entrada de P1: demanda esperada de salidas de una estación en la próxima hora.\n\nEl modelo champion de P1 usa la estación como variable categórica, por eso es obligatoria."
+            },
+            "P2Prediction": {
+              "properties": {
+                "clase": {
+                  "type": "integer",
+                  "maximum": 2.0,
+                  "minimum": 0.0,
+                  "title": "Clase",
+                  "description": "0 normal, 1 sin bicicletas, 2 sin anclajes"
+                },
+                "riesgo": {
+                  "type": "string",
+                  "enum": [
+                    "normal",
+                    "riesgo_sin_bicicletas",
+                    "riesgo_sin_anclajes"
+                  ],
+                  "title": "Riesgo"
+                },
+                "prob_normal": {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Prob Normal"
+                },
+                "prob_riesgo_sin_bicicletas": {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Prob Riesgo Sin Bicicletas"
+                },
+                "prob_riesgo_sin_anclajes": {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Prob Riesgo Sin Anclajes"
+                }
+              },
+              "type": "object",
+              "required": [
+                "clase",
+                "riesgo",
+                "prob_normal",
+                "prob_riesgo_sin_bicicletas",
+                "prob_riesgo_sin_anclajes"
+              ],
+              "title": "P2Prediction"
+            },
+            "P2Response": {
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "const": "P2",
+                  "title": "Question"
+                },
+                "model_uri": {
+                  "type": "string",
+                  "title": "Model Uri"
+                },
+                "prediction": {
+                  "$ref": "#/components/schemas/P2Prediction"
+                }
+              },
+              "type": "object",
+              "required": [
+                "question",
+                "model_uri",
+                "prediction"
+              ],
+              "title": "P2Response"
+            },
+            "P2Variables": {
+              "properties": {
+                "hour": {
+                  "type": "integer",
+                  "maximum": 23.0,
+                  "minimum": 0.0,
+                  "title": "Hour",
+                  "description": "Hora local del día (0 a 23)"
+                },
+                "weekday": {
+                  "type": "integer",
+                  "maximum": 6.0,
+                  "minimum": 0.0,
+                  "title": "Weekday",
+                  "description": "Día de la semana (0 lunes a 6 domingo)"
+                },
+                "is_weekend": {
+                  "type": "integer",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Is Weekend",
+                  "description": "1 si es sábado o domingo"
+                },
+                "month": {
+                  "type": "integer",
+                  "maximum": 12.0,
+                  "minimum": 1.0,
+                  "title": "Month",
+                  "description": "Mes (1 a 12)"
+                },
+                "departures_lag_1": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 1",
+                  "description": "Salidas de la estación 1 hora antes"
+                },
+                "departures_lag_24": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 24",
+                  "description": "Salidas 24 horas antes"
+                },
+                "departures_lag_168": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Lag 168",
+                  "description": "Salidas 168 horas antes"
+                },
+                "departures_mean_24": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Mean 24",
+                  "description": "Promedio de salidas de las 24 horas previas"
+                },
+                "departures_mean_168": {
+                  "type": "number",
+                  "minimum": 0.0,
+                  "title": "Departures Mean 168",
+                  "description": "Promedio de salidas de las 168 horas previas"
+                },
+                "station_id": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "maximum": 2147483647.0,
+                      "exclusiveMinimum": 0.0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Station Id",
+                  "description": "Solo si el modelo champion de P2 usa la estación como variable"
+                },
+                "virtual_occupancy": {
+                  "type": "number",
+                  "maximum": 1.0,
+                  "minimum": 0.0,
+                  "title": "Virtual Occupancy",
+                  "description": "Ocupación virtual actual (0 a 1)"
+                },
+                "net_flow_lag_1": {
+                  "type": "number",
+                  "title": "Net Flow Lag 1",
+                  "description": "Llegadas menos salidas 1 hora antes"
+                },
+                "net_flow_lag_24": {
+                  "type": "number",
+                  "title": "Net Flow Lag 24",
+                  "description": "Llegadas menos salidas 24 horas antes"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "hour",
+                "weekday",
+                "is_weekend",
+                "month",
+                "departures_lag_1",
+                "departures_lag_24",
+                "departures_lag_168",
+                "departures_mean_24",
+                "departures_mean_168",
+                "virtual_occupancy",
+                "net_flow_lag_1",
+                "net_flow_lag_24"
+              ],
+              "title": "P2Variables",
+              "description": "Entrada de P2: P1 más ocupación virtual y flujo neto rezagado."
+            },
+            "PredictionRequest": {
+              "properties": {
+                "question": {
+                  "type": "string",
+                  "enum": [
+                    "P1",
+                    "P2"
+                  ],
+                  "title": "Question"
+                },
+                "station_id": {
+                  "type": "integer",
+                  "maximum": 2147483647.0,
+                  "exclusiveMinimum": 0.0,
+                  "title": "Station Id"
+                },
+                "timestamp": {
+                  "type": "string",
+                  "format": "date-time",
+                  "title": "Timestamp"
+                }
+              },
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "question",
+                "station_id",
+                "timestamp"
+              ],
+              "title": "PredictionRequest"
+            },
+            "ValidationError": {
+              "properties": {
+                "loc": {
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "integer"
+                      }
+                    ]
+                  },
+                  "type": "array",
+                  "title": "Location"
+                },
+                "msg": {
+                  "type": "string",
+                  "title": "Message"
+                },
+                "type": {
+                  "type": "string",
+                  "title": "Error Type"
+                },
+                "input": {
+                  "title": "Input"
+                },
+                "ctx": {
+                  "type": "object",
+                  "title": "Context"
+                }
+              },
+              "type": "object",
+              "required": [
+                "loc",
+                "msg",
+                "type"
+              ],
+              "title": "ValidationError"
+            }
+          }
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 200,
+      "response": {
+        "question": "P1",
+        "model_uri": "models:/mibici-p1-demanda@champion",
+        "prediction": {
+          "demanda_esperada": 4.0
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p2",
+      "status": 200,
+      "response": {
+        "question": "P2",
+        "model_uri": "models:/mibici-p2-riesgo@champion",
+        "prediction": {
+          "clase": 1,
+          "riesgo": "riesgo_sin_bicicletas",
+          "prob_normal": 0.0,
+          "prob_riesgo_sin_bicicletas": 1.0,
+          "prob_riesgo_sin_anclajes": 0.0
+        }
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "hour"
+            ],
+            "msg": "Input should be less than or equal to 23",
+            "type": "less_than_equal"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "hour"
+            ],
+            "msg": "Input should be a valid integer",
+            "type": "int_type"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "departures_lag_1"
+            ],
+            "msg": "Input should be greater than or equal to 0",
+            "type": "greater_than_equal"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body"
+            ],
+            "msg": "Value error, is_weekend no coincide con weekday (5 y 6 son fin de semana)",
+            "type": "value_error"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "station_id"
+            ],
+            "msg": "Field required",
+            "type": "missing"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p1",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "extra"
+            ],
+            "msg": "Extra inputs are not permitted",
+            "type": "extra_forbidden"
+          }
+        ]
+      }
+    },
+    {
+      "method": "POST",
+      "path": "/predict/p2",
+      "status": 422,
+      "response": {
+        "detail": [
+          {
+            "loc": [
+              "body",
+              "virtual_occupancy"
+            ],
+            "msg": "Input should be less than or equal to 1",
+            "type": "less_than_equal"
+          }
+        ]
+      }
+    }
+  ]
+}
