@@ -136,10 +136,26 @@ Las 22 comprobaciones HTTP exitosas respaldan la operación de la API, el consum
 
 Estos resultados complementan la consolidación del repositorio y la validación documental del Model Registry.
 
-La confirmación de las versiones y aliases del Registry productivo permanece pendiente.
+La [revalidación final](revalidacion_20261126.md) complementa esta evidencia sintética con
+la recuperación y las métricas de los modelos reales del registro local de referencia.
+La evidencia de este CI conserva su alcance de integración y no se presenta como
+entrenamiento ni evaluación de esos modelos.
 
 ## 10. Documentos relacionados
 
 - [Consolidación del repositorio](consolidacion_repositorio.md).
 - [Validación del Model Registry](validacion_registry.md).
 - [Configuración del pipeline CI](../../.github/workflows/ci.yml).
+
+## 11. Verificación de main para el cierre
+
+El 26 de noviembre se consultó la ejecución
+[45771834486](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/runs/45771834486)
+del repositorio del equipo, sobre el commit `d4bb7849210b05f5d025165362695373f9dd5c76`.
+Los cuatro jobs finalizaron en `success`: Ubuntu, Windows, seguridad y despliegue Compose.
+La ejecución del fork descrita anteriormente conserva su valor histórico; este enlace
+identifica el resultado integrado en `main`.
+
+La comprobación local del mismo código aprobó 316 pruebas y 16 subpruebas. El registro
+de cierre añade las peticiones HTTP con modelos reales, antes y después de recrear los
+contenedores, y las verificaciones de versiones y datos.

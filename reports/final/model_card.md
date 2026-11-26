@@ -1,7 +1,7 @@
 # Model Card — MiBici, Equipo 45
 
 **Proyecto:** MiBici (Guadalajara) · **Equipo:** 45 · **Actividad:** Entrega final del proyecto integrador
-**Fecha:** 26 de noviembre de 2026 · **Commit de referencia:** `2cf05db`
+**Fecha:** 26 de noviembre de 2026 · **Código base revalidado:** `d4bb784`
 **Formato:** basado en *Model Cards for Model Reporting* (Mitchell et al., 2019).
 
 Esta ficha documenta el modelo principal del proyecto, **P1 — demanda por estación**, y resume los otros dos modelos registrados (P2 y P3). Todas las cifras provienen de evidencias del repositorio; cada sección indica su fuente.
@@ -15,7 +15,7 @@ Esta ficha documenta el modelo principal del proyecto, **P1 — demanda por esta
 | Algoritmo del champion | `StationGrouper` + `HistGradientBoostingRegressor` (pérdida Poisson) | Regla de persistencia sobre la ocupación virtual actual | K-means, k = 3 |
 | Hiperparámetros | `learning_rate=0.1`, `max_iter=100`, `max_leaf_nodes=31`, semilla 42 | Umbrales 10 % y 90 %; ocupación inicial 50 % | `n_init=10`, semilla 42 |
 | Versión `@champion` | v1 (run `da28d047b8384d089de6f74fcd4e175d`) | v1 (run `fb52c91b260843a992fe74ecfac7201c`) | v1 (run `1079f92ad21d4f2cbc7dfa29c0d01253`) |
-| Versión `@challenger` | v2: mismo algoritmo, reentrenado con enero–agosto | — | — |
+| Candidata en el registro A/B | v2: mismo algoritmo, reentrenado con enero–agosto | — | — |
 | Criterio de selección | Menor `val_mae` | Mayor `val_f1_macro` | Mayor `val_ari` (estabilidad entre periodos) |
 | Servido en la API | Sí: `POST /predict/p1` | Sí: `POST /predict/p2` | No: análisis por lotes |
 
@@ -23,6 +23,12 @@ Esta ficha documenta el modelo principal del proyecto, **P1 — demanda por esta
 - **Código:** entrenamiento en `mibici/train.py`, predicción en `mibici/predict.py`, recuperación por alias en `mibici/model_loader.py` y verificación del Registry en `mibici/verify_registry.py`. Se ejecuta como MLflow Project (`MLproject`).
 - **Serialización:** `skops`.
 - **Licencia del código:** MIT (`LICENSE`). La licencia no aplica a los datos (sección 4).
+
+El 26 de noviembre se recuperaron los tres champion reales y se reprodujeron sus
+predicciones y métricas. El registro local de referencia contiene P1/P2/P3 v1. El registro
+separado de la reproducción A/B contiene P1 v1/v2, con otros run IDs. Los números de
+versión se interpretan dentro de su registro, no como identificadores universales.
+[Consulta de linaje y aliases](evidencias_20261126/registry_linaje.json).
 
 Fuentes: [resultados de la segunda entrega](../resultados_mlflow_entrega2.md), [integración del Registry](../../references/integracion_registry.md) y [validación del Registry](validacion_registry.md).
 
@@ -64,6 +70,12 @@ Fuentes: [resultados de la segunda entrega](../resultados_mlflow_entrega2.md), [
 - **P3:** 48 medias horarias normalizadas, separadas en día laborable y fin de semana. Las coordenadas solo se usan para el mapa.
 
 Se excluyen los horizontes que cruzan los cortes entre particiones, así como las primeras 168 horas porque no tienen historia suficiente.
+
+Las cifras de entrenamiento y evaluación describen la versión histórica usada por estos
+modelos. La ejecución nueva del MLflow Project conserva su propia versión de datos y
+características. El código actual descubre el catálogo publicado si el proveedor retira
+el anterior; ese cambio no altera los manifiestos históricos ni acredita una reproducción
+exacta. La [revalidación final](revalidacion_20261126.md) distingue ambas ejecuciones.
 
 **Privacidad y condiciones de uso:**
 - Los modelos no usan identificadores de personas, edad, género ni otros atributos personales. El ID del viaje solo se usa para eliminar duplicados.
@@ -129,20 +141,28 @@ El ARI mide si los grupos se mantienen entre periodos. No es una exactitud super
 
 - **Servicio:** FastAPI contenerizada (`Containerfile`), orquestada con Docker Compose junto con MLflow y un servicio que importa y verifica los modelos del Registry. La API carga los modelos por alias `@champion`, así que cambiar de versión no requiere reconstruir la imagen.
 - **CI/CD:** GitHub Actions ejecuta pruebas en Ubuntu y Windows, revisiones de seguridad, construcción de la imagen, despliegue temporal con Compose y verificación HTTP. Fuente: [evidencia de CI](evidencia_validacion_ci.md).
-- **Carga con Locust** (con caché, límites p95 ≤ 500 ms y errores ≤ 1 %):
+- **Carga con Locust:** revalidación del 26 de noviembre con los modelos reales, Docker
+  Desktop 29.8.0 en Linux, Intel Core Ultra 9 285K y VM de 24 CPU / 8 GiB. La API tiene
+  límites de 2 CPU / 1 GiB. Locust corre en el mismo anfitrión. Criterios definidos por
+  el equipo: p95 ≤ 500 ms y errores ≤ 1 %.
 
-  | Escenario | Usuarios | RPS | p95 | Errores |
+  | Escenario | Usuarios | RPS totales | p95 | Errores |
   |---|---:|---:|---:|---:|
-  | Baseline | 5 | 15.25 | 19 ms | 0 % |
-  | Carga | 25 | 78.13 | 28 ms | 0 % |
-  | Estrés | 100 | 156.22 | 490 ms | 0 % |
+  | Baseline | 5 | 15.79 | 8 ms | 0 % |
+  | Estrés | 100 | 280.08 | 200 ms | 0 % |
 
-  Fuente: [resumen de carga](../carga/resumen.md).
+  Fuente: [resumen de la revalidación](evidencias_20261126/locust/resumen.md). Son dos
+  corridas de 60 y 120 s. Los RPS incluyen health y rechazos 422 esperados; en estrés
+  P1/P2 suman 224.03 predicciones válidas/s. Esta campaña se conserva separada de la
+  campaña Podman/WSL2 del 21 de noviembre y de las pruebas Docker del 20 de noviembre.
+  MLflow alcanzó 376.6 MiB de memoria durante el estrés, después de desactivar los
+  trabajos en segundo plano. No es una prueba prolongada ni determina capacidad de EC2.
 
 - **Costos (FinOps):**
-  - En una instancia AWS c6i.xlarge, el servicio cuesta USD 124.10 al mes en us-east-1 y USD 130.31 en mx-central-1.
+  - Como referencia de cómputo Linux On-Demand, una AWS c6i.xlarge cuesta USD 124.10 por 730 horas en us-east-1 y USD 130.31 en mx-central-1. Las tarifas se confirmaron el 26 de noviembre; no hubo despliegue ni facturación en AWS.
   - Con la demanda estimada (480 estaciones × 24 h × 2 modelos ≈ 23,040 inferencias diarias), el costo efectivo es de USD 0.18 a 0.19 por cada 1,000 inferencias.
-  - Usar una t3.large reduciría el costo mensual un 51 %.
+  - La tarifa base de t3.large reduce aproximadamente 51 % del cómputo. Su adopción requiere medir su capacidad y créditos de CPU; este porcentaje no estima la factura total.
+  - El cálculo excluye almacenamiento, red, IP pública, balanceador e impuestos. El rendimiento medido localmente no garantiza capacidad equivalente en EC2.
 
   Fuente: [análisis FinOps](../finops/analisis_costos.md).
 
@@ -151,8 +171,8 @@ El ARI mide si los grupos se mantienen entre periodos. No es una exactitud super
 - **Drift con Evidently:** compara el periodo de entrenamiento contra julio–agosto y contra septiembre. El umbral es 0.1 para la distancia de Wasserstein normalizada (variables numéricas) y para Jensen-Shannon (categóricas).
 - **Resultados:**
   - Ningún conjunto presenta drift global.
-  - `station_id` sí presenta drift en P1 y P2: 0.262 en septiembre, porque aparecieron 58 estaciones nuevas.
-  - `departures_mean_168` presenta drift leve solo en julio–agosto: 0.105.
+  - `station_id` sí presenta drift en septiembre: 0.2620 en P1 y 0.2605 en P2, con 58 estaciones ausentes del entrenamiento.
+  - `departures_mean_168` presenta drift leve solo en julio–agosto: 0.1052 en P1 y 0.1030 en P2.
 - **Calidad de datos:** no hay valores faltantes, filas duplicadas por estación y hora ni columnas constantes.
 - **Política:**
   - Revisar mensualmente.
@@ -173,22 +193,28 @@ Fuentes: [resumen de drift](../evidently/resumen.md) e [interpretación](../evid
 1. Septiembre ya se había observado en entregas anteriores, así que su evaluación es **retrospectiva** y no una prueba independiente nueva. La selección de modelos se hizo solo con validación.
 2. P2 evalúa un **inventario virtual**: arranca al 50 % de la capacidad y acumula llegadas menos salidas. No reproduce el rebalanceo real del operador.
 3. El catálogo de estaciones es posterior al periodo y se trató como fijo para todos los meses, lo que es una limitación retrospectiva.
-4. Las métricas de P1 son globales. El error por estación individual no está cuantificado más allá de la división entre estaciones conocidas y nuevas.
+4. El notebook `2.0-analisis-errores-p1.ipynb` desglosa los errores de validación por hora, decil de demanda y estación. La comparación A/B resume estaciones conocidas y nuevas; estos análisis no constituyen una auditoría formal de equidad territorial.
 5. El A/B se hizo offline, sin asignar tráfico real de forma aleatoria. Sus resultados no garantizan el mismo desempeño en meses futuros.
 6. Los tiempos de entrenamiento e inferencia se midieron en una sola máquina y una sola ejecución.
 
-## 10. Estado de producción y pendientes
+## 10. Estado de operación y decisión de entrega
 
 | Pregunta | Champion | Challenger | Decisión vigente |
 |---|---|---|---|
-| P1 | v1 | v2 (recomendada por el A/B) | Se mantiene v1 hasta que se apruebe la promoción de forma controlada |
-| P2 | v1 | — | Vigente |
-| P3 | v1 | — | Vigente, por lotes |
+| P1 | v1 en el registro de referencia | v2 en el registro separado de A/B | La API de entrega mantiene v1; v2 conserva la recomendación experimental |
+| P2 | v1 | — | Persistencia del proxy, elegida por F1 macro y menor costo |
+| P3 | v1 | — | K-means k = 3, por lotes |
 
-**Pendientes antes de la entrega**, según la [validación del Registry](validacion_registry.md):
-- Confirmar los aliases actuales en el servidor MLflow.
-- Ejecutar `python -m mibici.verify_registry --question all --smoke-only` y guardar la evidencia.
-- Decidir si se promueve la v2 de P1 a `@champion`. Si se promueve, actualizar las secciones 1, 5.2 y 10 de esta ficha.
+Los aliases y el linaje se consultaron en las copias locales de los registros reales del
+equipo; los cuatro smoke tests y la reproducción de métricas aprobaron. El servicio
+Compose importa P1/P2 y comprueba sus predicciones antes de exponer la API. La asignación
+`champion` define el estado de consumo de este prototipo local y no un servicio público
+en producción. No se declara acceso al servidor privado de otro integrante.
+
+La decisión conserva v1 para la entrega y limita la promoción de v2 a una evaluación en
+otro periodo y revisión técnica. La ventaja retrospectiva observada no demuestra por sí
+sola desempeño futuro. El protocolo conserva el modelo anterior para reversión y evita
+promover automáticamente por drift. Evidencia: [revalidación final](revalidacion_20261126.md).
 
 ## Referencias
 

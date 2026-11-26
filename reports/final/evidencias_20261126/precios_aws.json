@@ -1,0 +1,85 @@
+{
+  "consulted_on": "2026-11-26",
+  "currency": "USD",
+  "scope": "Referencia de cómputo Linux On-Demand; excluye otros servicios e impuestos.",
+  "regions": {
+    "us-east-1": {
+      "url": "https://b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/ec2/USD/current/ec2-ondemand-without-sec-sel/US%20East%20%28N.%20Virginia%29/Linux/index.json",
+      "publication": "2026-11-24T23:14:17Z",
+      "sha256": "074ebeeb611a8ad6713ed5e5c15a7ded646d0de9d2c52b12036e3bb73ba84d3f",
+      "instances": {
+        "t3.large": {
+          "rateCode": "HBVJM3Q9S8K6MNPJ.JRTCKXETXF.6YS6EN2CT7",
+          "price": "0.0832000000",
+          "Location": "US East (N. Virginia)",
+          "Instance Family": "General purpose",
+          "vCPU": "2",
+          "Instance Type": "t3.large",
+          "Memory": "8 GiB",
+          "Storage": "EBS only",
+          "Network Performance": "Up to 5 Gigabit",
+          "plc:OperatingSystem": "Linux",
+          "plc:InstanceFamily": "General Purpose",
+          "Operating System": "Linux",
+          "Pre Installed S/W": "NA",
+          "License Model": "No License required"
+        },
+        "c6i.xlarge": {
+          "rateCode": "JPN4K2NQVRWGTQGS.JRTCKXETXF.6YS6EN2CT7",
+          "price": "0.1700000000",
+          "Location": "US East (N. Virginia)",
+          "Instance Family": "Compute optimized",
+          "vCPU": "4",
+          "Instance Type": "c6i.xlarge",
+          "Memory": "8 GiB",
+          "Storage": "EBS only",
+          "Network Performance": "Up to 12500 Megabit",
+          "plc:OperatingSystem": "Linux",
+          "plc:InstanceFamily": "Compute Optimized",
+          "Operating System": "Linux",
+          "Pre Installed S/W": "NA",
+          "License Model": "No License required"
+        }
+      }
+    },
+    "mx-central-1": {
+      "url": "https://b0.p.awsstatic.com/pricing/2.0/meteredUnitMaps/ec2/USD/current/ec2-ondemand-without-sec-sel/Mexico%20%28Central%29/Linux/index.json",
+      "publication": "2026-11-24T23:14:17Z",
+      "sha256": "f34d62d582f42cd770905e791e9e0ffb307eb2c4041edfc901b7c91e45d3c2cc",
+      "instances": {
+        "t3.large": {
+          "rateCode": "AHBZGCJYTVNA65UB.JRTCKXETXF.6YS6EN2CT7",
+          "price": "0.0874000000",
+          "Location": "Mexico (Central)",
+          "Instance Family": "General purpose",
+          "vCPU": "2",
+          "Instance Type": "t3.large",
+          "Memory": "8 GiB",
+          "Storage": "EBS only",
+          "Network Performance": "Up to 5 Gigabit",
+          "plc:OperatingSystem": "Linux",
+          "plc:InstanceFamily": "General Purpose",
+          "Operating System": "Linux",
+          "Pre Installed S/W": "NA",
+          "License Model": "No License required"
+        },
+        "c6i.xlarge": {
+          "rateCode": "ZGE69Z5U5NFY6Z3Q.JRTCKXETXF.6YS6EN2CT7",
+          "price": "0.1785000000",
+          "Location": "Mexico (Central)",
+          "Instance Family": "Compute optimized",
+          "vCPU": "4",
+          "Instance Type": "c6i.xlarge",
+          "Memory": "8 GiB",
+          "Storage": "EBS only",
+          "Network Performance": "Up to 12500 Megabit",
+          "plc:OperatingSystem": "Linux",
+          "plc:InstanceFamily": "Compute Optimized",
+          "Operating System": "Linux",
+          "Pre Installed S/W": "NA",
+          "License Model": "No License required"
+        }
+      }
+    }
+  }
+}

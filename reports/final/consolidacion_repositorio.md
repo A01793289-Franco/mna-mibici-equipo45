@@ -1,9 +1,11 @@
 # Consolidación del repositorio — Proyecto integrador MiBici
 
-**Equipo:** 45  
-**Actividad:** Entrega final del proyecto integrador  
-**Alcance:** Punto 1 — Consolidación del repositorio  
-**Commit de referencia:** 2671c33
+**Equipo:** 45
+**Actividad:** Entrega final del proyecto integrador
+**Alcance:** Punto 1 — Consolidación del repositorio
+**Commit de referencia original:** 2671c33
+**Cierre:** 26 de noviembre de 2026, código base `d4bb784`. Véase la
+[revalidación funcional final](revalidacion_20261126.md).
 
 ## 1. Objetivo
 
@@ -188,8 +190,10 @@ Los resultados documentados en entregas anteriores incluyen:
 | Baseline estacional | 0.898799 |
 | HistGradientBoosting | 0.761427 |
 | Modelo ajustado | 0.7552 |
+| Champion definitivo con estación | 0.749792 |
 
-Se observa una reducción del error respecto al baseline estacional.
+El champion definitivo con estación obtiene el menor MAE de validación. El modelo
+ajustado de las filas anteriores corresponde a otro experimento y no es el elegido.
 
 #### P2 — Clasificación
 
@@ -255,9 +259,9 @@ La integración permite conectar el desarrollo experimental con los componentes 
 | Entorno de ejecución | python_env.yaml | Revisado |
 | Entrenamiento parametrizado | MLproject y train.py | Revisado |
 | MLflow Tracking | tracking.py y reportes | Revisado |
-| Pruebas automatizadas | Evidencia histórica de Pytest | Documentado |
-| Reproducibilidad exacta | Versionamiento de datos y características | Requiere confirmación |
-| Ejecución funcional actual | Nueva ejecución del pipeline | Pendiente |
+| Pruebas automatizadas | 316 pruebas y 16 subpruebas aprobadas el 26 de noviembre | Comprobado |
+| Reproducción de métricas históricas | Código de origen y hashes de las tablas originales | Comprobado |
+| Ejecución funcional con código actual | MLflow Project, modelos reales y Compose; evidencia de cierre | Comprobado |
 
 ## 9. Recomendaciones
 
@@ -276,6 +280,11 @@ El proyecto MiBici cuenta con una estructura organizada y con los componentes t�
 
 La evidencia histórica demuestra avances en la ejecución reproducible del proyecto y en la automatización de pruebas.
 
-La revisión final confirma documentalmente la integración de los componentes correspondientes al punto 1. Sin embargo, la reproducción exacta de experimentos históricos y la ejecución funcional sobre el entorno actual requieren verificaciones adicionales.
+La [revalidación del 26 de noviembre](revalidacion_20261126.md) añade ejecución funcional
+al examen documental: recuperación de modelos reales con el código actual, reproducción
+de métricas con el código histórico compatible y ejecución del MLflow Project con una
+versión nueva de datos. El registro mantiene la identidad de cada versión; descargar un
+catálogo distinto no convierte una tabla nueva en la que produjo los modelos históricos.
 
-La validación del Model Registry, el linaje y las versiones vigentes se documentarán de manera independiente como parte del punto 2.
+La [verificación del Registry](validacion_registry.md) conserva el linaje, los resultados
+de predicción y la decisión sobre los modelos consumidos por el prototipo de entrega.

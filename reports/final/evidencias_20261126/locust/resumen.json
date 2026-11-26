@@ -1,0 +1,239 @@
+{
+  "host": "http://127.0.0.1:8126",
+  "generated_at": "2026-11-26 07:55",
+  "locust": "2.46.0",
+  "scenarios": {
+    "baseline": {
+      "scenario": {
+        "users": 5,
+        "spawn_rate": 1,
+        "seconds": 60
+      },
+      "aggregated": {
+        "requests": 932,
+        "failures": 0,
+        "error_rate_pct": 0.0,
+        "rps": 15.79,
+        "mean_ms": 5.0,
+        "p50_ms": 5.0,
+        "p95_ms": 8.0,
+        "p99_ms": 11.0,
+        "max_ms": 16.2
+      },
+      "endpoints": {
+        "/health": {
+          "requests": 91,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 1.54,
+          "mean_ms": 2.4,
+          "p50_ms": 2.0,
+          "p95_ms": 3.0,
+          "p99_ms": 10.0,
+          "max_ms": 10.1
+        },
+        "/predict/p1": {
+          "requests": 456,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 7.73,
+          "mean_ms": 7.2,
+          "p50_ms": 7.0,
+          "p95_ms": 10.0,
+          "p99_ms": 12.0,
+          "max_ms": 16.2
+        },
+        "/predict/p1 [invalida]": {
+          "requests": 101,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 1.71,
+          "mean_ms": 2.2,
+          "p50_ms": 2.0,
+          "p95_ms": 3.0,
+          "p99_ms": 3.0,
+          "max_ms": 3.1
+        },
+        "/predict/p2": {
+          "requests": 284,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 4.81,
+          "mean_ms": 3.4,
+          "p50_ms": 3.0,
+          "p95_ms": 4.0,
+          "p99_ms": 6.0,
+          "max_ms": 10.7
+        }
+      },
+      "failures": [],
+      "evaluation": {
+        "limits": {
+          "p95_ms": 500.0,
+          "error_rate_pct": 1.0
+        },
+        "checks": {
+          "p95_ms": true,
+          "error_rate_pct": true
+        },
+        "passed": true
+      },
+      "resources": {
+        "engine": "docker",
+        "interval_s": 2.0,
+        "generated_at": "2026-11-26 07:53",
+        "services": {
+          "api": {
+            "samples": 31,
+            "cpu_pct": {
+              "mean": 9.92,
+              "p95": 17.14,
+              "max": 17.79
+            },
+            "mem_mib": {
+              "mean": 220.1,
+              "p95": 220.7,
+              "max": 220.9
+            },
+            "mem_pct_max": 21.57,
+            "mem_limit_mib": 1024.0,
+            "pids_max": 26
+          },
+          "mlflow": {
+            "samples": 31,
+            "cpu_pct": {
+              "mean": 1.07,
+              "p95": 6.33,
+              "max": 6.38
+            },
+            "mem_mib": {
+              "mean": 374.8,
+              "p95": 375.3,
+              "max": 375.4
+            },
+            "mem_pct_max": 36.66,
+            "mem_limit_mib": 1024.0,
+            "pids_max": 13
+          }
+        },
+        "errors": []
+      }
+    },
+    "estres": {
+      "scenario": {
+        "users": 100,
+        "spawn_rate": 20,
+        "seconds": 120
+      },
+      "aggregated": {
+        "requests": 33358,
+        "failures": 0,
+        "error_rate_pct": 0.0,
+        "rps": 280.08,
+        "mean_ms": 50.9,
+        "p50_ms": 17.0,
+        "p95_ms": 200.0,
+        "p99_ms": 270.0,
+        "max_ms": 452.5
+      },
+      "endpoints": {
+        "/health": {
+          "requests": 3397,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 28.52,
+          "mean_ms": 9.9,
+          "p50_ms": 4.0,
+          "p95_ms": 38.0,
+          "p99_ms": 65.0,
+          "max_ms": 196.9
+        },
+        "/predict/p1": {
+          "requests": 16748,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 140.62,
+          "mean_ms": 88.4,
+          "p50_ms": 65.0,
+          "p95_ms": 230.0,
+          "p99_ms": 290.0,
+          "max_ms": 452.5
+        },
+        "/predict/p1 [invalida]": {
+          "requests": 3279,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 27.53,
+          "mean_ms": 5.1,
+          "p50_ms": 2.0,
+          "p95_ms": 17.0,
+          "p99_ms": 32.0,
+          "max_ms": 154.4
+        },
+        "/predict/p2": {
+          "requests": 9934,
+          "failures": 0,
+          "error_rate_pct": 0.0,
+          "rps": 83.41,
+          "mean_ms": 16.8,
+          "p50_ms": 7.0,
+          "p95_ms": 62.0,
+          "p99_ms": 110.0,
+          "max_ms": 279.6
+        }
+      },
+      "failures": [],
+      "evaluation": {
+        "limits": {
+          "p95_ms": 500.0,
+          "error_rate_pct": 1.0
+        },
+        "checks": {
+          "p95_ms": true,
+          "error_rate_pct": true
+        },
+        "passed": true
+      },
+      "resources": {
+        "engine": "docker",
+        "interval_s": 2.0,
+        "generated_at": "2026-11-26 07:55",
+        "services": {
+          "api": {
+            "samples": 61,
+            "cpu_pct": {
+              "mean": 106.61,
+              "p95": 116.85,
+              "max": 142.93
+            },
+            "mem_mib": {
+              "mean": 237.7,
+              "p95": 240.0,
+              "max": 247.7
+            },
+            "mem_pct_max": 24.19,
+            "mem_limit_mib": 1024.0,
+            "pids_max": 86
+          },
+          "mlflow": {
+            "samples": 61,
+            "cpu_pct": {
+              "mean": 1.31,
+              "p95": 6.32,
+              "max": 6.94
+            },
+            "mem_mib": {
+              "mean": 375.7,
+              "p95": 376.4,
+              "max": 376.6
+            },
+            "mem_pct_max": 36.77,
+            "mem_limit_mib": 1024.0,
+            "pids_max": 13
+          }
+        },
+        "errors": []
+      }
+    }
+  }
+}

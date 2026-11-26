@@ -1,0 +1,40 @@
+{
+  "engine": "docker",
+  "interval_s": 2.0,
+  "generated_at": "2026-11-26 07:55",
+  "services": {
+    "api": {
+      "samples": 61,
+      "cpu_pct": {
+        "mean": 106.61,
+        "p95": 116.85,
+        "max": 142.93
+      },
+      "mem_mib": {
+        "mean": 237.7,
+        "p95": 240.0,
+        "max": 247.7
+      },
+      "mem_pct_max": 24.19,
+      "mem_limit_mib": 1024.0,
+      "pids_max": 86
+    },
+    "mlflow": {
+      "samples": 61,
+      "cpu_pct": {
+        "mean": 1.31,
+        "p95": 6.32,
+        "max": 6.94
+      },
+      "mem_mib": {
+        "mean": 375.7,
+        "p95": 376.4,
+        "max": 376.6
+      },
+      "mem_pct_max": 36.77,
+      "mem_limit_mib": 1024.0,
+      "pids_max": 13
+    }
+  },
+  "errors": []
+}

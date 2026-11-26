@@ -1,0 +1,60 @@
+[
+  {
+    "name": "mibici-p1-demanda",
+    "alias": "champion",
+    "version": "1",
+    "run_id": "da28d047b8384d089de6f74fcd4e175d",
+    "checked_rows": 5,
+    "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+    "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+    "status": "passed",
+    "validation_rows": 665747,
+    "metrics": {
+      "val_mae": 0.7497917145254663,
+      "val_rmse": 1.4446325976139336,
+      "val_wape": 0.6403362785136293,
+      "val_r2": 0.6255968112349437
+    }
+  },
+  {
+    "name": "mibici-p2-riesgo",
+    "alias": "champion",
+    "version": "1",
+    "run_id": "fb52c91b260843a992fe74ecfac7201c",
+    "checked_rows": 5,
+    "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+    "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+    "status": "passed",
+    "validation_rows": 662771,
+    "metrics": {
+      "val_f1_macro": 0.882361022824495,
+      "val_balanced_accuracy": 0.8823618306392178,
+      "val_precision_normal": 0.9153970095711962,
+      "val_recall_normal": 0.9153529493723797,
+      "val_ap_normal": 0.8883269561371678,
+      "val_precision_riesgo_sin_bicicletas": 0.8877435745261262,
+      "val_recall_riesgo_sin_bicicletas": 0.8878591288229842,
+      "val_ap_riesgo_sin_bicicletas": 0.8206881323064624,
+      "val_precision_riesgo_sin_anclajes": 0.8439400721451329,
+      "val_recall_riesgo_sin_anclajes": 0.8438734137222895,
+      "val_ap_riesgo_sin_anclajes": 0.7300731565598386,
+      "val_ap_macro": 0.8130294150011563
+    }
+  },
+  {
+    "name": "mibici-p3-grupos",
+    "alias": "champion",
+    "version": "1",
+    "run_id": "1079f92ad21d4f2cbc7dfa29c0d01253",
+    "checked_rows": 5,
+    "git_commit": "92e305f3de71dada5853035ba0081401aad197be",
+    "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+    "status": "passed",
+    "validation_rows": 468,
+    "groups_assigned": 3,
+    "metrics": {
+      "val_assignment_silhouette": 0.12276800634549838,
+      "val_assignment_davies_bouldin": 2.2114579777123864
+    }
+  }
+]

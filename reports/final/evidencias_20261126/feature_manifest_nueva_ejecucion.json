@@ -1,0 +1,139 @@
+{
+  "data_version": "85fa5af8030a91135df4e4d84f5abd96399cb9040515b4c60519a3d1d140f97e",
+  "features_sha256": "5b7b070de359e0a8f42e90676e1510907b5479eb7911c40863fe916755de7bf5",
+  "config_sha256": "91ccca8c72f1fa3b11681190977cf449abf96368f63b46f817aae0a157c419d5",
+  "packages": {
+    "pandas": "3.0.6",
+    "numpy": "2.5.3",
+    "pyarrow": "25.0.0"
+  },
+  "initial_occupancy": 0.5,
+  "predictors": {
+    "p1": [
+      "hour",
+      "weekday",
+      "is_weekend",
+      "month",
+      "departures_lag_1",
+      "departures_lag_24",
+      "departures_lag_168",
+      "departures_mean_24",
+      "departures_mean_168"
+    ],
+    "p2": [
+      "hour",
+      "weekday",
+      "is_weekend",
+      "month",
+      "departures_lag_1",
+      "departures_lag_24",
+      "departures_lag_168",
+      "departures_mean_24",
+      "departures_mean_168",
+      "virtual_occupancy",
+      "net_flow_lag_1",
+      "net_flow_lag_24"
+    ],
+    "p3": [
+      "weekday_00",
+      "weekday_01",
+      "weekday_02",
+      "weekday_03",
+      "weekday_04",
+      "weekday_05",
+      "weekday_06",
+      "weekday_07",
+      "weekday_08",
+      "weekday_09",
+      "weekday_10",
+      "weekday_11",
+      "weekday_12",
+      "weekday_13",
+      "weekday_14",
+      "weekday_15",
+      "weekday_16",
+      "weekday_17",
+      "weekday_18",
+      "weekday_19",
+      "weekday_20",
+      "weekday_21",
+      "weekday_22",
+      "weekday_23",
+      "weekend_00",
+      "weekend_01",
+      "weekend_02",
+      "weekend_03",
+      "weekend_04",
+      "weekend_05",
+      "weekend_06",
+      "weekend_07",
+      "weekend_08",
+      "weekend_09",
+      "weekend_10",
+      "weekend_11",
+      "weekend_12",
+      "weekend_13",
+      "weekend_14",
+      "weekend_15",
+      "weekend_16",
+      "weekend_17",
+      "weekend_18",
+      "weekend_19",
+      "weekend_20",
+      "weekend_21",
+      "weekend_22",
+      "weekend_23"
+    ]
+  },
+  "split_counts": {
+    "p1": {
+      "train": 1552105,
+      "val": 665747,
+      "test": 338690
+    },
+    "p2": {
+      "train": 1551437,
+      "val": 662771,
+      "test": 337250
+    }
+  },
+  "p2_class_counts": {
+    "normal": 1439302,
+    "riesgo_sin_bicicletas": 801934,
+    "riesgo_sin_anclajes": 310222
+  },
+  "coverage_policy": "Horas completas desde primera actividad; operación continua supuesta; P3 excluye primer día parcial y exige cobertura mínima.",
+  "p2_diagnostics": {
+    "clipped_events": 447423,
+    "excluded_rows_without_capacity_or_history": 5084
+  },
+  "files": {
+    "p1": {
+      "path": "processed/p1_hourly.parquet",
+      "sha256": "b66f92d7bdb6c4838190e0cc90ae85a0f108ec1fbdad0be7114ec878368080c7",
+      "rows": 2556542
+    },
+    "p2": {
+      "path": "processed/p2_hourly.parquet",
+      "sha256": "bca75128406b31b28af62b8e8bbc9ce554269e29f57b3550fdbd3982c78876a9",
+      "rows": 2551458
+    },
+    "p3_train": {
+      "path": "processed/p3_train.parquet",
+      "sha256": "6ec6a426154e6f10eb713f4b7010a69c2c278011d4d8b771f1ec152797c0e583",
+      "rows": 397
+    },
+    "p3_val": {
+      "path": "processed/p3_val.parquet",
+      "sha256": "44865f2d7c7eb965144eb0abfebe1a2f1f1490d02221633a5541026a6d8dcf2d",
+      "rows": 468
+    },
+    "p3_test": {
+      "path": "processed/p3_test.parquet",
+      "sha256": "cc50959e4896f24582eb8b7b641853062b094f2ed3b9a462ab889b10108339d9",
+      "rows": 468
+    }
+  },
+  "feature_version": "a6d5c3e01bf87c807484d54b8ffd8bf86944b011a2e853ff7b9d588784c3d13b",
+  "created_at": "2026-11-26T07:56:41.127589+00:00"
+}
