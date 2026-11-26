@@ -1,0 +1,26 @@
+{
+  "consulted_on": "2026-11-26",
+  "benchmark": "Docker Desktop, Intel Core Ultra 9 285K, 24 CPU y 8 GiB en la VM; campaña local del 26 de noviembre",
+  "valid_inferences_per_second": 224.03,
+  "formula": "USD por 1000 = USD/h / (predicciones válidas/s * 3600) * 1000",
+  "inference_count": "Solo POST P1/P2 exitosos; excluye health y entradas inválidas",
+  "planning_daily_inferences": 23040,
+  "planning_station_count": 480,
+  "planning_volume_is_hypothetical": true,
+  "cloud_throughput_measured": false,
+  "scope": "Solo cómputo Linux On-Demand; extrapolación local, excluye red, almacenamiento, IP, balanceador e impuestos.",
+  "regions": {
+    "us-east-1": {
+      "usd_hour": 0.17,
+      "usd_730_hours": 124.1,
+      "usd_per_1000_at_measured_throughput": 0.00021078526189448834,
+      "usd_per_1000_at_23040_daily": 0.17708333333333334
+    },
+    "mx-central-1": {
+      "usd_hour": 0.1785,
+      "usd_730_hours": 130.305,
+      "usd_per_1000_at_measured_throughput": 0.00022132452498921276,
+      "usd_per_1000_at_23040_daily": 0.1859375
+    }
+  }
+}

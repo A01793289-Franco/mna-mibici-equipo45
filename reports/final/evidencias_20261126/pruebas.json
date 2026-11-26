@@ -1,0 +1,11 @@
+{
+  "verified_on": "2026-11-26",
+  "command": "python -m pytest -q",
+  "code_snapshot": "d4bb7849210b05f5d025165362695373f9dd5c76",
+  "exit_code": 0,
+  "passed": 316,
+  "subtests_passed": 16,
+  "warnings": 243,
+  "duration_s": 38.62,
+  "log_sha256": "938e2258d0f7b4504c326ebc17246cbfff9a0946f9c91f644c97e38721a0ef9d"
+}

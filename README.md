@@ -2,7 +2,43 @@
 
 [![CI](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml/badge.svg)](https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/workflows/ci.yml)
 
-Propuesta de Machine Learning para apoyar la operación de MiBici en Guadalajara.
+Sistema de Machine Learning para apoyar la operación de MiBici en Guadalajara.
+
+## Entrega final del proyecto
+
+El proyecto conserva las entregas previas e integra datos y variables reproducibles,
+experimentación, modelos registrados, FastAPI, Compose, CI/CD, carga y monitoreo.
+
+| Componente | Código y evidencia |
+|---|---|
+| Estructura, ingesta y variables | [Consolidación](reports/final/consolidacion_repositorio.md), [MLflow Project](references/mlflow_project.md) y [manifiestos](references/ingesta_features.md) |
+| Modelos y linaje | [Verificación del Registry](reports/final/validacion_registry.md) y [evidencias finales](reports/final/revalidacion_20261126.md) |
+| API y operación | [Guía de Compose](references/operacion_compose.md), [Containerfile](Containerfile), [workflow CI](.github/workflows/ci.yml) y [Locust](load/locustfile.py) |
+| Monitoreo y comparación | [Drift](reports/evidently/resumen.md), [A/B retrospectivo](reports/abtest/resultados.md) y [protocolo de decisión](references/protocolo_abtest.md) |
+| Gobernanza y costo | [Model Card](reports/final/model_card.md) y [FinOps](reports/finops/analisis_costos.md) |
+
+La API de entrega conserva los champion v1 de P1 y P2; P3 v1 se utiliza por lotes.
+El registro de la reproducción A/B conserva por separado P1 v1 y el challenger v2.
+La comparación retrospectiva favorece v2, pero la decisión de entrega mantiene v1,
+con una promoción posterior condicionada a evidencia en otro periodo y revisión técnica.
+`champion` identifica la versión del prototipo local que consume el servicio; no implica
+un despliegue público ni disponibilidad real de bicicletas.
+
+La [revalidación del 26 de noviembre](reports/final/revalidacion_20261126.md) distingue
+la recuperación con el código actual, la reproducción histórica con sus datos y
+configuración originales y la reconstrucción de una versión nueva de datos. No se
+omiten controles de hashes para mezclar esas versiones.
+
+### Presentación y video
+
+La presentación `TC5061_Proyecto_Final_Equipo45.pdf` y el video
+`TC5061_Proyecto_Final_Equipo45.mp4` se entregan en Canvas, fuera del repositorio.
+El video debe durar de 2 a 5 minutos, ser continuo y mostrar una petición real a la API.
+Antes de grabar se prepara el paquete de modelos, se inicia Compose con la guía siguiente
+y se comprueban las predicciones. Durante la demo se abre `/docs`, se ejecuta
+`POST /predict/p1` con el ejemplo de la [guía de operación](references/operacion_compose.md)
+y se muestra su JSON HTTP 200. El entrenamiento y la construcción de la imagen se
+realizan antes de iniciar la grabación.
 
 ## Operación con Docker Compose y CI/CD
 

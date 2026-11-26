@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-26",
+  "code_base": "d4bb7849210b05f5d025165362695373f9dd5c76",
+  "flake8_exit_code": 0,
+  "mkdocs_strict_exit_code": 0,
+  "security": {
+    "commit": "d4bb7849210b05f5d025165362695373f9dd5c76",
+    "historial_incluido": true,
+    "archivos_revisados": {
+      "actuales": 190,
+      "historicos": 369,
+      "textos_grandes_omitidos": 0
+    },
+    "aprobado": true,
+    "hallazgos": []
+  },
+  "bandit_medium_or_high_findings": 0,
+  "pip_audit": {
+    "exit_code": 0,
+    "additional_known_vulnerabilities": 0,
+    "ignored_findings": 3,
+    "existing_policy_ids": [
+      "PYSEC-2026-3447",
+      "GHSA-xmj3-9gf7-h52w"
+    ],
+    "policy_document": "docs/docs/verificacion.md"
+  },
+  "ci": {
+    "url": "https://github.com/A01793289-Franco/mna-mibici-equipo45/actions/runs/45771834486",
+    "head_sha": "d4bb7849210b05f5d025165362695373f9dd5c76",
+    "conclusion": "success",
+    "jobs": [
+      "Python 3.13 / ubuntu-latest",
+      "Python 3.13 / windows-latest",
+      "Seguridad / dependencias y código",
+      "Imagen y despliegue de prueba / Compose"
+    ]
+  }
+}

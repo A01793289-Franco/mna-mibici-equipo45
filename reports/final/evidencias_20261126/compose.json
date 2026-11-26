@@ -1,0 +1,202 @@
+{
+  "date": "2026-11-26",
+  "code_commit": "d4bb7849210b05f5d025165362695373f9dd5c76",
+  "engine": "29.8.0",
+  "compose": "5.5.1",
+  "project": "mibici-final-20261126",
+  "api_port": 8126,
+  "registry_port": 5226,
+  "image": {
+    "id": "sha256:72b89f5719341341a8d31dbd534142237a735784a8941dfdc1ad3c1fd740da2e",
+    "user": "1000",
+    "architecture": "amd64"
+  },
+  "services": [
+    {
+      "Command": "\"python -m uvicorn m…\"",
+      "CreatedAt": "2026-11-26 01:49:58 -0600 CST",
+      "Engine": "",
+      "ExitCode": 0,
+      "Health": "healthy",
+      "ID": "d066bf542807",
+      "Image": "mibici-api:final-20261126",
+      "Labels": "com.docker.compose.version=5.5.1,desktop.docker.io/ports.scheme=v2,desktop.docker.io/ports/8000/tcp=127.0.0.1:8126,com.docker.compose.config-hash=c2cad1a14a910fb8c590519f84b58d3822d26487cd7a6e3b6a5e81d428753448,com.docker.compose.container-number=1,com.docker.compose.depends_on=mlflow:service_healthy:false,registry-init:service_completed_successfully:false,com.docker.compose.oneoff=False,com.docker.compose.project.config_files=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45/docker-compose.yml,com.docker.compose.project.working_dir=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45,com.docker.compose.service=api,com.docker.compose.image=sha256:9f914f4ac29c447de033a4466ac207e33c372e8bfbde804ef5bf209b9f61a17e,com.docker.compose.project=mibici-final-20261126",
+      "LocalVolumes": "0",
+      "Mounts": "",
+      "Name": "mibici-final-20261126-api-1",
+      "Names": "mibici-final-20261126-api-1",
+      "Networks": "mibici-final-20261126_serving",
+      "Ports": "127.0.0.1:8126->8000/tcp",
+      "Project": "mibici-final-20261126",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 8000,
+          "PublishedPort": 8126,
+          "Protocol": "tcp"
+        }
+      ],
+      "RunningFor": "7 minutes ago",
+      "Service": "api",
+      "Size": "0B",
+      "State": "running",
+      "Status": "Up 7 minutes (healthy)"
+    },
+    {
+      "Command": "\"mlflow server --hos…\"",
+      "CreatedAt": "2026-11-26 01:49:58 -0600 CST",
+      "Engine": "",
+      "ExitCode": 0,
+      "Health": "healthy",
+      "ID": "4d852804bdaf",
+      "Image": "mibici-api:final-20261126",
+      "Labels": "com.docker.compose.container-number=1,com.docker.compose.oneoff=False,com.docker.compose.project.working_dir=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45,desktop.docker.io/ports.scheme=v2,desktop.docker.io/ports/5000/tcp=127.0.0.1:5226,com.docker.compose.depends_on=,com.docker.compose.image=sha256:9f914f4ac29c447de033a4466ac207e33c372e8bfbde804ef5bf209b9f61a17e,com.docker.compose.project=mibici-final-20261126,com.docker.compose.project.config_files=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45/docker-compose.yml,com.docker.compose.service=mlflow,com.docker.compose.version=5.5.1,com.docker.compose.config-hash=b248e2b961fc744d02690a6931a164b9eb1c6779705acf32a54bcab81e54a2d9",
+      "LocalVolumes": "1",
+      "Mounts": "mibici-final-2…",
+      "Name": "mibici-final-20261126-mlflow-1",
+      "Names": "mibici-final-20261126-mlflow-1",
+      "Networks": "mibici-final-20261126_serving",
+      "Ports": "127.0.0.1:5226->5000/tcp",
+      "Project": "mibici-final-20261126",
+      "Publishers": [
+        {
+          "URL": "127.0.0.1",
+          "TargetPort": 5000,
+          "PublishedPort": 5226,
+          "Protocol": "tcp"
+        }
+      ],
+      "RunningFor": "7 minutes ago",
+      "Service": "mlflow",
+      "Size": "0B",
+      "State": "running",
+      "Status": "Up 7 minutes (healthy)"
+    },
+    {
+      "Command": "\"python -m mibici.re…\"",
+      "CreatedAt": "2026-11-26 01:49:58 -0600 CST",
+      "Engine": "",
+      "ExitCode": 0,
+      "Health": "",
+      "ID": "6783353b1ed5",
+      "Image": "mibici-api:final-20261126",
+      "Labels": "desktop.docker.io/mounts/0/Source=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/work/cierre_final_20261126/serving,desktop.docker.io/mounts/0/SourceKind=hostFile,com.docker.compose.image=sha256:9f914f4ac29c447de033a4466ac207e33c372e8bfbde804ef5bf209b9f61a17e,com.docker.compose.project.config_files=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45/docker-compose.yml,com.docker.compose.project.working_dir=/home/leo/Documents/Codex/2026-10-15/inicia-session-en-githu/outputs/mna-mibici-equipo45,com.docker.compose.service=registry-init,com.docker.compose.version=5.5.1,desktop.docker.io/mounts/0/Target=/models,desktop.docker.io/ports.scheme=v2,com.docker.compose.config-hash=bf2e960f1019721bd39fb3aa8dac5dfd2bbd2323873e7ef9402aeae8d9996f4c,com.docker.compose.container-number=1,com.docker.compose.depends_on=mlflow:service_healthy:false,com.docker.compose.oneoff=False,com.docker.compose.project=mibici-final-20261126",
+      "LocalVolumes": "0",
+      "Mounts": "/host_mnt/home…",
+      "Name": "mibici-final-20261126-registry-init-1",
+      "Names": "mibici-final-20261126-registry-init-1",
+      "Networks": "mibici-final-20261126_serving",
+      "Ports": "",
+      "Project": "mibici-final-20261126",
+      "Publishers": [],
+      "RunningFor": "7 minutes ago",
+      "Service": "registry-init",
+      "Size": "0B",
+      "State": "exited",
+      "Status": "Exited (0) 7 minutes ago"
+    }
+  ],
+  "model_bundle_sha256": "c1f11d2e2751e07481e5c7bd377b70a087c55eb6c3d182147c7a978bf27aab2a",
+  "models_after_recreation": {
+    "mibici-p1-demanda": {
+      "version": "1",
+      "aliases": {
+        "champion": "1"
+      },
+      "run_id": "a8022798a1be4b278f1f4f78edcbe74f",
+      "tags": {
+        "serving_bundle_sha256": "c1f11d2e2751e07481e5c7bd377b70a087c55eb6c3d182147c7a978bf27aab2a"
+      },
+      "version_count": 1
+    },
+    "mibici-p2-riesgo": {
+      "version": "1",
+      "aliases": {
+        "champion": "1"
+      },
+      "run_id": "877f90e3d42b4490a2bf05e3515e48b3",
+      "tags": {
+        "serving_bundle_sha256": "c1f11d2e2751e07481e5c7bd377b70a087c55eb6c3d182147c7a978bf27aab2a"
+      },
+      "version_count": 1
+    }
+  },
+  "http": {
+    "http-real": {
+      "passed": true,
+      "count": 11,
+      "predictions": [
+        {
+          "method": "POST",
+          "path": "/predict/p1",
+          "status": 200,
+          "response": {
+            "question": "P1",
+            "model_uri": "models:/mibici-p1-demanda@champion",
+            "prediction": {
+              "demanda_esperada": 2.6144151108240576
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/predict/p2",
+          "status": 200,
+          "response": {
+            "question": "P2",
+            "model_uri": "models:/mibici-p2-riesgo@champion",
+            "prediction": {
+              "clase": 1,
+              "riesgo": "riesgo_sin_bicicletas",
+              "prob_normal": 0.0,
+              "prob_riesgo_sin_bicicletas": 1.0,
+              "prob_riesgo_sin_anclajes": 0.0
+            }
+          }
+        }
+      ]
+    },
+    "http-real-restart": {
+      "passed": true,
+      "count": 11,
+      "predictions": [
+        {
+          "method": "POST",
+          "path": "/predict/p1",
+          "status": 200,
+          "response": {
+            "question": "P1",
+            "model_uri": "models:/mibici-p1-demanda@champion",
+            "prediction": {
+              "demanda_esperada": 2.6144151108240576
+            }
+          }
+        },
+        {
+          "method": "POST",
+          "path": "/predict/p2",
+          "status": 200,
+          "response": {
+            "question": "P2",
+            "model_uri": "models:/mibici-p2-riesgo@champion",
+            "prediction": {
+              "clase": 1,
+              "riesgo": "riesgo_sin_bicicletas",
+              "prob_normal": 0.0,
+              "prob_riesgo_sin_bicicletas": 1.0,
+              "prob_riesgo_sin_anclajes": 0.0
+            }
+          }
+        }
+      ]
+    }
+  },
+  "passed": true,
+  "runtime_sha256": {
+    "Containerfile": "1ea0aa7c8e3a275ae47e0ba24222d50923fa677be68f95c379ee412173cfe73d",
+    "docker-compose.yml": "07fdea524e39af8135a0d7e337e9c29c4397e7f861aeb3278b7139e21fab1032",
+    "requirements-api.txt": "14ecd2c1eb7b0dcc754c3954adfa21cdf5268c2d3b5d999814337be3448402a9",
+    "mibici/api.py": "9f21c40d3d0559f8500031ef6caf5df0cf0950acfd0b3a8e1f1d63430cb36bb1",
+    "mibici/registry_bundle.py": "7b94273d99075e7bb8b124df0e9609035ce623bd51352cd4fd1793f92bec865e"
+  }
+}

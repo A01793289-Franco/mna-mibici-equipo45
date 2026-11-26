@@ -1,0 +1,12 @@
+[
+  {
+    "name": "mibici-p1-demanda",
+    "alias": "challenger",
+    "version": 2,
+    "run_id": "ad655fdb19c042a190b794e084684c8c",
+    "checked_rows": 5,
+    "git_commit": "61f237f05e5ddddd8101460a6b8e7524f8cf8c21",
+    "data_version": "5ca52ccee062fbfea75de9d014ebe44884994e8cd2aa92d6a3d621465f8bee43",
+    "status": "passed"
+  }
+]

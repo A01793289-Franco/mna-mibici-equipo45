@@ -1,0 +1,40 @@
+{
+  "verified_on": "2026-11-26",
+  "execution_code_snapshot": "d4bb7849210b05f5d025165362695373f9dd5c76",
+  "source_method": "git archive a una carpeta nueva, sin datos previos",
+  "command": "python -m mlflow run . -e ingest --env-manager local --experiment-name mibici-equipo45",
+  "run_id": "315c65d7398f4f89a31f0c80d2ebe72d",
+  "status": "FINISHED",
+  "data_version": "85fa5af8030a91135df4e4d84f5abd96399cb9040515b4c60519a3d1d140f97e",
+  "feature_version": "a6d5c3e01bf87c807484d54b8ffd8bf86944b011a2e853ff7b9d588784c3d13b",
+  "summary": {
+    "months": 9,
+    "raw_rows": 3362065,
+    "clean_trips": 3358273,
+    "observed_stations": 471,
+    "catalog_stations": 470,
+    "stations_outside_catalog": [
+      405,
+      407
+    ]
+  },
+  "catalog_url": "https://www.mibici.net/site/assets/files/1118/nomenclatura_2026_10.csv",
+  "raw_and_clean_trip_hashes_match_historical": true,
+  "feature_files_match_historical": {
+    "p1": true,
+    "p2": false,
+    "p3_train": false,
+    "p3_val": false,
+    "p3_test": false
+  },
+  "feature_rows": {
+    "p1": 2556542,
+    "p2": 2551458,
+    "p3_train": 397,
+    "p3_val": 468,
+    "p3_test": 468
+  },
+  "source_and_features_verified": true,
+  "historical_manifests_modified": false,
+  "registered_models_modified": false
+}

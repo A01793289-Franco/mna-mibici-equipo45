@@ -1,9 +1,15 @@
 # Validación del Model Registry — Proyecto integrador MiBici
 
-**Equipo:** 45  
-**Actividad:** Entrega final del proyecto integrador  
-**Alcance:** Punto 2 — Verificación del Model Registry  
-**Commit de referencia:** 2671c33
+**Equipo:** 45
+**Actividad:** Entrega final del proyecto integrador
+**Alcance:** Punto 2 — Verificación del Model Registry
+**Commit de referencia original:** 2671c33
+**Cierre de verificación:** 26 de noviembre de 2026, código base `d4bb784`.
+
+La [revalidación final](revalidacion_20261126.md) incorpora consultas y predicciones nuevas
+contra copias locales de los registros reales del equipo. Se conserva la base histórica
+sin modificar sus aliases. El registro de referencia contiene los tres champion; el
+registro de reproducción A/B contiene las dos versiones de P1. Son registros distintos.
 
 ## 1. Objetivo
 
@@ -96,7 +102,9 @@ El repositorio conserva evidencias adicionales para los tres modelos:
 - [Artefactos de entrenamiento](../figures/entrega2/artefactos.jpg).
 - [Firma del modelo](../figures/entrega2/firma_modelo.jpg).
 
-Las evidencias individuales de P2 y P3 se conservan como referencias documentales. Su contenido detallado y su correspondencia con las versiones actuales requieren confirmación adicional.
+El linaje de P2 y P3 se comprobó además mediante consulta al registro local de referencia:
+run, experimento, commit, versiones de datos y características, parámetros, métricas y firma.
+Los resultados completos están en [registry_linaje.json](evidencias_20261126/registry_linaje.json).
 
 ## 5. Artefactos y reproducibilidad
 
@@ -299,11 +307,23 @@ Los procedimientos anteriores no requieren reentrenar los modelos ni promover nu
 
 ### 9.5 Estado de ejecución
 
-Los comandos se encuentran respaldados por el código fuente y la documentación del repositorio.
+El 26 de noviembre se recuperaron los champion reales de P1, P2 y P3 con el código actual.
+Los tres reprodujeron cinco predicciones de referencia por modelo con tolerancia `1e-12`.
+Se comprobó también el challenger de P1 en el registro separado de la reproducción A/B.
 
-Su ejecución contra el Registry actual permanece pendiente de confirmación durante esta revisión final.
+La evaluación completa utilizó el código de origen `92e305f`, el catálogo histórico y
+las tablas cuyos SHA-256 coinciden con sus manifiestos. Reprodujo las métricas de
+validación: P1 MAE `0.7497917145254663`, P2 F1 macro `0.882361022824495` y las métricas
+de asignación de P3 sobre 468 estaciones. El detalle está en
+[registry_validacion_historica.json](evidencias_20261126/registry_validacion_historica.json).
 
-No se presentan resultados de ejecución que no hayan sido obtenidos.
+La configuración de ingesta actual difiere de la histórica. El verificador completo
+de `main` rechaza correctamente esas tablas antiguas por su hash de configuración.
+Para reproducir las métricas se utiliza el código de origen; para una ejecución nueva
+se regeneran datos y variables y se obtiene otra versión. No se omite ese control.
+La [revalidación final](revalidacion_20261126.md) documenta ambas rutas y la ejecución
+del MLflow Project con datos nuevos. Estas comprobaciones son locales y no acreditan
+el estado de un servidor privado de otro integrante.
 
 ## 10. Criterios de promoción a producción
 
@@ -354,19 +374,19 @@ El diagrama representa el flujo recomendado de operación y no implica que exist
 
 | Requerimiento | Evidencia | Estado |
 |---|---|---|
-| Registro de P1, P2 y P3 | Captura histórica del Registry | Documentado |
-| Versionamiento | Versiones históricas y A/B de P1 | Documentado |
-| Alias champion | Capturas históricas | Documentado |
-| Linaje de P1 | Run ID, tags y firma | Revisado |
-| Linaje de P2 y P3 | Evidencias gráficas disponibles | Revisión detallada pendiente |
+| Registro de P1, P2 y P3 | Consulta al registro local real y recuperación | Comprobado |
+| Versionamiento | Registro de referencia y registro separado de A/B | Comprobado |
+| Alias champion | v1 de P1/P2/P3 en el registro de referencia | Comprobado |
+| Linaje de P1 | Run ID, tags, métricas y firma | Comprobado |
+| Linaje de P2 y P3 | Consulta de las versiones y runs reales | Comprobado |
 | Criterios de selección | Documentación de integración | Revisado |
 | Comparación de versiones P1 | A/B testing offline | Revisado |
 | Recomendación de nueva versión | Versión 2 de P1 | Justificada |
 | Recuperación por alias | Código de recuperación | Implementado |
 | Verificación de predicciones | verify_registry.py | Implementado |
-| Estado actual de los aliases | Consulta al servidor MLflow | Pendiente |
-| Smoke test actual | Evidencia de ejecución | Pendiente |
-| Reproducción de métricas | Datos y características correspondientes | Pendiente |
+| Estado de los aliases del registro local de referencia | registry_linaje.json | Comprobado |
+| Smoke test de los tres champion y el challenger | JSON de ejecución del 26 de noviembre | Comprobado |
+| Reproducción de métricas | Datos, tablas y código histórico compatibles | Comprobado |
 
 ## 13. Conclusión
 
@@ -376,6 +396,11 @@ Las evidencias históricas demuestran el registro de los modelos P1, P2 y P3, as
 
 La comparación offline de P1 proporciona evidencia favorable para considerar la versión 2 como candidata a producción, con mejoras en las métricas evaluadas y en los segmentos de estaciones conocidas y nuevas.
 
-No obstante, la promoción efectiva de dicha versión y el estado actual de los aliases deben confirmarse directamente en el servidor MLflow correspondiente.
+La decisión de entrega conserva v1 en la API y mantiene v2 como candidata. La comparación
+offline no mueve aliases y no acredita desempeño futuro. La promoción se condiciona a
+una evaluación en otro periodo y revisión técnica, conservando la versión anterior.
 
-La revisión documental confirma la integración de los componentes técnicos del punto 2. La validación funcional actual deberá complementarse con la ejecución de los procedimientos descritos y la conservación de sus resultados como evidencia de la entrega final.
+Las consultas, predicciones y métricas del registro local real complementan la revisión
+documental. El alias `champion` define el modelo consumido por el prototipo local; no se
+declara un servicio público en producción. La importación de P1/P2 a Compose conserva
+la procedencia y vuelve a comprobar las predicciones antes de habilitar la API.
